@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Or Plus Max</title>
+  <link rel="stylesheet" type="text/css" id="frame_style" href="../css/frame_style1.css">
+  <link rel="stylesheet" type="text/css" id="Markdown_style" href="../css/Markdown_style.css">
+  <script type="text/javascript" src="../jscode/frame.js"></script>
+  <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+  <link rel="stylesheet" href="https://ziyuan.fenxianglu.cn/js/highlight/styles/default.css">
+  <script src="https://ziyuan.fenxianglu.cn/js/highlight/highlight.pack.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+        inlineMath: [['$','$']]
+      }
+    });
+  </script>
+</head>
+<body>
+  <div class="main">
+    <div class="head">
+      <div class="title1">
+        <a href="../index.html">wjh15101051's space</a>
+      </div>
+      <div class="title2">
+        卧薪尝胆，厚积薄发。
+      </div>
+    </div>
+    <div id="middle_blogfile">
+      <div class="blog_blogfile">
+        <div class="blogfile_title">
+            Or Plus Max
+        </div>
+        <div class="blogfile_stitle">
+          <img src="http://pic.yupoo.com/wjh15101051/1e0e1b3a/118165c5.jpg">
+          Date: Wed Nov 28 07:29:54 CST 2018
+          <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png">
+          In Category:
+          <a href="../categories/NoCategory.html">NoCategory</a>
+        </div>
+        <div class="blogfile_content">
+<div class = "MarkdownCommonContent">
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Description：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+给定正整数
+$n$
+和正整数序列
+$A$
+，
+$|A|=2^{n-1}$
+ 。对于每一个
+$k(1\leqslant k&lt;2^n)$
+ ，输出满足
+$i\text{ or }j\leqslant k$
+的最大
+$a_i+a_J$
+值。
+</div>
+<div class = "MarkdownCommonContent">
+$1\leqslant n\leqslant 18$
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Solution：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+先变化一下条件，对每个
+$k$
+求出
+$i\text{ or }j=k$
+的最大的
+$a_i+a_j$
+的值，放宽一下约束条件，可以看成
+$i\in k$
+的
+$a_i$
+的最大值和次大值，这样一定合法且不会丢解，那发现这就是一个子集统计问题，可以用快速莫比乌斯变换来解决。
+</div>
+<div class = "MarkdownCommonContent">
+<img class = "MarkdownImg" src="https://images2018.cnblogs.com/blog/922029/201807/922029-20180709193119680-196786520.gif"  alt="" />
+</div>
+<div class = "MarkdownCommonContent">
+快速莫比乌斯变换是用来解决集合幂级数的集合并卷积的问题，也就是说，给定两个长度为
+$2^n-1$
+的序列
+$a$
+和
+$b$
+，让求一个序列
+$c$
+满足：
+$$
+c[k]=\sum_{i\text{ or }j=k}a[i]\times b[j]
+$$
+暴力做肯定是
+$O((2^n)^2)$
+的，考虑怎么优化，
+$i\cup j=k$
+这个很不好处理，那么我们可以做一个集合的前缀和（用大写字母表示）：
+$$
+\begin{align}
+C[k]&=\sum_{k_0\subseteq k}c[k_0]\\
+&=\sum_{k_0\subseteq k}\sum_{i\cup j=k_0}a[i]\times b[j]\\
+&=\sum_{i\cup j\subseteq k}a[i]\times b[j]\\
+&=(\sum_{i\subseteq k}a[i])\times (\sum_{j\subseteq k}b[j])\\
+&=A[k]\times B[k]
+\end{align}
+$$
+也就是说快速莫比乌斯变换就是用来求集合的前缀和的，在这个求完之后像
+$FFT$
+一样对应位置相乘然后再变换回去即可。
+</div>
+<div class = "MarkdownCommonContent">
+但是这道题就是让求子集统计，也就是说不用变换回去，维护一个最大值一个次大值即可。
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Code：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+<pre><code class="MarkdownParaCode">
+#include&lt;algorithm&gt;<br />
+#include&lt;iostream&gt;<br />
+#include&lt;cstdlib&gt;<br />
+#include&lt;cstdio&gt;<br />
+#include&lt;cmath&gt;<br />
+#include&lt;cctype&gt;<br />
+#include&lt;cstring&gt;<br />
+using namespace std;<br />
+int n;<br />
+#define MAXN 19<br />
+struct state<br />
+{<br />
+	long long x,y;<br />
+	friend state operator + (state a,state b)<br />
+	{<br />
+		state res;<br />
+		if(a.x &gt;= b.x){res.x = a.x;res.y = max(a.y,b.x);}<br />
+		else {res.x = b.x;res.y = max(a.x,b.y);}<br />
+		return res;<br />
+	}<br />
+}f[1 &lt;&lt; MAXN];<br />
+void FMT(state f[],int l)<br />
+{<br />
+	for(int i = 0;i &lt; l;++i)<br />
+	{<br />
+		for(int j = 0;j &lt; (1 &lt;&lt; l);++j)<br />
+		{<br />
+			if(((j &gt;&gt; i) & 1) == 0)f[j | (1 &lt;&lt; i)] = f[j | (1 &lt;&lt; i)] + f[j];<br />
+		}<br />
+	}<br />
+	return;<br />
+}<br />
+long long ans[1 &lt;&lt; MAXN];<br />
+int main()<br />
+{<br />
+	scanf("%d",&n);<br />
+	for(int i = 0;i &lt; (1 &lt;&lt; n);++i)<br />
+	{<br />
+		scanf("%lld",&f[i].x);<br />
+		f[i].y = -9999999999;<br />
+	}<br />
+	FMT(f,n);<br />
+	for(int i = 0;i &lt; (1 &lt;&lt; n);++i)ans[i] = f[i].x + f[i].y;<br />
+	for(int i = 1;i &lt; (1 &lt;&lt; n);++i)ans[i] = max(ans[i],ans[i - 1]);<br />
+	for(int i = 1;i &lt; (1 &lt;&lt; n);++i)printf("%lld\n",ans[i]);<br />
+	return 0;<br />
+}<br />
+</pre></code>
+</div>
+        </div>
+        <div class="blogfile_showtag">
+          <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png">
+          In tag:
+<a href="../tags/数学-多项式-快速莫比乌斯变换.html">数学-多项式-快速莫比乌斯变换</a> 
+          <!--<a href="../tags/blog.html">blog</a>-->
+        </div>
+      </div>
+    </div>
+    <div id="middle_nav">
+      <div class="blog_host">
+        <div class="nav_avator">
+          <img src="http://pic.yupoo.com/wjh15101051/72c1aeab/f51d56e0.jpg" alt="avator">
+        </div>
+        <div class="nav_ID">
+          wjh15101051
+        </div>
+      </div>
+      <div class="nav_list">
+        <li class="tags">
+          <a href="../tags.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png" class="list_icon" id="tags_image">
+            Tags
+          </a>
+        </li>
+        <li class="categories">
+          <a href="../categories.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png" class="list_icon" id="categories_image">
+            Categories
+          </a>
+        </li>
+        <li class="timeline">
+          <a href="../timeline.html">
+            <img src="http://pic.yupoo.com/wjh15101051/30365cc7/c1a3be15.png" class="list_icon" id="timeline_image">
+            Timeline
+          </a>
+        </li>
+        <li class="about">
+          <a href="../about.html">
+            <img src="http://pic.yupoo.com/wjh15101051/24f1cb41/e239086e.png" class="list_icon" id="about_image">
+            About
+          </a>
+        </li>
+        <li class="toolbox">
+          <a href="../toolbox.html">
+            <img src="http://pic.yupoo.com/wjh15101051/dee9f673/d3cf682a.png" class="list_icon" id="toolbox_image">
+            Toolbox
+          </a>
+        </li>
+        <li class="friends">
+            <div class="friends_text">
+              <img src="http://pic.yupoo.com/wjh15101051/d291ebed/29f9c807.png" id="friends_image">
+              Friends
+            </div>
+            <div id="fp_friends_list">
+              <div id="SGcolin">
+                <a href="http://blog.gyx.me/" target="_blank">SGcolin</a>
+              </div>
+              <div id="Xingcy">
+                <a href="https://www.cnblogs.com/xcysblog/" target="_blank">Xingcy</a>
+              </div>
+              <div id="ZH_comld">
+                <a href="https://www.cnblogs.com/ZH-comld/" target="_blank">ZH_comld</a>
+              </div>
+            </div>
+            <br>
+          </div>
+        </li>
+      </div>
+    <div class="music_player">
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer@1.10.0/dist/APlayer.min.css">
+      <script src="https://blog-static.cnblogs.com/files/yjlaugus/APlayer.min.js"></script>
+      <div id="aplayer" class="aplayer"  data-id="5313691453" data-server="netease" data-type="playlist" data-fixed="true" data-listfolded="true" data-order="random" data-theme="#F58EA8"></div>
+      <script src="https://unpkg.com/meting@1.2/dist/Meting.min.js"></script>
+    </div>
+    <div class="bottom">
+      <div>
+        Copyright © 2020
+        <a id="copyright_user_a" href="index.html">
+          <span id="copyright_user">wjh15101051</span>
+        </a>
+      </div>
+      <div class="bottom_anime">ღゝ◡╹)ノ♡</div>
+    </div>
+  </div>
+</body>
+</html>

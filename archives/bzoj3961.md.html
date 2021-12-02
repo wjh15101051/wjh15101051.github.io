@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>WF2011 Chips Challenge</title>
+  <link rel="stylesheet" type="text/css" id="frame_style" href="../css/frame_style1.css">
+  <link rel="stylesheet" type="text/css" id="Markdown_style" href="../css/Markdown_style.css">
+  <script type="text/javascript" src="../jscode/frame.js"></script>
+  <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+  <link rel="stylesheet" href="https://ziyuan.fenxianglu.cn/js/highlight/styles/default.css">
+  <script src="https://ziyuan.fenxianglu.cn/js/highlight/highlight.pack.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+        inlineMath: [['$','$']]
+      }
+    });
+  </script>
+</head>
+<body>
+  <div class="main">
+    <div class="head">
+      <div class="title1">
+        <a href="../index.html">wjh15101051's space</a>
+      </div>
+      <div class="title2">
+        卧薪尝胆，厚积薄发。
+      </div>
+    </div>
+    <div id="middle_blogfile">
+      <div class="blog_blogfile">
+        <div class="blogfile_title">
+            WF2011 Chips Challenge
+        </div>
+        <div class="blogfile_stitle">
+          <img src="http://pic.yupoo.com/wjh15101051/1e0e1b3a/118165c5.jpg">
+          Date: Mon Mar 25 11:00:18 CST 2019
+          <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png">
+          In Category:
+          <a href="../categories/NoCategory.html">NoCategory</a>
+        </div>
+        <div class="blogfile_content">
+<div class = "MarkdownCommonContent">
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Description：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+给一个正方形网格，有些位置不能放，有些位置必须放，第
+$i$
+行和第
+$i$
+列放的个数必须一样多，任意一行
+$/$
+一列放的个数不能超过总数的
+$A/B$
+，问最多能放几个
+</div>
+<div class = "MarkdownCommonContent">
+$1\leqslant n\leqslant 40$
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Solution：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+显然最不好做的限制是任意一行
+$/$
+一列放的个数不超过总数的
+$A/B$
+，这个时候有一个很神仙的做法就是我们枚举每一行
+$/$
+一列放的个数的最大值
+$t$
+，那么有
+$t\leqslant A/B\times sum$
+，即
+$t\times B\leqslant sum\times A$
+，直接求不好求，我们可以补集转化，先把能放的都放了，然后再把多余的扣掉，然后从源点向代表行的点连
+$(cntx[i],0)$
+的边，从代表列的点向汇点连
+$(cnty[i],0)$
+的边，对应行和列连
+$(t,0)$
+的边，然后从代表行的点向代表列的点连
+$(1,1)$
+的边，代表把这个点扣掉，那么我们应该让抠掉的最少，也就是跑最小费用最大流，当且仅当满流时并且
+$t\times B\leqslant (t\times n-cost)\times A$
+时合法，更新答案。
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Code：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+<pre><code class="MarkdownParaCode">
+#include&lt;algorithm&gt;<br />
+#include&lt;iostream&gt;<br />
+#include&lt;cstdlib&gt;<br />
+#include&lt;cstdio&gt;<br />
+#include&lt;cmath&gt;<br />
+#include&lt;queue&gt;<br />
+#include&lt;cctype&gt;<br />
+#include&lt;cstring&gt;<br />
+using namespace std;<br />
+inline int rd()<br />
+{<br />
+	register int res = 0,f = 1;register char c = getchar();<br />
+	while(!isdigit(c)){if(c == '-')f = -1;c = getchar();}<br />
+	while(isdigit(c))res = (res &lt;&lt; 1) + (res &lt;&lt; 3) + c - '0',c = getchar();<br />
+	return res * f;<br />
+}<br />
+int n,A,B;<br />
+#define MAXN 50<br />
+char map[MAXN][MAXN];<br />
+int cntx[MAXN],cnty[MAXN],sum = 0,cntc = 0;<br />
+char getc()<br />
+{<br />
+	register char c = getchar();<br />
+	while(c != '.' && c != '/' && c != 'C')c = getchar();<br />
+	return c;<br />
+}<br />
+#define MAXP (MAXN * 2)<br />
+#define MAXE (MAXN * MAXN + 3 * MAXN)<br />
+struct edge<br />
+{<br />
+	int to,nxt,f,c;<br />
+}e[MAXE &lt;&lt; 1];<br />
+int edgenum = 0;<br />
+int lin[MAXP];<br />
+void add(int a,int b,int f,int c)<br />
+{<br />
+	e[edgenum] = (edge){b,lin[a],f,c};lin[a] = edgenum++;<br />
+	e[edgenum] = (edge){a,lin[b],0,-c};lin[b] = edgenum++;<br />
+	return;<br />
+}<br />
+int pre[MAXP],d[MAXP],rate[MAXP];<br />
+bool inq[MAXP];<br />
+int s,t;<br />
+#define INF 0x3f3f3f3f<br />
+bool SPFA()<br />
+{<br />
+	memset(d,0x3f,sizeof(d));d[s] = 0;<br />
+	rate[s] = INF;<br />
+	queue&lt;int&gt; q;q.push(s);<br />
+	while(!q.empty())<br />
+	{<br />
+		int k = q.front();q.pop();<br />
+		inq[k] = false;<br />
+		for(int i = lin[k];i != -1;i = e[i].nxt)<br />
+		{<br />
+			if(d[e[i].to] &gt; d[k] + e[i].c && e[i].f)<br />
+			{<br />
+				d[e[i].to] = d[k] + e[i].c;<br />
+				rate[e[i].to] = min(rate[k],e[i].f);<br />
+				pre[e[i].to] = i;<br />
+				if(!inq[e[i].to])<br />
+				{<br />
+					inq[e[i].to] = k;<br />
+					q.push(e[i].to);<br />
+				}<br />
+			}<br />
+		}<br />
+	}<br />
+	return d[t] != INF;<br />
+}<br />
+#define pii pair&lt;int,int&gt;<br />
+pii flow()<br />
+{<br />
+	for(int i = t;i != s;i = e[pre[i] ^ 1].to)<br />
+	{<br />
+		e[pre[i]].f -= rate[t];<br />
+		e[pre[i] ^ 1].f += rate[t];<br />
+	}<br />
+	return make_pair(rate[t] * d[t],rate[t]);<br />
+}<br />
+pii operator + (pii a,pii b){return make_pair(a.first + b.first,a.second + b.second);}<br />
+pii EK()<br />
+{<br />
+	pii ans = make_pair(0,0);<br />
+	while(SPFA())ans = ans + flow();<br />
+	return ans;<br />
+}<br />
+int calc(int v)<br />
+{//cout &lt;&lt; " : " &lt;&lt; v &lt;&lt; endl;<br />
+	memset(lin,-1,sizeof(lin));<br />
+	edgenum = 0;<br />
+	s = 2 * n + 1;t = s + 1;<br />
+	for(int i = 1;i &lt;= n;++i)add(s,i,cntx[i],0);<br />
+	for(int i = 1;i &lt;= n;++i)add(i + n,t,cnty[i],0);<br />
+	for(int i = 1;i &lt;= n;++i)add(i,i + n,v,0);<br />
+	for(int i = 1;i &lt;= n;++i)for(int j = 1;j &lt;= n;++j)if(map[i][j] == '.')add(i,j + n,1,1);<br />
+	pii res = EK();//cout &lt;&lt; res.first &lt;&lt; " " &lt;&lt; res.second &lt;&lt; endl;<br />
+	if(res.second != sum)return -1;<br />
+	if(v * B &gt; (res.second - res.first) * A)return -1;<br />
+	return res.second - res.first;<br />
+}<br />
+int main()<br />
+{<br />
+	int testcases = 0;<br />
+	while(true)<br />
+	{<br />
+		n = rd();A = rd();B = rd();<br />
+		if(n == 0 && A == 0 && B == 0)break;<br />
+		for(int i = 1;i &lt;= n;++i)for(int j = 1;j &lt;= n;++j)map[i][j] = getc();<br />
+		memset(cntx,0,sizeof(cntx));<br />
+		memset(cnty,0,sizeof(cnty));<br />
+		sum = 0;cntc = 0;<br />
+		for(int i = 1;i &lt;= n;++i)for(int j = 1;j &lt;= n;++j)if(map[i][j] != '/')++cntx[i],++cnty[j];<br />
+		for(int i = 1;i &lt;= n;++i)for(int j = 1;j &lt;= n;++j)if(map[i][j] == 'C')++cntc;<br />
+		for(int i = 1;i &lt;= n;++i)sum += cntx[i];//cout &lt;&lt; " -&gt; " &lt;&lt; sum &lt;&lt; endl;<br />
+		int ans = -1;<br />
+		for(int v = 0;v &lt;= n;++v)ans = max(ans,calc(v));<br />
+		if(ans == -1)printf("Case %d: impossible\n",++testcases);<br />
+		else printf("Case %d: %d\n",++testcases,ans - cntc);<br />
+	}<br />
+	return 0;<br />
+}<br />
+<br />
+</pre></code>
+</div>
+        </div>
+        <div class="blogfile_showtag">
+          <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png">
+          In tag:
+<a href="../tags/图论-网络流-最小费用最大流.html">图论-网络流-最小费用最大流</a> 
+          <!--<a href="../tags/blog.html">blog</a>-->
+        </div>
+      </div>
+    </div>
+    <div id="middle_nav">
+      <div class="blog_host">
+        <div class="nav_avator">
+          <img src="http://pic.yupoo.com/wjh15101051/72c1aeab/f51d56e0.jpg" alt="avator">
+        </div>
+        <div class="nav_ID">
+          wjh15101051
+        </div>
+      </div>
+      <div class="nav_list">
+        <li class="tags">
+          <a href="../tags.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png" class="list_icon" id="tags_image">
+            Tags
+          </a>
+        </li>
+        <li class="categories">
+          <a href="../categories.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png" class="list_icon" id="categories_image">
+            Categories
+          </a>
+        </li>
+        <li class="timeline">
+          <a href="../timeline.html">
+            <img src="http://pic.yupoo.com/wjh15101051/30365cc7/c1a3be15.png" class="list_icon" id="timeline_image">
+            Timeline
+          </a>
+        </li>
+        <li class="about">
+          <a href="../about.html">
+            <img src="http://pic.yupoo.com/wjh15101051/24f1cb41/e239086e.png" class="list_icon" id="about_image">
+            About
+          </a>
+        </li>
+        <li class="toolbox">
+          <a href="../toolbox.html">
+            <img src="http://pic.yupoo.com/wjh15101051/dee9f673/d3cf682a.png" class="list_icon" id="toolbox_image">
+            Toolbox
+          </a>
+        </li>
+        <li class="friends">
+            <div class="friends_text">
+              <img src="http://pic.yupoo.com/wjh15101051/d291ebed/29f9c807.png" id="friends_image">
+              Friends
+            </div>
+            <div id="fp_friends_list">
+              <div id="SGcolin">
+                <a href="http://blog.gyx.me/" target="_blank">SGcolin</a>
+              </div>
+              <div id="Xingcy">
+                <a href="https://www.cnblogs.com/xcysblog/" target="_blank">Xingcy</a>
+              </div>
+              <div id="ZH_comld">
+                <a href="https://www.cnblogs.com/ZH-comld/" target="_blank">ZH_comld</a>
+              </div>
+            </div>
+            <br>
+          </div>
+        </li>
+      </div>
+    <div class="music_player">
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer@1.10.0/dist/APlayer.min.css">
+      <script src="https://blog-static.cnblogs.com/files/yjlaugus/APlayer.min.js"></script>
+      <div id="aplayer" class="aplayer"  data-id="5313691453" data-server="netease" data-type="playlist" data-fixed="true" data-listfolded="true" data-order="random" data-theme="#F58EA8"></div>
+      <script src="https://unpkg.com/meting@1.2/dist/Meting.min.js"></script>
+    </div>
+    <div class="bottom">
+      <div>
+        Copyright © 2020
+        <a id="copyright_user_a" href="index.html">
+          <span id="copyright_user">wjh15101051</span>
+        </a>
+      </div>
+      <div class="bottom_anime">ღゝ◡╹)ノ♡</div>
+    </div>
+  </div>
+</body>
+</html>

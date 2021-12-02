@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>提高A组模拟 number</title>
+  <link rel="stylesheet" type="text/css" id="frame_style" href="../css/frame_style1.css">
+  <link rel="stylesheet" type="text/css" id="Markdown_style" href="../css/Markdown_style.css">
+  <script type="text/javascript" src="../jscode/frame.js"></script>
+  <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+  <link rel="stylesheet" href="https://ziyuan.fenxianglu.cn/js/highlight/styles/default.css">
+  <script src="https://ziyuan.fenxianglu.cn/js/highlight/highlight.pack.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+        inlineMath: [['$','$']]
+      }
+    });
+  </script>
+</head>
+<body>
+  <div class="main">
+    <div class="head">
+      <div class="title1">
+        <a href="../index.html">wjh15101051's space</a>
+      </div>
+      <div class="title2">
+        卧薪尝胆，厚积薄发。
+      </div>
+    </div>
+    <div id="middle_blogfile">
+      <div class="blog_blogfile">
+        <div class="blogfile_title">
+            提高A组模拟 number
+        </div>
+        <div class="blogfile_stitle">
+          <img src="http://pic.yupoo.com/wjh15101051/1e0e1b3a/118165c5.jpg">
+          Date: Sat Aug 18 18:24:29 CST 2018
+          <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png">
+          In Category:
+          <a href="../categories/NoCategory.html">NoCategory</a>
+        </div>
+        <div class="blogfile_content">
+<div class = "MarkdownCommonContent">
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Description：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+给定正整数
+$ n,m$
+，问有多少个正整数满足：
+$(1)$
+不含前导
+$ 0$
+；
+$ (2)$
+是
+$ m $
+的倍数；
+$ (3)$
+可以通过重排列各个数位得到
+$ n$
+。
+</div>
+<div class = "MarkdownCommonContent">
+$1\le n \le10^{20}$
+ 
+$1\le m \le 100$
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Solution：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+数位
+$DP$
+，第三个条件表示
+$k$
+中各个数字个数与
+$n$
+相同，
+$f[i][j]$
+表示剩余
+$n$
+中的数字个数状压起来为
+$i$
+，对
+$m$
+取模结果是
+$j$
+的方案数，最大的问题是怎么状压
+$i$
+，因为数字最大的出现个数可能是
+$20$
+，如果用
+$map$
+维护
+$vector$
+最慢的点跑到
+$12s$
+，于是可以以
+$n$
+中每一位的个数
+$+1$
+作为每一位的进制把状态压成一个数，就可以开数组了。
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Code：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+<pre><code class="MarkdownParaCode">
+#pragma GCC optimize(3)<br />
+#include&lt;algorithm&gt;<br />
+#include&lt;iostream&gt;<br />
+#include&lt;cstdlib&gt;<br />
+#include&lt;cstdio&gt;<br />
+#include&lt;cmath&gt;<br />
+#include&lt;map&gt;<br />
+#include&lt;vector&gt;<br />
+#include&lt;cctype&gt;<br />
+#include&lt;cstring&gt;<br />
+using namespace std;<br />
+int m;<br />
+int tot;<br />
+#define MOD 998244353<br />
+int cntbit[10];<br />
+inline int encode(int kcnt[])<br />
+{<br />
+	register int res = 0;<br />
+	for(register int i = 0;i &lt;= 9;++i)<br />
+		res = res * (cntbit[i] + 1) + kcnt[i];<br />
+	return res;<br />
+}<br />
+int f[60000][101];<br />
+bool v[60000][101];<br />
+int dfs(int pos,bool zero,int k[],int mod)<br />
+{<br />
+	if(pos == 0)<br />
+	{<br />
+		if(mod == 0)return 1;<br />
+		else return 0;<br />
+	}<br />
+	register int code = encode(k);<br />
+	if(v[code][mod])return f[code][mod];<br />
+	register long long res = 0;<br />
+	for(register int i = 0;i &lt;= 9;++i)<br />
+	{<br />
+		if(!zero && i == 0)continue;<br />
+		if(k[i] == 0)continue;<br />
+		--k[i];<br />
+		res += dfs(pos - 1,true,k,(mod * 10 + i) % m);<br />
+		++k[i];<br />
+	}<br />
+	res %= MOD;<br />
+	f[code][mod] = res;v[code][mod] = true;<br />
+	return res;<br />
+}<br />
+int stcnt[10];<br />
+int main()<br />
+{<br />
+	freopen("number.in","r",stdin);<br />
+	freopen("number.out","w",stdout);<br />
+	register char c = getchar();<br />
+	while(c &lt; '0' || c &gt; '9')c = getchar();<br />
+	register int k;<br />
+	while('0' &lt;= c && c &lt;= '9')<br />
+	{<br />
+		++tot;<br />
+		k = (c ^ 48);<br />
+		stcnt[k] += 1;<br />
+		cntbit[k] += 1;<br />
+		c = getchar();<br />
+	}<br />
+	scanf("%d",&m);<br />
+	printf("%d\n",dfs(tot,false,stcnt,0));<br />
+	fclose(stdin);<br />
+	fclose(stdout);<br />
+	return 0;<br />
+}<br />
+</pre></code>
+</div>
+        </div>
+        <div class="blogfile_showtag">
+          <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png">
+          In tag:
+<a href="../tags/DP-数位DP.html">DP-数位DP</a> 
+          <!--<a href="../tags/blog.html">blog</a>-->
+        </div>
+      </div>
+    </div>
+    <div id="middle_nav">
+      <div class="blog_host">
+        <div class="nav_avator">
+          <img src="http://pic.yupoo.com/wjh15101051/72c1aeab/f51d56e0.jpg" alt="avator">
+        </div>
+        <div class="nav_ID">
+          wjh15101051
+        </div>
+      </div>
+      <div class="nav_list">
+        <li class="tags">
+          <a href="../tags.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png" class="list_icon" id="tags_image">
+            Tags
+          </a>
+        </li>
+        <li class="categories">
+          <a href="../categories.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png" class="list_icon" id="categories_image">
+            Categories
+          </a>
+        </li>
+        <li class="timeline">
+          <a href="../timeline.html">
+            <img src="http://pic.yupoo.com/wjh15101051/30365cc7/c1a3be15.png" class="list_icon" id="timeline_image">
+            Timeline
+          </a>
+        </li>
+        <li class="about">
+          <a href="../about.html">
+            <img src="http://pic.yupoo.com/wjh15101051/24f1cb41/e239086e.png" class="list_icon" id="about_image">
+            About
+          </a>
+        </li>
+        <li class="toolbox">
+          <a href="../toolbox.html">
+            <img src="http://pic.yupoo.com/wjh15101051/dee9f673/d3cf682a.png" class="list_icon" id="toolbox_image">
+            Toolbox
+          </a>
+        </li>
+        <li class="friends">
+            <div class="friends_text">
+              <img src="http://pic.yupoo.com/wjh15101051/d291ebed/29f9c807.png" id="friends_image">
+              Friends
+            </div>
+            <div id="fp_friends_list">
+              <div id="SGcolin">
+                <a href="http://blog.gyx.me/" target="_blank">SGcolin</a>
+              </div>
+              <div id="Xingcy">
+                <a href="https://www.cnblogs.com/xcysblog/" target="_blank">Xingcy</a>
+              </div>
+              <div id="ZH_comld">
+                <a href="https://www.cnblogs.com/ZH-comld/" target="_blank">ZH_comld</a>
+              </div>
+            </div>
+            <br>
+          </div>
+        </li>
+      </div>
+    <div class="music_player">
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer@1.10.0/dist/APlayer.min.css">
+      <script src="https://blog-static.cnblogs.com/files/yjlaugus/APlayer.min.js"></script>
+      <div id="aplayer" class="aplayer"  data-id="5313691453" data-server="netease" data-type="playlist" data-fixed="true" data-listfolded="true" data-order="random" data-theme="#F58EA8"></div>
+      <script src="https://unpkg.com/meting@1.2/dist/Meting.min.js"></script>
+    </div>
+    <div class="bottom">
+      <div>
+        Copyright © 2020
+        <a id="copyright_user_a" href="index.html">
+          <span id="copyright_user">wjh15101051</span>
+        </a>
+      </div>
+      <div class="bottom_anime">ღゝ◡╹)ノ♡</div>
+    </div>
+  </div>
+</body>
+</html>

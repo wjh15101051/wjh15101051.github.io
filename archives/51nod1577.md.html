@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>异或凑数</title>
+  <link rel="stylesheet" type="text/css" id="frame_style" href="../css/frame_style1.css">
+  <link rel="stylesheet" type="text/css" id="Markdown_style" href="../css/Markdown_style.css">
+  <script type="text/javascript" src="../jscode/frame.js"></script>
+  <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+  <link rel="stylesheet" href="https://ziyuan.fenxianglu.cn/js/highlight/styles/default.css">
+  <script src="https://ziyuan.fenxianglu.cn/js/highlight/highlight.pack.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+        inlineMath: [['$','$']]
+      }
+    });
+  </script>
+</head>
+<body>
+  <div class="main">
+    <div class="head">
+      <div class="title1">
+        <a href="../index.html">wjh15101051's space</a>
+      </div>
+      <div class="title2">
+        卧薪尝胆，厚积薄发。
+      </div>
+    </div>
+    <div id="middle_blogfile">
+      <div class="blog_blogfile">
+        <div class="blogfile_title">
+            异或凑数
+        </div>
+        <div class="blogfile_stitle">
+          <img src="http://pic.yupoo.com/wjh15101051/1e0e1b3a/118165c5.jpg">
+          Date: Sat Aug 25 23:00:35 CST 2018
+          <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png">
+          In Category:
+          <a href="../categories/NoCategory.html">NoCategory</a>
+        </div>
+        <div class="blogfile_content">
+<div class = "MarkdownCommonContent">
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Description：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+从左到右一共
+$n$
+个数，一共
+$m$
+次询问，每次询问是否能从第
+$L$
+个到第
+$R$
+个数中选出一些数使得他们异或为
+$K$
+。
+</div>
+<div class = "MarkdownCommonContent">
+$1\le n \le 500000$
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Solution：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+构造前缀线性基，对线性基中每一个数记录他的位置，如果在加入时发现这个位置已经有值，那么就把这个位置设成较靠后的一个，并把另一个继续处理后面的位，也就是说线性基中每个元素都尽量靠后。
+</div>
+<div class = "MarkdownCommonContent">
+最后在询问时照常遍历线性基，如果
+$k$
+能被线性基消完，那么可以表出，但只处理
+$pos\ge left$
+的，如果没有这个线性基，那么返回
+$false$
+。
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Code：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+<pre><code class="MarkdownParaCode">
+#include&lt;algorithm&gt;<br />
+#include&lt;iostream&gt;<br />
+#include&lt;cstdlib&gt;<br />
+#include&lt;cstdio&gt;<br />
+#include&lt;cmath&gt;<br />
+#include&lt;cstring&gt;<br />
+using namespace std;<br />
+int n,m;<br />
+#define MAXN 500010<br />
+int a[MAXN];<br />
+#define MAXL 31<br />
+struct LinearBase<br />
+{<br />
+	int d[MAXL],p[MAXL];<br />
+	void insert(int k,int id)<br />
+	{<br />
+		for(int i = 30;i &gt;= 0;--i)<br />
+		{<br />
+			if(k & (1 &lt;&lt; i))<br />
+			{<br />
+				if(p[i] == 0)<br />
+				{<br />
+					d[i] = k;p[i] = id;<br />
+					break;<br />
+				}<br />
+				else<br />
+				{<br />
+					if(id &gt; p[i]){swap(id,p[i]);swap(d[i],k);}<br />
+					k ^= d[i];<br />
+				}<br />
+			}<br />
+		}<br />
+		return;<br />
+	}<br />
+	bool query(int k,int lef)<br />
+	{<br />
+		for(int i = 30;i &gt;= 0;--i)<br />
+		{<br />
+			if(k & (1 &lt;&lt; i))<br />
+			{<br />
+				if(d[i] == 0 || p[i] &lt; lef)return false;<br />
+				k ^= d[i];<br />
+			}<br />
+		}<br />
+		return true;<br />
+	}<br />
+}lb[MAXN];<br />
+inline int read()<br />
+{<br />
+	register int res = 0;<br />
+	register char c = getchar();<br />
+	while(!isdigit(c))c = getchar();<br />
+	while(isdigit(c))<br />
+	{<br />
+		res = (res &lt;&lt; 1) + (res &lt;&lt; 3) + c - '0';<br />
+		c = getchar();<br />
+	}<br />
+	return res;<br />
+}<br />
+int main()<br />
+{<br />
+	scanf("%d",&n);<br />
+	for(int i = 1;i &lt;= n;++i)<br />
+	{<br />
+		a[i] = read();lb[i] = lb[i - 1];lb[i].insert(a[i],i);<br />
+	}<br />
+	scanf("%d",&m);<br />
+	int l,r,k;<br />
+	for(int i = 1;i &lt;= m;++i)<br />
+	{<br />
+		l = read();r = read();k = read();<br />
+		if(lb[r].query(k,l))puts("YES");<br />
+		else puts("NO");<br />
+	}<br />
+	return 0;<br />
+}<br />
+</pre></code>
+</div>
+        </div>
+        <div class="blogfile_showtag">
+          <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png">
+          In tag:
+<a href="../tags/数学-线性基.html">数学-线性基</a> 
+          <!--<a href="../tags/blog.html">blog</a>-->
+        </div>
+      </div>
+    </div>
+    <div id="middle_nav">
+      <div class="blog_host">
+        <div class="nav_avator">
+          <img src="http://pic.yupoo.com/wjh15101051/72c1aeab/f51d56e0.jpg" alt="avator">
+        </div>
+        <div class="nav_ID">
+          wjh15101051
+        </div>
+      </div>
+      <div class="nav_list">
+        <li class="tags">
+          <a href="../tags.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png" class="list_icon" id="tags_image">
+            Tags
+          </a>
+        </li>
+        <li class="categories">
+          <a href="../categories.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png" class="list_icon" id="categories_image">
+            Categories
+          </a>
+        </li>
+        <li class="timeline">
+          <a href="../timeline.html">
+            <img src="http://pic.yupoo.com/wjh15101051/30365cc7/c1a3be15.png" class="list_icon" id="timeline_image">
+            Timeline
+          </a>
+        </li>
+        <li class="about">
+          <a href="../about.html">
+            <img src="http://pic.yupoo.com/wjh15101051/24f1cb41/e239086e.png" class="list_icon" id="about_image">
+            About
+          </a>
+        </li>
+        <li class="toolbox">
+          <a href="../toolbox.html">
+            <img src="http://pic.yupoo.com/wjh15101051/dee9f673/d3cf682a.png" class="list_icon" id="toolbox_image">
+            Toolbox
+          </a>
+        </li>
+        <li class="friends">
+            <div class="friends_text">
+              <img src="http://pic.yupoo.com/wjh15101051/d291ebed/29f9c807.png" id="friends_image">
+              Friends
+            </div>
+            <div id="fp_friends_list">
+              <div id="SGcolin">
+                <a href="http://blog.gyx.me/" target="_blank">SGcolin</a>
+              </div>
+              <div id="Xingcy">
+                <a href="https://www.cnblogs.com/xcysblog/" target="_blank">Xingcy</a>
+              </div>
+              <div id="ZH_comld">
+                <a href="https://www.cnblogs.com/ZH-comld/" target="_blank">ZH_comld</a>
+              </div>
+            </div>
+            <br>
+          </div>
+        </li>
+      </div>
+    <div class="music_player">
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer@1.10.0/dist/APlayer.min.css">
+      <script src="https://blog-static.cnblogs.com/files/yjlaugus/APlayer.min.js"></script>
+      <div id="aplayer" class="aplayer"  data-id="5313691453" data-server="netease" data-type="playlist" data-fixed="true" data-listfolded="true" data-order="random" data-theme="#F58EA8"></div>
+      <script src="https://unpkg.com/meting@1.2/dist/Meting.min.js"></script>
+    </div>
+    <div class="bottom">
+      <div>
+        Copyright © 2020
+        <a id="copyright_user_a" href="index.html">
+          <span id="copyright_user">wjh15101051</span>
+        </a>
+      </div>
+      <div class="bottom_anime">ღゝ◡╹)ノ♡</div>
+    </div>
+  </div>
+</body>
+</html>

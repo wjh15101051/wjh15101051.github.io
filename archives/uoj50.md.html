@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>UR3 链式反应</title>
+  <link rel="stylesheet" type="text/css" id="frame_style" href="../css/frame_style1.css">
+  <link rel="stylesheet" type="text/css" id="Markdown_style" href="../css/Markdown_style.css">
+  <script type="text/javascript" src="../jscode/frame.js"></script>
+  <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+  <link rel="stylesheet" href="https://ziyuan.fenxianglu.cn/js/highlight/styles/default.css">
+  <script src="https://ziyuan.fenxianglu.cn/js/highlight/highlight.pack.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+        inlineMath: [['$','$']]
+      }
+    });
+  </script>
+</head>
+<body>
+  <div class="main">
+    <div class="head">
+      <div class="title1">
+        <a href="../index.html">wjh15101051's space</a>
+      </div>
+      <div class="title2">
+        卧薪尝胆，厚积薄发。
+      </div>
+    </div>
+    <div id="middle_blogfile">
+      <div class="blog_blogfile">
+        <div class="blogfile_title">
+            UR3 链式反应
+        </div>
+        <div class="blogfile_stitle">
+          <img src="http://pic.yupoo.com/wjh15101051/1e0e1b3a/118165c5.jpg">
+          Date: Sat Jan 12 19:12:09 CST 2019
+          <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png">
+          In Category:
+          <a href="../categories/NoCategory.html">NoCategory</a>
+        </div>
+        <div class="blogfile_content">
+<div class = "MarkdownCommonContent">
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Description：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+题目大意：给定
+$n$
+和集合
+$C$
+，对于
+$i=1\sim n$
+求多少
+$i$
+个节点有标号的多叉树满足： 
+1.父亲节点的标号大于子节点 。
+</div>
+<div class = "MarkdownCommonContent">
+2.一个点如果有儿子，则有两个无序的
+$a$
+型儿子，有
+$c$
+个无序的
+$b$
+型儿子，其中
+$c\in C$
+。 
+</div>
+<div class = "MarkdownCommonContent">
+3.如果一个点是根节点或
+$a$
+型儿子，那么它可以有儿子或者是一个叶节点；如果一个点是ββ型儿子，那么它只能是一个叶节点。
+</div>
+<div class = "MarkdownCommonContent">
+$1\leqslant n\leqslant 200000$
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Solution：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+设答案为
+$f(n)$
+，那么显然有转移：
+$$
+f(n)=\frac 1 2\sum_{l=1}^{n-1}\sum_{r=1}^{n-1-l}f(l)\times f(r)\times\binom{n-1}{n-1-l-r}\binom{l+r}{l}[n-1-l-r\in C]
+$$
+那么我们可以把组合数拆开：
+$$
+f(n)=\frac 1 2(n-1)!\sum_{l=1}^{n-1}\sum_{r=1}^{n-1-l}\frac{f(l)}{l!}\times \frac{f(r)}{r!}\times\frac{[n-1-l-r\in C]}{(n-1-l-r)!}
+$$
+这显然是三个函数的卷积，除二是因为两个子树相同。
+</div>
+<div class = "MarkdownCommonContent">
+另一种方法是利用指数型生成函数，之所以使用指数型生成函数是因为计数对象有标号：
+$$
+F(x)=\sum_{i=0}f(i)\frac{x^i}{i!}
+$$
+但是实际上根节点编号一定是
+$1$
+，因此根节点实际上不参与计数：
+$$
+F(x)=\sum_{i=0}f(i)\frac{x^{i-1}}{(i-1)!}
+$$
+那么类似的可以得到方程：
+$$
+F=\frac 1 2F^2C+1
+$$
+和上面是一样的。
+</div>
+<div class = "MarkdownCommonContent">
+然后有三种做法，一是用上面那个方程直接牛顿迭代，二是用上面那个方程直接多项式开方，三是用上面那个递推式分治
+$FFT$
+。
+</div>
+<div class = "MarkdownCommonContent">
+这里写的是分治
+$+NTT$
+，但是需要写成：
+$$
+\begin{align}
+g(x)&=\sum_{i=0}^xf(i)f(x-i)\\
+f(x)&=\sum_{i=0}^xC(i)\times g(x-i)\\
+C(i)&=[i\in C]\frac 1{2\times i!}
+\end{align}
+$$
+然后这个就可以分治
+$FFT$
+了，因为首先用
+$g$
+求
+$f$
+是肯定可以分治
+$FFT$
+的，也就是考虑左边的
+$g$
+对右边的
+$f$
+的贡献，但是还要求
+$g$
+，由于
+$g$
+等于
+$f$
+卷自己，也就是说分治右半边的
+$f$
+还没求出来，那么我们就要计算卷积中
+$x$
+和
+$i-x$
+都
+$\leqslant mid$
+的部分对右边的贡献，别的可以等到之后再计算，首先先设
+$a[i]=g[i-l](i\in[l,mid])$
+，然后考虑
+$b$
+是什么，显然对于
+$i&lt;l$
+的，应该计算两次，但是只计算了一次，那么他还要有一个
+$2$
+的系数，对于
+$[l,mid]$
+的，在卷积中已经计算了两次，因此系数不变。
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Code：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+<pre><code class="MarkdownParaCode">
+#include&lt;bits/stdc++.h&gt;<br />
+using namespace std;<br />
+typedef long long ll;<br />
+int n;<br />
+#define MAXN 1200010<br />
+bool get()<br />
+{<br />
+	char c = getchar();<br />
+	while(!isdigit(c))c = getchar();<br />
+	return (c == '1');<br />
+}<br />
+ll c[MAXN];<br />
+#define P 998244353<br />
+ll power(ll a,ll b)<br />
+{<br />
+	ll res = 1;<br />
+	while(b &gt; 0)<br />
+	{<br />
+		if(b & 1)res = res * a % P;<br />
+		a = a * a % P;<br />
+		b = b &gt;&gt; 1;<br />
+	}<br />
+	return res;<br />
+}<br />
+namespace poly<br />
+{<br />
+	int rev[MAXN];<br />
+	ll ww[MAXN &lt;&lt; 1],*g = ww + MAXN;<br />
+	void NTT(ll f[],int l,int type)<br />
+	{<br />
+		for(int i = 0;i &lt; l;++i)<br />
+		{<br />
+			if(i &lt; rev[i])swap(f[i],f[rev[i]]);<br />
+		}<br />
+		for(int i = 2;i &lt;= l;i = i &lt;&lt; 1)<br />
+		{<br />
+			ll wn = g[type * l / i];<br />
+			for(int j = 0;j &lt; l;j += i)<br />
+			{<br />
+				ll w = 1;<br />
+				for(int k = j;k &lt; j + i / 2;++k)<br />
+				{<br />
+					ll u = f[k],t = w * f[k + i / 2] % P;<br />
+					f[k] = (u + t) % P;<br />
+					f[k + i / 2] = (u - t + P) % P;<br />
+					w = w * wn % P;<br />
+				}<br />
+			}<br />
+		}<br />
+		if(type == -1)<br />
+		{<br />
+			ll ni = power(l,P - 2);<br />
+			for(int i = 0;i &lt; l;++i)f[i] = f[i] * ni % P;<br />
+		}<br />
+		return;<br />
+	}<br />
+	void mul(ll a[],ll b[],ll res[],int deg)<br />
+	{//cout &lt;&lt; " : " &lt;&lt; endl;<br />
+		//for(int i = 0;i &lt; deg;++i)cout &lt;&lt; a[i] &lt;&lt; " ";cout &lt;&lt; endl;<br />
+		//for(int i = 0;i &lt; deg;++i)cout &lt;&lt; b[i] &lt;&lt; " ";cout &lt;&lt; endl;<br />
+		int l = 0,len = 1;<br />
+		for(;len &lt;= (deg &lt;&lt; 1);len = len &lt;&lt; 1)++l;<br />
+		g[0] = g[-len] = 1;g[1] = g[1 - len] = power(3,(P - 1) / len);<br />
+		for(int i = 2;i &lt; len;++i)g[i] = g[i - len] = g[i - 1] * g[1] % P;<br />
+		for(int i = 0;i &lt; len;++i)rev[i] = (rev[i &gt;&gt; 1] &gt;&gt; 1) | ((i & 1) &lt;&lt; (l - 1));<br />
+		NTT(a,len,1);NTT(b,len,1);<br />
+		for(int i = 0;i &lt; len;++i)res[i] = a[i] * b[i] % P;<br />
+		NTT(res,len,-1);<br />
+		for(int i = 0;i &lt; len;++i)a[i] = b[i] = 0;<br />
+		//for(int i = 0;i &lt; len;++i)cout &lt;&lt; res[i] &lt;&lt; " ";cout &lt;&lt; endl;<br />
+		return;<br />
+	}<br />
+}<br />
+ll f[MAXN],g[MAXN];<br />
+ll fac[MAXN],inv[MAXN];<br />
+ll tmp1[MAXN],tmp2[MAXN],tmp3[MAXN],res[MAXN];<br />
+void solve(int l,int r)<br />
+{<br />
+	if(l == r)<br />
+	{<br />
+		f[l] = f[l] * fac[l - 1] % P;<br />
+		return;<br />
+	}<br />
+	int mid = ((l + r) &gt;&gt; 1);<br />
+	solve(l,mid);<br />
+	for(int i = l;i &lt;= mid;++i)tmp1[i - l] = g[i];<br />
+	int d = r - l + 1;<br />
+	for(int i = 0;i &lt; r - l + 1;++i)tmp2[i] = c[i];<br />
+	poly::mul(tmp1,tmp2,res,d + 1);<br />
+	for(int i = mid + 1;i &lt;= r;++i)f[i] = (f[i] + res[i - l - 1]) % P;<br />
+	for(int i = l;i &lt;= mid;++i)tmp1[i - l] = f[i] * inv[i] % P;<br />
+	for(int i = 0;i &lt;= r - l;++i)<br />
+	{<br />
+		if(i &lt; l)tmp2[i] = f[i] * inv[i] * 2 % P;<br />
+		else if(i &lt;= mid)tmp2[i] = f[i] * inv[i] % P;<br />
+	}<br />
+	poly::mul(tmp1,tmp2,res,d + 1);<br />
+	for(int i = mid + 1;i &lt;= r;++i)g[i] = (g[i] + res[i - l]) % P;<br />
+	solve(mid + 1,r);<br />
+	return;<br />
+}<br />
+int main()<br />
+{<br />
+	scanf("%d",&n);<br />
+	fac[0] = 1;<br />
+	for(int i = 1;i &lt;= n;++i)fac[i] = fac[i - 1] * i % P;<br />
+	inv[n] = power(fac[n],P - 2);<br />
+	for(int i = n - 1;i &gt;= 0;--i)inv[i] = inv[i + 1] * (i + 1) % P;<br />
+	for(int i = 0;i &lt; n;++i)if(get())c[i] = inv[i] * inv[2] % P;<br />
+	f[1] = 1;<br />
+	solve(1,n);<br />
+	for(int i = 1;i &lt;= n;++i)printf("%lld\n",f[i]);<br />
+	return 0;<br />
+}<br />
+</pre></code>
+</div>
+        </div>
+        <div class="blogfile_showtag">
+          <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png">
+          In tag:
+<a href="../tags/数学-多项式-多项式牛顿迭代法.html">数学-多项式-多项式牛顿迭代法</a> <a href="../tags/数学-多项式-分治FFT.html">数学-多项式-分治FFT</a> 
+          <!--<a href="../tags/blog.html">blog</a>-->
+        </div>
+      </div>
+    </div>
+    <div id="middle_nav">
+      <div class="blog_host">
+        <div class="nav_avator">
+          <img src="http://pic.yupoo.com/wjh15101051/72c1aeab/f51d56e0.jpg" alt="avator">
+        </div>
+        <div class="nav_ID">
+          wjh15101051
+        </div>
+      </div>
+      <div class="nav_list">
+        <li class="tags">
+          <a href="../tags.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png" class="list_icon" id="tags_image">
+            Tags
+          </a>
+        </li>
+        <li class="categories">
+          <a href="../categories.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png" class="list_icon" id="categories_image">
+            Categories
+          </a>
+        </li>
+        <li class="timeline">
+          <a href="../timeline.html">
+            <img src="http://pic.yupoo.com/wjh15101051/30365cc7/c1a3be15.png" class="list_icon" id="timeline_image">
+            Timeline
+          </a>
+        </li>
+        <li class="about">
+          <a href="../about.html">
+            <img src="http://pic.yupoo.com/wjh15101051/24f1cb41/e239086e.png" class="list_icon" id="about_image">
+            About
+          </a>
+        </li>
+        <li class="toolbox">
+          <a href="../toolbox.html">
+            <img src="http://pic.yupoo.com/wjh15101051/dee9f673/d3cf682a.png" class="list_icon" id="toolbox_image">
+            Toolbox
+          </a>
+        </li>
+        <li class="friends">
+            <div class="friends_text">
+              <img src="http://pic.yupoo.com/wjh15101051/d291ebed/29f9c807.png" id="friends_image">
+              Friends
+            </div>
+            <div id="fp_friends_list">
+              <div id="SGcolin">
+                <a href="http://blog.gyx.me/" target="_blank">SGcolin</a>
+              </div>
+              <div id="Xingcy">
+                <a href="https://www.cnblogs.com/xcysblog/" target="_blank">Xingcy</a>
+              </div>
+              <div id="ZH_comld">
+                <a href="https://www.cnblogs.com/ZH-comld/" target="_blank">ZH_comld</a>
+              </div>
+            </div>
+            <br>
+          </div>
+        </li>
+      </div>
+    <div class="music_player">
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer@1.10.0/dist/APlayer.min.css">
+      <script src="https://blog-static.cnblogs.com/files/yjlaugus/APlayer.min.js"></script>
+      <div id="aplayer" class="aplayer"  data-id="5313691453" data-server="netease" data-type="playlist" data-fixed="true" data-listfolded="true" data-order="random" data-theme="#F58EA8"></div>
+      <script src="https://unpkg.com/meting@1.2/dist/Meting.min.js"></script>
+    </div>
+    <div class="bottom">
+      <div>
+        Copyright © 2020
+        <a id="copyright_user_a" href="index.html">
+          <span id="copyright_user">wjh15101051</span>
+        </a>
+      </div>
+      <div class="bottom_anime">ღゝ◡╹)ノ♡</div>
+    </div>
+  </div>
+</body>
+</html>

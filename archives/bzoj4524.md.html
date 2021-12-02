@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>CQOI2016 伪光滑数</title>
+  <link rel="stylesheet" type="text/css" id="frame_style" href="../css/frame_style1.css">
+  <link rel="stylesheet" type="text/css" id="Markdown_style" href="../css/Markdown_style.css">
+  <script type="text/javascript" src="../jscode/frame.js"></script>
+  <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+  <link rel="stylesheet" href="https://ziyuan.fenxianglu.cn/js/highlight/styles/default.css">
+  <script src="https://ziyuan.fenxianglu.cn/js/highlight/highlight.pack.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+        inlineMath: [['$','$']]
+      }
+    });
+  </script>
+</head>
+<body>
+  <div class="main">
+    <div class="head">
+      <div class="title1">
+        <a href="../index.html">wjh15101051's space</a>
+      </div>
+      <div class="title2">
+        卧薪尝胆，厚积薄发。
+      </div>
+    </div>
+    <div id="middle_blogfile">
+      <div class="blog_blogfile">
+        <div class="blogfile_title">
+            CQOI2016 伪光滑数
+        </div>
+        <div class="blogfile_stitle">
+          <img src="http://pic.yupoo.com/wjh15101051/1e0e1b3a/118165c5.jpg">
+          Date: Sat Feb 23 17:21:23 CST 2019
+          <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png">
+          In Category:
+          <a href="../categories/NoCategory.html">NoCategory</a>
+        </div>
+        <div class="blogfile_content">
+<div class = "MarkdownCommonContent">
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Description：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+若一个大于
+$1$
+的整数
+$M$
+的质因数分解有
+$k$
+项，其最大的质因子为
+$a_k$
+，并且满足
+$a_{k}^{k}\leqslant N$
+，
+$a_k&lt;128$
+，我们就称整数
+$M$
+为
+$N-$
+伪光滑数。现在给出
+$N$
+，求所有整数中，第
+$K$
+大的
+$N-$
+伪光滑数。
+</div>
+<div class = "MarkdownCommonContent">
+$1\leqslant n\leqslant 10^{18},1\leqslant K\leqslant 800000$
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Solution：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+考虑一种方法，如果我们可以得到包含所有
+$N-$
+伪光滑数的大根堆，那么我们只要
+$pop$
+堆
+$k$
+次就可以计算答案了，这个也是可以做到的。
+</div>
+<div class = "MarkdownCommonContent">
+设
+$f[i][j]$
+表示最大质因子为
+$p[i]$
+，分解出
+$j$
+项的
+$N-$
+伪光滑数的大根堆，转移为：
+$$
+\begin{align}
+f[i][j]&=\sum_{k=0}^jg[i-1][j-k]\times p[i]^k\\
+g[i][j]&=g[i-1][j]+f[i][j]\\
+ans&=\sum_{i=0}^{31}\sum_{k=0}^{60}f[i][k](p[i]^k\leqslant N)
+\end{align}
+$$
+乘常数代表整体打
+$tag$
+，加代表集合求并。
+</div>
+<div class = "MarkdownCommonContent">
+卡空间，因此不能用
+$ans$
+把所有的都并起来而是要一个一个做。
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Code：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+<pre><code class="MarkdownParaCode">
+#include&lt;algorithm&gt;<br />
+#include&lt;iostream&gt;<br />
+#include&lt;cstdlib&gt;<br />
+#include&lt;cstdio&gt;<br />
+#include&lt;cmath&gt;<br />
+#include&lt;queue&gt;<br />
+#include&lt;cctype&gt;<br />
+#include&lt;cstring&gt;<br />
+using namespace std;<br />
+typedef long long ll;<br />
+ll n;<br />
+int K;<br />
+struct node<br />
+{<br />
+    int lc,rc,d;<br />
+    ll val,mul;<br />
+    node(int lc_ = 0,int rc_ = 0,ll val_ = 0,ll mul_ = 1)<br />
+    {<br />
+        lc = lc_;rc = rc_;val = val_;mul = mul_;<br />
+    }<br />
+}t[17000005];<br />
+int ptr = 0;<br />
+int newnode(){return ++ptr;}<br />
+int root;<br />
+void pushdown(int rt)<br />
+{<br />
+	if(t[rt].mul == 1)return;<br />
+    if(t[rt].lc)<br />
+    {<br />
+        int k = newnode();t[k] = t[t[rt].lc];t[rt].lc = k;<br />
+        t[t[rt].lc].val *= t[rt].mul;<br />
+        t[t[rt].lc].mul *= t[rt].mul;<br />
+    }<br />
+    if(t[rt].rc)<br />
+    {<br />
+        int k = newnode();t[k] = t[t[rt].rc];t[rt].rc = k;<br />
+        t[t[rt].rc].val *= t[rt].mul;<br />
+        t[t[rt].rc].mul *= t[rt].mul;<br />
+    }<br />
+    t[rt].mul = 1;<br />
+    return;<br />
+}<br />
+int merge(int x,int y)<br />
+{<br />
+    if(x == 0 || y == 0)return x + y;<br />
+    if(t[x].val &lt; t[y].val)swap(x,y);<br />
+    int rt = newnode();t[rt] = t[x];<br />
+    pushdown(rt);<br />
+    t[rt].rc = merge(t[rt].rc,y);<br />
+    if(t[t[rt].lc].d &lt; t[t[rt].rc].d)swap(t[rt].lc,t[rt].rc);<br />
+	t[rt].d = t[t[rt].rc].d + 1; <br />
+    return rt;<br />
+}<br />
+void add(int rt,ll val)<br />
+{<br />
+    t[rt].val *= val;t[rt].mul *= val;<br />
+    return;<br />
+}<br />
+int f[32][61],g[32][61];<br />
+int p[32];<br />
+bool isprime[128];<br />
+int createnode(int rt,ll val)<br />
+{<br />
+    if(rt == 0)return 0;<br />
+    t[newnode()] = t[rt];add(ptr,val);<br />
+    return ptr;<br />
+}<br />
+struct res<br />
+{<br />
+	int i,j;ll val;<br />
+	friend bool operator &lt; (const res& a,const res& b)<br />
+	{<br />
+		return a.val &lt; b.val;<br />
+	}<br />
+};<br />
+priority_queue&lt;res&gt; ans;<br />
+int main()<br />
+{<br />
+    scanf("%lld%d",&n,&K);<br />
+    t[newnode()] = (node){0,0,1,1};<br />
+    f[0][0] = merge(f[0][0],ptr);<br />
+    g[0][0] = merge(g[0][0],f[0][0]);<br />
+    for(int i = 2;i &lt; 128;++i)isprime[i] = true;<br />
+    for(int i = 2;i &lt; 128;++i)<br />
+    {<br />
+        if(isprime[i])p[++p[0]] = i;<br />
+        for(int j = i * i;j &lt; 128;j += i)isprime[j] = false;<br />
+    }<br />
+    for(int i = 1;i &lt;= p[0];++i)<br />
+    {<br />
+        double cur = p[i];<br />
+        g[i][0] = g[i - 1][0];<br />
+        for(int j = 1;j &lt;= 60 && cur &lt;= n;++j,cur = cur * p[i])<br />
+        {<br />
+            ll pr = p[i];<br />
+            for(int k = 1;k &lt;= j;++k,pr = pr * p[i])<br />
+            {<br />
+                int v = createnode(g[i - 1][j - k],pr);<br />
+                f[i][j] = merge(f[i][j],v);<br />
+            }<br />
+            g[i][j] = merge(g[i - 1][j],f[i][j]);<br />
+            ans.push((res){i,j,t[f[i][j]].val});<br />
+        }<br />
+    }<br />
+    ll v;<br />
+    for(int i = 1;i &lt;= K;++i)<br />
+    {<br />
+		res k = ans.top();ans.pop();<br />
+		v = k.val;//cout &lt;&lt; v &lt;&lt; endl;<br />
+		pushdown(f[k.i][k.j]);<br />
+		f[k.i][k.j] = merge(t[f[k.i][k.j]].lc,t[f[k.i][k.j]].rc);<br />
+		ans.push((res){k.i,k.j,t[f[k.i][k.j]].val});<br />
+	}<br />
+	cout &lt;&lt; v &lt;&lt; endl;<br />
+    return 0;<br />
+}<br />
+</pre></code>
+</div>
+        </div>
+        <div class="blogfile_showtag">
+          <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png">
+          In tag:
+<a href="../tags/数据结构-可持久化左偏树.html">数据结构-可持久化左偏树</a> 
+          <!--<a href="../tags/blog.html">blog</a>-->
+        </div>
+      </div>
+    </div>
+    <div id="middle_nav">
+      <div class="blog_host">
+        <div class="nav_avator">
+          <img src="http://pic.yupoo.com/wjh15101051/72c1aeab/f51d56e0.jpg" alt="avator">
+        </div>
+        <div class="nav_ID">
+          wjh15101051
+        </div>
+      </div>
+      <div class="nav_list">
+        <li class="tags">
+          <a href="../tags.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png" class="list_icon" id="tags_image">
+            Tags
+          </a>
+        </li>
+        <li class="categories">
+          <a href="../categories.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png" class="list_icon" id="categories_image">
+            Categories
+          </a>
+        </li>
+        <li class="timeline">
+          <a href="../timeline.html">
+            <img src="http://pic.yupoo.com/wjh15101051/30365cc7/c1a3be15.png" class="list_icon" id="timeline_image">
+            Timeline
+          </a>
+        </li>
+        <li class="about">
+          <a href="../about.html">
+            <img src="http://pic.yupoo.com/wjh15101051/24f1cb41/e239086e.png" class="list_icon" id="about_image">
+            About
+          </a>
+        </li>
+        <li class="toolbox">
+          <a href="../toolbox.html">
+            <img src="http://pic.yupoo.com/wjh15101051/dee9f673/d3cf682a.png" class="list_icon" id="toolbox_image">
+            Toolbox
+          </a>
+        </li>
+        <li class="friends">
+            <div class="friends_text">
+              <img src="http://pic.yupoo.com/wjh15101051/d291ebed/29f9c807.png" id="friends_image">
+              Friends
+            </div>
+            <div id="fp_friends_list">
+              <div id="SGcolin">
+                <a href="http://blog.gyx.me/" target="_blank">SGcolin</a>
+              </div>
+              <div id="Xingcy">
+                <a href="https://www.cnblogs.com/xcysblog/" target="_blank">Xingcy</a>
+              </div>
+              <div id="ZH_comld">
+                <a href="https://www.cnblogs.com/ZH-comld/" target="_blank">ZH_comld</a>
+              </div>
+            </div>
+            <br>
+          </div>
+        </li>
+      </div>
+    <div class="music_player">
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer@1.10.0/dist/APlayer.min.css">
+      <script src="https://blog-static.cnblogs.com/files/yjlaugus/APlayer.min.js"></script>
+      <div id="aplayer" class="aplayer"  data-id="5313691453" data-server="netease" data-type="playlist" data-fixed="true" data-listfolded="true" data-order="random" data-theme="#F58EA8"></div>
+      <script src="https://unpkg.com/meting@1.2/dist/Meting.min.js"></script>
+    </div>
+    <div class="bottom">
+      <div>
+        Copyright © 2020
+        <a id="copyright_user_a" href="index.html">
+          <span id="copyright_user">wjh15101051</span>
+        </a>
+      </div>
+      <div class="bottom_anime">ღゝ◡╹)ノ♡</div>
+    </div>
+  </div>
+</body>
+</html>

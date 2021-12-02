@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>网络流24题 汽车加油行驶问题</title>
+  <link rel="stylesheet" type="text/css" id="frame_style" href="../css/frame_style1.css">
+  <link rel="stylesheet" type="text/css" id="Markdown_style" href="../css/Markdown_style.css">
+  <script type="text/javascript" src="../jscode/frame.js"></script>
+  <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+  <link rel="stylesheet" href="https://ziyuan.fenxianglu.cn/js/highlight/styles/default.css">
+  <script src="https://ziyuan.fenxianglu.cn/js/highlight/highlight.pack.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+        inlineMath: [['$','$']]
+      }
+    });
+  </script>
+</head>
+<body>
+  <div class="main">
+    <div class="head">
+      <div class="title1">
+        <a href="../index.html">wjh15101051's space</a>
+      </div>
+      <div class="title2">
+        卧薪尝胆，厚积薄发。
+      </div>
+    </div>
+    <div id="middle_blogfile">
+      <div class="blog_blogfile">
+        <div class="blogfile_title">
+            网络流24题 汽车加油行驶问题
+        </div>
+        <div class="blogfile_stitle">
+          <img src="http://pic.yupoo.com/wjh15101051/1e0e1b3a/118165c5.jpg">
+          Date: Mon Sep 03 10:03:10 CST 2018
+          <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png">
+          In Category:
+          <a href="../categories/NoCategory.html">NoCategory</a>
+        </div>
+        <div class="blogfile_content">
+<div class = "MarkdownCommonContent">
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Description：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+一个
+$n\times n$
+的网格图，一辆车从左上角开到右下角，刚开始油箱是满的，一个满的油箱可以跑
+$k$
+条边，有些位置有加油站，到了加油站强制花
+$a$
+元加满油，往东或往南走不花钱，往西或往北走一格
+$b$
+元，可以建加油站，花费
+$c$
+元且不包括加油的
+$a$
+元，问最小花费。
+</div>
+<div class = "MarkdownCommonContent">
+$1\le n \le 100,1\le k \le 10$
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Solution：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+建一个
+$k+1$
+层的图，对于行驶直接从上层到下层连相应花费的边，对于加油站的点，不连行驶的边，把所有层中这个点全部连向第一层中这个点，边权为
+$a$
+，在第一层向第二层连行驶的边，对于建加油站，从每层这个点向第一层中这个点连边权为
+$a+c$
+的边，最后跑最短路即可。
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Code：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+<pre><code class="MarkdownParaCode">
+#include&lt;algorithm&gt;<br />
+#include&lt;iostream&gt;<br />
+#include&lt;cstdlib&gt;<br />
+#include&lt;cstdio&gt;<br />
+#include&lt;cmath&gt;<br />
+#include&lt;queue&gt;<br />
+#include&lt;cstring&gt;<br />
+using namespace std;<br />
+int n,t,A,B,C;<br />
+#define MAXN 110<br />
+#define MAXK 11<br />
+struct edge<br />
+{<br />
+    int to,nxt,v;<br />
+}e[MAXN * MAXN * MAXK * 4 + MAXN * MAXN * MAXK];<br />
+int edgenum = 0;<br />
+int lin[MAXN * MAXN * MAXK] = {0};<br />
+void add(int a,int b,int c)<br />
+{<br />
+    ++edgenum;e[edgenum].to = b;e[edgenum].v = c;e[edgenum].nxt = lin[a];lin[a] = edgenum;<br />
+    return;<br />
+}<br />
+int p[MAXN][MAXN];<br />
+int to(int i,int j){return (i - 1) * n + j;}<br />
+int d[MAXN * MAXN * MAXK];<br />
+bool v[MAXN * MAXN * MAXK];<br />
+int main()<br />
+{<br />
+    scanf("%d%d%d%d%d",&n,&t,&A,&B,&C);<br />
+    for(int i = 1;i &lt;= n;++i)<br />
+        for(int j = 1;j &lt;= n;++j)<br />
+            scanf("%d",&p[i][j]);<br />
+    for(int i = 1;i &lt;= n;++i)<br />
+    {<br />
+        for(int j = 1;j &lt;= n;++j)<br />
+        {<br />
+            if(p[i][j] == 0)<br />
+            {<br />
+                for(int k = 0;k &lt; t;++k)<br />
+                {<br />
+                    if(i &gt; 1)add(k * n * n + to(i,j),(k + 1) * n * n + to(i - 1,j),B);<br />
+                    if(j &gt; 1)add(k * n * n + to(i,j),(k + 1) * n * n + to(i,j - 1),B);<br />
+                    if(i &lt; n)add(k * n * n + to(i,j),(k + 1) * n * n + to(i + 1,j),0);<br />
+                    if(j &lt; n)add(k * n * n + to(i,j),(k + 1) * n * n + to(i,j + 1),0);<br />
+                }<br />
+                for(int k = 0;k &lt;= t;++k)add(k * n * n + to(i,j),to(i,j),C + A);<br />
+            }<br />
+            else<br />
+            {<br />
+                for(int k = 0;k &lt;= t;++k)add(k * n * n + to(i,j),to(i,j),A);<br />
+                if(i &gt; 1)add(to(i,j),n * n + to(i - 1,j),B);<br />
+                if(j &gt; 1)add(to(i,j),n * n + to(i,j - 1),B);<br />
+                if(i &lt; n)add(to(i,j),n * n + to(i + 1,j),0);<br />
+                if(j &lt; n)add(to(i,j),n * n + to(i,j + 1),0);<br />
+            }<br />
+        }<br />
+    }<br />
+    queue&lt;int&gt; q;q.push(1);<br />
+    memset(d,0x3f,sizeof(d));<br />
+    memset(v,false,sizeof(v));<br />
+    d[1] = 0;v[1] = true;<br />
+    while(!q.empty())<br />
+    {<br />
+        int k = q.front();q.pop();<br />
+        v[k] = false;<br />
+        for(int i = lin[k];i != 0;i = e[i].nxt)<br />
+        {<br />
+            if(d[e[i].to] &gt; d[k] + e[i].v)<br />
+            {<br />
+                d[e[i].to] = d[k] + e[i].v;<br />
+                if(!v[e[i].to])<br />
+                {<br />
+                    v[e[i].to] = true;<br />
+                    q.push(e[i].to);<br />
+                }<br />
+            }<br />
+        }<br />
+    }<br />
+    int ans = 0x3f3f3f3f;<br />
+    for(int i = 0;i &lt;= t;++i)<br />
+    {<br />
+        ans = min(ans,d[i * n * n + to(n,n)]);<br />
+    }<br />
+    cout &lt;&lt; ans &lt;&lt; endl;<br />
+    return 0;<br />
+}<br />
+</pre></code>
+</div>
+        </div>
+        <div class="blogfile_showtag">
+          <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png">
+          In tag:
+<a href="../tags/图论-分层图.html">图论-分层图</a> 
+          <!--<a href="../tags/blog.html">blog</a>-->
+        </div>
+      </div>
+    </div>
+    <div id="middle_nav">
+      <div class="blog_host">
+        <div class="nav_avator">
+          <img src="http://pic.yupoo.com/wjh15101051/72c1aeab/f51d56e0.jpg" alt="avator">
+        </div>
+        <div class="nav_ID">
+          wjh15101051
+        </div>
+      </div>
+      <div class="nav_list">
+        <li class="tags">
+          <a href="../tags.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png" class="list_icon" id="tags_image">
+            Tags
+          </a>
+        </li>
+        <li class="categories">
+          <a href="../categories.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png" class="list_icon" id="categories_image">
+            Categories
+          </a>
+        </li>
+        <li class="timeline">
+          <a href="../timeline.html">
+            <img src="http://pic.yupoo.com/wjh15101051/30365cc7/c1a3be15.png" class="list_icon" id="timeline_image">
+            Timeline
+          </a>
+        </li>
+        <li class="about">
+          <a href="../about.html">
+            <img src="http://pic.yupoo.com/wjh15101051/24f1cb41/e239086e.png" class="list_icon" id="about_image">
+            About
+          </a>
+        </li>
+        <li class="toolbox">
+          <a href="../toolbox.html">
+            <img src="http://pic.yupoo.com/wjh15101051/dee9f673/d3cf682a.png" class="list_icon" id="toolbox_image">
+            Toolbox
+          </a>
+        </li>
+        <li class="friends">
+            <div class="friends_text">
+              <img src="http://pic.yupoo.com/wjh15101051/d291ebed/29f9c807.png" id="friends_image">
+              Friends
+            </div>
+            <div id="fp_friends_list">
+              <div id="SGcolin">
+                <a href="http://blog.gyx.me/" target="_blank">SGcolin</a>
+              </div>
+              <div id="Xingcy">
+                <a href="https://www.cnblogs.com/xcysblog/" target="_blank">Xingcy</a>
+              </div>
+              <div id="ZH_comld">
+                <a href="https://www.cnblogs.com/ZH-comld/" target="_blank">ZH_comld</a>
+              </div>
+            </div>
+            <br>
+          </div>
+        </li>
+      </div>
+    <div class="music_player">
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer@1.10.0/dist/APlayer.min.css">
+      <script src="https://blog-static.cnblogs.com/files/yjlaugus/APlayer.min.js"></script>
+      <div id="aplayer" class="aplayer"  data-id="5313691453" data-server="netease" data-type="playlist" data-fixed="true" data-listfolded="true" data-order="random" data-theme="#F58EA8"></div>
+      <script src="https://unpkg.com/meting@1.2/dist/Meting.min.js"></script>
+    </div>
+    <div class="bottom">
+      <div>
+        Copyright © 2020
+        <a id="copyright_user_a" href="index.html">
+          <span id="copyright_user">wjh15101051</span>
+        </a>
+      </div>
+      <div class="bottom_anime">ღゝ◡╹)ノ♡</div>
+    </div>
+  </div>
+</body>
+</html>

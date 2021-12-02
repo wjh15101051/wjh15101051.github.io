@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>小P的牧场</title>
+  <link rel="stylesheet" type="text/css" id="frame_style" href="../css/frame_style1.css">
+  <link rel="stylesheet" type="text/css" id="Markdown_style" href="../css/Markdown_style.css">
+  <script type="text/javascript" src="../jscode/frame.js"></script>
+  <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+  <link rel="stylesheet" href="https://ziyuan.fenxianglu.cn/js/highlight/styles/default.css">
+  <script src="https://ziyuan.fenxianglu.cn/js/highlight/highlight.pack.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+        inlineMath: [['$','$']]
+      }
+    });
+  </script>
+</head>
+<body>
+  <div class="main">
+    <div class="head">
+      <div class="title1">
+        <a href="../index.html">wjh15101051's space</a>
+      </div>
+      <div class="title2">
+        卧薪尝胆，厚积薄发。
+      </div>
+    </div>
+    <div id="middle_blogfile">
+      <div class="blog_blogfile">
+        <div class="blogfile_title">
+            小P的牧场
+        </div>
+        <div class="blogfile_stitle">
+          <img src="http://pic.yupoo.com/wjh15101051/1e0e1b3a/118165c5.jpg">
+          Date: Sun Sep 09 00:46:19 CST 2018
+          <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png">
+          In Category:
+          <a href="../categories/NoCategory.html">NoCategory</a>
+        </div>
+        <div class="blogfile_content">
+<div class = "MarkdownCommonContent">
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Description：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+有
+$n$
+个牧场，在每个牧场建控制站有代价，每个控制站控制它左边控制站后面的所有牧场，每个牧场的代价是它到控制他的控制站的距离乘该牧场放养量，最小化总代价。
+</div>
+<div class = "MarkdownCommonContent">
+$1\le n\le 1000000$
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Solution：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+正着推很不好做，这道题有一个很好的思路，就是可以先求出一个好求的方案，再把更优的减掉。
+</div>
+<div class = "MarkdownCommonContent">
+如果只在
+$n$
+建控制站的话，费用是
+$\begin{align}\sum_{i=1}^nb[i]\times (n-i)\end{align}$
+，然后考虑在
+$i$
+这个位置再建一个控制站能节省多少钱，设
+$f[i]$
+表示后面都已经处理好，在
+$i$
+这里建立控制站能节省的最大代价，转移为
+$f[i]=\max(f[j]+sum[i]\times(j-i))-a[i]$
+。移个项就是
+$f[j]=-sum[i]\times j+sum[i]\times i+a[i]+f[i]$
+，
+$-sum[i]$
+也就是斜率单调递增，
+$j$
+也就是位置单调递减，最大化截距也就是维护上凸壳。
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Code：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+<pre><code class="MarkdownParaCode">
+#include&lt;algorithm&gt;<br />
+#include&lt;iostream&gt;<br />
+#include&lt;cstdlib&gt;<br />
+#include&lt;cstdio&gt;<br />
+#include&lt;cmath&gt;<br />
+#include&lt;cstring&gt;<br />
+using namespace std;<br />
+int n;<br />
+#define MAXN 1000010<br />
+typedef long long ll;<br />
+ll a[MAXN],b[MAXN];<br />
+int q[MAXN],head = 1,tail = 0;<br />
+ll sum[MAXN];<br />
+ll f[MAXN];<br />
+double slope(int a,int b)<br />
+{<br />
+	return (double)(f[a] - f[b]) / (double)(a - b);<br />
+}<br />
+int main()<br />
+{<br />
+	scanf("%d",&n);<br />
+	for(int i = 1;i &lt;= n;++i)scanf("%lld",&a[i]);<br />
+	for(int i = 1;i &lt;= n;++i)scanf("%lld",&b[i]);<br />
+	for(int i = 1;i &lt;= n;++i)sum[i] = sum[i - 1] + b[i];<br />
+	ll ans = 0;<br />
+	for(int i = 1;i &lt;= n;++i)ans += (n - i) * b[i];<br />
+	ans += a[n];<br />
+	q[++tail] = n;<br />
+	for(int i = n - 1;i &gt;= 1;--i)<br />
+	{<br />
+		while(head &lt; tail && slope(q[head],q[head + 1]) &lt; -sum[i])++head;<br />
+		f[i] = f[q[head]] + sum[i] * (q[head] - i) - a[i];<br />
+		while(head &lt; tail && slope(q[tail],q[tail - 1]) &gt; slope(q[tail],i))--tail;<br />
+		q[++tail] = i;<br />
+	}<br />
+	ll res = 0;<br />
+	for(int i = 1;i &lt;= n;++i)res = max(res,f[i]);<br />
+	cout &lt;&lt; ans - res &lt;&lt; endl;<br />
+	return 0;<br />
+}<br />
+</pre></code>
+</div>
+        </div>
+        <div class="blogfile_showtag">
+          <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png">
+          In tag:
+<a href="../tags/DP-斜率优化DP.html">DP-斜率优化DP</a> 
+          <!--<a href="../tags/blog.html">blog</a>-->
+        </div>
+      </div>
+    </div>
+    <div id="middle_nav">
+      <div class="blog_host">
+        <div class="nav_avator">
+          <img src="http://pic.yupoo.com/wjh15101051/72c1aeab/f51d56e0.jpg" alt="avator">
+        </div>
+        <div class="nav_ID">
+          wjh15101051
+        </div>
+      </div>
+      <div class="nav_list">
+        <li class="tags">
+          <a href="../tags.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png" class="list_icon" id="tags_image">
+            Tags
+          </a>
+        </li>
+        <li class="categories">
+          <a href="../categories.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png" class="list_icon" id="categories_image">
+            Categories
+          </a>
+        </li>
+        <li class="timeline">
+          <a href="../timeline.html">
+            <img src="http://pic.yupoo.com/wjh15101051/30365cc7/c1a3be15.png" class="list_icon" id="timeline_image">
+            Timeline
+          </a>
+        </li>
+        <li class="about">
+          <a href="../about.html">
+            <img src="http://pic.yupoo.com/wjh15101051/24f1cb41/e239086e.png" class="list_icon" id="about_image">
+            About
+          </a>
+        </li>
+        <li class="toolbox">
+          <a href="../toolbox.html">
+            <img src="http://pic.yupoo.com/wjh15101051/dee9f673/d3cf682a.png" class="list_icon" id="toolbox_image">
+            Toolbox
+          </a>
+        </li>
+        <li class="friends">
+            <div class="friends_text">
+              <img src="http://pic.yupoo.com/wjh15101051/d291ebed/29f9c807.png" id="friends_image">
+              Friends
+            </div>
+            <div id="fp_friends_list">
+              <div id="SGcolin">
+                <a href="http://blog.gyx.me/" target="_blank">SGcolin</a>
+              </div>
+              <div id="Xingcy">
+                <a href="https://www.cnblogs.com/xcysblog/" target="_blank">Xingcy</a>
+              </div>
+              <div id="ZH_comld">
+                <a href="https://www.cnblogs.com/ZH-comld/" target="_blank">ZH_comld</a>
+              </div>
+            </div>
+            <br>
+          </div>
+        </li>
+      </div>
+    <div class="music_player">
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer@1.10.0/dist/APlayer.min.css">
+      <script src="https://blog-static.cnblogs.com/files/yjlaugus/APlayer.min.js"></script>
+      <div id="aplayer" class="aplayer"  data-id="5313691453" data-server="netease" data-type="playlist" data-fixed="true" data-listfolded="true" data-order="random" data-theme="#F58EA8"></div>
+      <script src="https://unpkg.com/meting@1.2/dist/Meting.min.js"></script>
+    </div>
+    <div class="bottom">
+      <div>
+        Copyright © 2020
+        <a id="copyright_user_a" href="index.html">
+          <span id="copyright_user">wjh15101051</span>
+        </a>
+      </div>
+      <div class="bottom_anime">ღゝ◡╹)ノ♡</div>
+    </div>
+  </div>
+</body>
+</html>

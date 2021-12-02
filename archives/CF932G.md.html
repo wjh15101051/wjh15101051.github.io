@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Palindrome Partition</title>
+  <link rel="stylesheet" type="text/css" id="frame_style" href="../css/frame_style1.css">
+  <link rel="stylesheet" type="text/css" id="Markdown_style" href="../css/Markdown_style.css">
+  <script type="text/javascript" src="../jscode/frame.js"></script>
+  <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+  <link rel="stylesheet" href="https://ziyuan.fenxianglu.cn/js/highlight/styles/default.css">
+  <script src="https://ziyuan.fenxianglu.cn/js/highlight/highlight.pack.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+        inlineMath: [['$','$']]
+      }
+    });
+  </script>
+</head>
+<body>
+  <div class="main">
+    <div class="head">
+      <div class="title1">
+        <a href="../index.html">wjh15101051's space</a>
+      </div>
+      <div class="title2">
+        卧薪尝胆，厚积薄发。
+      </div>
+    </div>
+    <div id="middle_blogfile">
+      <div class="blog_blogfile">
+        <div class="blogfile_title">
+            Palindrome Partition
+        </div>
+        <div class="blogfile_stitle">
+          <img src="http://pic.yupoo.com/wjh15101051/1e0e1b3a/118165c5.jpg">
+          Date: Tue Jan 15 20:03:03 CST 2019
+          <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png">
+          In Category:
+          <a href="../categories/NoCategory.html">NoCategory</a>
+        </div>
+        <div class="blogfile_content">
+<div class = "MarkdownCommonContent">
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Description：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+给定一个串，把串分为偶数段，假设分为了
+$s_1,s_2,s_3\dots s_k$
+，求满足
+$s_1=s_k,s_2=s_{k-1}\dots$
+的方案数。
+</div>
+<div class = "MarkdownCommonContent">
+$1\leqslant n\leqslant 10^6$
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Solution：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+直接做是肯定没法做的，这个时候有一个非常妙的转化：
+</div>
+<div class = "MarkdownCommonContent">
+构造串
+$S'=S[1]S[n]S[2]S[n-1]\cdots$
+，这个时候我们发现每一个原来的一对在这个串里是一个偶数长度的回文子串，于是构建出回文树，然后在上面
+$dp$
+一下，每次从
+$fail[i],fail[fail[i]],\dots$
+那里转移过来，只有偶数的时候转移。
+</div>
+<div class = "MarkdownCommonContent">
+但是这样的复杂度是错的，因为可能会一直跳
+$fail$
+，这个时候有一个重要性质，就是一个串的若干回文后缀如果长度
+$&gt;len/2$
+，那么他们等差，如果把这些看成一组，那么长度每次
+$/2$
+，那么我们可以把这些等差的组放在一起转移，复杂度就是
+$O(n\log n)$
+的了。
+</div>
+<div class = "MarkdownCommonContent">
+代码是抄的yyb的。
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Code：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+<pre><code class="MarkdownParaCode">
+#include&lt;algorithm&gt;<br />
+#include&lt;iostream&gt;<br />
+#include&lt;cstdlib&gt;<br />
+#include&lt;cstdio&gt;<br />
+#include&lt;cmath&gt;<br />
+#include&lt;cctype&gt;<br />
+#include&lt;cstring&gt;<br />
+using namespace std;<br />
+#define MAXN 1000100<br />
+#define MOD 1000000007<br />
+int n;<br />
+char c[MAXN],S[MAXN];<br />
+struct node<br />
+{<br />
+	int tr[26];<br />
+	int len,fail;<br />
+}s[MAXN];<br />
+int ptr,last;<br />
+int newnode(int l){s[ptr].len = l;return ptr++;}<br />
+void init()<br />
+{<br />
+	ptr = last = 0;<br />
+	newnode(0);<br />
+	newnode(-1);<br />
+	s[0].fail = 1;<br />
+	return;<br />
+}<br />
+int getfail(int i,int p)<br />
+{<br />
+	while(c[i - s[p].len - 1] != c[i])p = s[p].fail;<br />
+	return p;<br />
+}<br />
+int diff[MAXN],anc[MAXN];<br />
+void extend(int i,int k)<br />
+{<br />
+	int p = getfail(i,last);<br />
+	if(s[p].tr[k] == 0)<br />
+	{<br />
+		int np = newnode(s[p].len + 2);<br />
+		s[np].fail = s[getfail(i,s[p].fail)].tr[k];<br />
+		s[p].tr[k] = np;<br />
+		diff[np] = s[np].len - s[s[np].fail].len;<br />
+		anc[np] = (diff[np] == diff[s[np].fail] ? anc[s[np].fail] : s[np].fail);<br />
+	}<br />
+	last = s[p].tr[k];<br />
+	return;<br />
+}<br />
+int f[MAXN],ans[MAXN];<br />
+int main()<br />
+{<br />
+	scanf("%s",S + 1);<br />
+	n = strlen(S + 1);<br />
+	if(n & 1){puts("0");return 0;}<br />
+	init();<br />
+	int cur = 0;<br />
+	for(int i = 1,j = n;i &lt; j;++i,--j)<br />
+	{<br />
+		c[++cur] = S[i];<br />
+		c[++cur] = S[j];<br />
+	}<br />
+	ans[0] = 1;<br />
+	for(int i = 1;i &lt;= n;++i)<br />
+	{<br />
+		extend(i,c[i] - 'a');<br />
+		for(int p = last;p != 0;p = anc[p])<br />
+		{<br />
+			f[p] = ans[i - s[anc[p]].len - diff[p]];<br />
+			if(anc[p] != s[p].fail)f[p] = (f[p] + f[s[p].fail]) % MOD;<br />
+			if(i % 2 == 0)ans[i] = (ans[i] + f[p]) % MOD;<br />
+		}<br />
+	}<br />
+	cout &lt;&lt; ans[n] &lt;&lt; endl;<br />
+	return 0;<br />
+} <br />
+</pre></code>
+</div>
+        </div>
+        <div class="blogfile_showtag">
+          <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png">
+          In tag:
+<a href="../tags/字符串-回文自动机.html">字符串-回文自动机</a> 
+          <!--<a href="../tags/blog.html">blog</a>-->
+        </div>
+      </div>
+    </div>
+    <div id="middle_nav">
+      <div class="blog_host">
+        <div class="nav_avator">
+          <img src="http://pic.yupoo.com/wjh15101051/72c1aeab/f51d56e0.jpg" alt="avator">
+        </div>
+        <div class="nav_ID">
+          wjh15101051
+        </div>
+      </div>
+      <div class="nav_list">
+        <li class="tags">
+          <a href="../tags.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png" class="list_icon" id="tags_image">
+            Tags
+          </a>
+        </li>
+        <li class="categories">
+          <a href="../categories.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png" class="list_icon" id="categories_image">
+            Categories
+          </a>
+        </li>
+        <li class="timeline">
+          <a href="../timeline.html">
+            <img src="http://pic.yupoo.com/wjh15101051/30365cc7/c1a3be15.png" class="list_icon" id="timeline_image">
+            Timeline
+          </a>
+        </li>
+        <li class="about">
+          <a href="../about.html">
+            <img src="http://pic.yupoo.com/wjh15101051/24f1cb41/e239086e.png" class="list_icon" id="about_image">
+            About
+          </a>
+        </li>
+        <li class="toolbox">
+          <a href="../toolbox.html">
+            <img src="http://pic.yupoo.com/wjh15101051/dee9f673/d3cf682a.png" class="list_icon" id="toolbox_image">
+            Toolbox
+          </a>
+        </li>
+        <li class="friends">
+            <div class="friends_text">
+              <img src="http://pic.yupoo.com/wjh15101051/d291ebed/29f9c807.png" id="friends_image">
+              Friends
+            </div>
+            <div id="fp_friends_list">
+              <div id="SGcolin">
+                <a href="http://blog.gyx.me/" target="_blank">SGcolin</a>
+              </div>
+              <div id="Xingcy">
+                <a href="https://www.cnblogs.com/xcysblog/" target="_blank">Xingcy</a>
+              </div>
+              <div id="ZH_comld">
+                <a href="https://www.cnblogs.com/ZH-comld/" target="_blank">ZH_comld</a>
+              </div>
+            </div>
+            <br>
+          </div>
+        </li>
+      </div>
+    <div class="music_player">
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer@1.10.0/dist/APlayer.min.css">
+      <script src="https://blog-static.cnblogs.com/files/yjlaugus/APlayer.min.js"></script>
+      <div id="aplayer" class="aplayer"  data-id="5313691453" data-server="netease" data-type="playlist" data-fixed="true" data-listfolded="true" data-order="random" data-theme="#F58EA8"></div>
+      <script src="https://unpkg.com/meting@1.2/dist/Meting.min.js"></script>
+    </div>
+    <div class="bottom">
+      <div>
+        Copyright © 2020
+        <a id="copyright_user_a" href="index.html">
+          <span id="copyright_user">wjh15101051</span>
+        </a>
+      </div>
+      <div class="bottom_anime">ღゝ◡╹)ノ♡</div>
+    </div>
+  </div>
+</body>
+</html>

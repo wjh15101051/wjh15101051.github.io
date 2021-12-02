@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>SDOI2013 森林</title>
+  <link rel="stylesheet" type="text/css" id="frame_style" href="../css/frame_style1.css">
+  <link rel="stylesheet" type="text/css" id="Markdown_style" href="../css/Markdown_style.css">
+  <script type="text/javascript" src="../jscode/frame.js"></script>
+  <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+  <link rel="stylesheet" href="https://ziyuan.fenxianglu.cn/js/highlight/styles/default.css">
+  <script src="https://ziyuan.fenxianglu.cn/js/highlight/highlight.pack.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+        inlineMath: [['$','$']]
+      }
+    });
+  </script>
+</head>
+<body>
+  <div class="main">
+    <div class="head">
+      <div class="title1">
+        <a href="../index.html">wjh15101051's space</a>
+      </div>
+      <div class="title2">
+        卧薪尝胆，厚积薄发。
+      </div>
+    </div>
+    <div id="middle_blogfile">
+      <div class="blog_blogfile">
+        <div class="blogfile_title">
+            SDOI2013 森林
+        </div>
+        <div class="blogfile_stitle">
+          <img src="http://pic.yupoo.com/wjh15101051/1e0e1b3a/118165c5.jpg">
+          Date: Sun Jun 03 11:47:45 CST 2018
+          <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png">
+          In Category:
+          <a href="../categories/NoCategory.html">NoCategory</a>
+        </div>
+        <div class="blogfile_content">
+<div class = "MarkdownCommonContent">
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Description:
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+连边
+$+$
+询问路径第
+$K$
+小，保证任何时刻图是森林。
+</div>
+<div class = "MarkdownCommonContent">
+$1\le N\le 80000$
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Solution:
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+第
+$K​$
+小想到主席树，但主席树是静态的，无法支持连边操作，但看数据范围只有
+$80000​$
+，可以每次连边时用启发式合并的思想，暴力将
+$siz​$
+小的树中的点挂到另一个树上去，在加点时从父亲继承下来一个版本，在这个版本上加入这个点的值，
+$LCA​$
+也必须动态求，显然链剖和
+$tarjan​$
+都不能用，在挂点时一边
+$dfs​$
+一边重新计算倍增数组，询问时树上查分即可。
+</div>
+<div class = "MarkdownCommonContent">
+<del class = "MarkdownDel">
+连边时忘了加边居然有60分
+</del>
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Code:
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+<pre><code class="MarkdownParaCode">
+#include&lt;algorithm&gt;<br />
+#include&lt;iostream&gt;<br />
+#include&lt;cstdlib&gt;<br />
+#include&lt;cstdio&gt;<br />
+#include&lt;cmath&gt;<br />
+#include&lt;map&gt;<br />
+#include&lt;cstring&gt;<br />
+#define mid ((l + r) &gt;&gt; 1)<br />
+using namespace std;<br />
+char getc()<br />
+{<br />
+    char c = getchar();<br />
+    while(c != 'Q' && c != 'L')c = getchar();<br />
+    return c;<br />
+}<br />
+int read()<br />
+{<br />
+    int res = 0;<br />
+    char c = getchar();<br />
+    while(c &lt; '0' || c &gt; '9')c = getchar();<br />
+    while('0' &lt;= c && c &lt;= '9')<br />
+    {<br />
+        res = (res &lt;&lt; 1) + (res &lt;&lt; 3) + c - '0';<br />
+        c = getchar();<br />
+    }<br />
+    return res;<br />
+} <br />
+int testcase;<br />
+int n,m,q;<br />
+#define MAXN 80001<br />
+int siz[MAXN],fa[MAXN],val[MAXN],depth[MAXN];<br />
+map&lt;int,int&gt; tr;<br />
+int to[MAXN],s[MAXN],tot = 0;<br />
+int find(int x){return (x == fa[x] ? x : fa[x] = find(fa[x]));}<br />
+struct edge<br />
+{<br />
+    int to,nxt;<br />
+}e[MAXN &lt;&lt; 1];<br />
+int edgenum = 0;<br />
+int lin[MAXN] = {0};<br />
+void add(int a,int b)<br />
+{<br />
+    ++edgenum;<br />
+    e[edgenum].to = b;<br />
+    e[edgenum].nxt = lin[a];<br />
+    lin[a] = edgenum;<br />
+    return;<br />
+}<br />
+bool v[MAXN];<br />
+int f[MAXN][17];<br />
+struct node<br />
+{<br />
+    int c[2],sum;<br />
+    node(){c[0] = c[1] = sum = 0;}<br />
+}t[MAXN * 500];<br />
+int ptr = 0;<br />
+int newnode(){return ++ptr;}<br />
+int root[MAXN];<br />
+void insert(int &rt,int rt_,int p,int l,int r)<br />
+{<br />
+    rt = newnode();<br />
+    t[rt] = t[rt_];<br />
+    t[rt].sum += 1;<br />
+    if(l == r)return;<br />
+    if(p &lt;= mid)insert(t[rt].c[0],t[rt_].c[0],p,l,mid);<br />
+    else insert(t[rt].c[1],t[rt_].c[1],p,mid + 1,r);<br />
+    return;<br />
+}<br />
+void dfs(int k)<br />
+{<br />
+    v[k] = true;<br />
+    for(int i = 1;i &lt;= 16;++i)<br />
+    {<br />
+        f[k][i] = f[f[k][i - 1]][i - 1];<br />
+    }<br />
+    for(int i = lin[k];i != 0;i = e[i].nxt)<br />
+    {<br />
+        if(e[i].to != f[k][0])<br />
+        {<br />
+            f[e[i].to][0] = k;depth[e[i].to] = depth[k] + 1;<br />
+            insert(root[e[i].to],root[k],tr[val[e[i].to]],1,tot);<br />
+            dfs(e[i].to);<br />
+        }<br />
+    }<br />
+    return;<br />
+}<br />
+void merge(int a,int b)<br />
+{<br />
+	add(a,b);add(b,a);<br />
+    int p = find(a),q = find(b);<br />
+    if(siz[p] &gt; siz[q])<br />
+    {<br />
+        swap(p,q);swap(a,b);<br />
+    }<br />
+    fa[p] = q;<br />
+    siz[q] += siz[p];<br />
+    f[a][0] = b;<br />
+    depth[a] = depth[b] + 1;<br />
+    insert(root[a],root[b],tr[val[a]],1,tot);<br />
+    dfs(a);<br />
+    return;<br />
+}<br />
+int LCA(int a,int b)<br />
+{<br />
+    if(depth[a] &lt; depth[b])swap(a,b);<br />
+    for(int i = 16;i &gt;= 0;--i)<br />
+    {<br />
+        if(depth[f[a][i]] &gt;= depth[b])<br />
+        {<br />
+            a = f[a][i];<br />
+        }<br />
+    }<br />
+    if(a == b)return a;<br />
+    for(int i = 16;i &gt;= 0;--i)<br />
+    {<br />
+        if(f[a][i] != f[b][i])<br />
+        {<br />
+            a = f[a][i];b = f[b][i];<br />
+        }<br />
+    }<br />
+    return f[a][0];<br />
+}<br />
+int main()<br />
+{<br />
+    scanf("%d",&testcase);<br />
+    scanf("%d%d%d",&n,&m,&q);<br />
+    memset(f,0,sizeof(f));<br />
+    for(int i = 1;i &lt;= n;++i)<br />
+    {<br />
+        siz[i] = 1;fa[i] = i;depth[i] = 1;<br />
+        val[i] = read();s[i] = val[i];<br />
+    }<br />
+    sort(s + 1,s + 1 + n);<br />
+    for(int i = 1;i &lt;= n;++i)<br />
+    {<br />
+        if(s[i] != s[i - 1])<br />
+        {<br />
+            tr[s[i]] = ++tot;<br />
+            to[tot] = s[i];<br />
+        }<br />
+    }<br />
+    for(int i = 1;i &lt;= n;++i)<br />
+    {<br />
+        insert(root[i],0,tr[val[i]],1,tot);<br />
+    }<br />
+    int a,b;<br />
+    for(int i = 1;i &lt;= m;++i)<br />
+    {<br />
+        a = read();b = read();<br />
+        merge(a,b);<br />
+    }<br />
+    memset(v,false,sizeof(v));<br />
+    for(int i = 1;i &lt;= n;++i)<br />
+    {<br />
+        if(!v[i])<br />
+        {<br />
+            dfs(i);<br />
+        }<br />
+    }<br />
+    int lastans = 0;<br />
+    char c;<br />
+    int x,y,k;<br />
+    int a1,a2,a3,a4;<br />
+    for(int i = 1;i &lt;= q;++i)<br />
+    {<br />
+        c = getc();<br />
+        if(c == 'Q')<br />
+        {<br />
+            x = read();y = read();k = read();<br />
+            x ^= lastans;y ^= lastans;k ^= lastans;//cout &lt;&lt; x &lt;&lt; " " &lt;&lt; y &lt;&lt; " " &lt;&lt; k &lt;&lt; endl;<br />
+            int lca = LCA(x,y);//cout &lt;&lt; " : " &lt;&lt; x &lt;&lt; " " &lt;&lt; y &lt;&lt; " " &lt;&lt; lca &lt;&lt; endl;<br />
+            a1 = root[x];a2 = root[y];a3 = root[lca];a4 = root[f[lca][0]];//cout &lt;&lt; t[a1].sum &lt;&lt; " " &lt;&lt; t[a2].sum &lt;&lt; " " &lt;&lt; t[a3].sum &lt;&lt; " " &lt;&lt; t[a4].sum &lt;&lt; endl;<br />
+            int l = 1,r = tot;<br />
+            int tmp;<br />
+            while(l &lt; r)<br />
+            {<br />
+                tmp = t[t[a1].c[0]].sum + t[t[a2].c[0]].sum - t[t[a3].c[0]].sum - t[t[a4].c[0]].sum;<br />
+                if(k &lt;= tmp)<br />
+                {<br />
+                    a1 = t[a1].c[0];a2 = t[a2].c[0];a3 = t[a3].c[0];a4 = t[a4].c[0];<br />
+                    r = ((l + r) &gt;&gt; 1);<br />
+                }<br />
+                else<br />
+                {<br />
+                    a1 = t[a1].c[1];a2 = t[a2].c[1];a3 = t[a3].c[1];a4 = t[a4].c[1];<br />
+                    l = ((l + r) &gt;&gt; 1) + 1;<br />
+                    k -= tmp;<br />
+                }<br />
+            }<br />
+            printf("%d\n",lastans = to[l]);<br />
+        }<br />
+        else<br />
+        {<br />
+            x = read();y = read();<br />
+            x ^= lastans;y ^= lastans;//cout &lt;&lt; x &lt;&lt; " " &lt;&lt; y &lt;&lt; endl;<br />
+            merge(x,y);<br />
+        }<br />
+    }<br />
+    return 0;<br />
+}<br />
+</pre></code>
+</div>
+        </div>
+        <div class="blogfile_showtag">
+          <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png">
+          In tag:
+<a href="../tags/数据结构-主席树.html">数据结构-主席树</a> <a href="../tags/数据结构-启发式合并.html">数据结构-启发式合并</a> 
+          <!--<a href="../tags/blog.html">blog</a>-->
+        </div>
+      </div>
+    </div>
+    <div id="middle_nav">
+      <div class="blog_host">
+        <div class="nav_avator">
+          <img src="http://pic.yupoo.com/wjh15101051/72c1aeab/f51d56e0.jpg" alt="avator">
+        </div>
+        <div class="nav_ID">
+          wjh15101051
+        </div>
+      </div>
+      <div class="nav_list">
+        <li class="tags">
+          <a href="../tags.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png" class="list_icon" id="tags_image">
+            Tags
+          </a>
+        </li>
+        <li class="categories">
+          <a href="../categories.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png" class="list_icon" id="categories_image">
+            Categories
+          </a>
+        </li>
+        <li class="timeline">
+          <a href="../timeline.html">
+            <img src="http://pic.yupoo.com/wjh15101051/30365cc7/c1a3be15.png" class="list_icon" id="timeline_image">
+            Timeline
+          </a>
+        </li>
+        <li class="about">
+          <a href="../about.html">
+            <img src="http://pic.yupoo.com/wjh15101051/24f1cb41/e239086e.png" class="list_icon" id="about_image">
+            About
+          </a>
+        </li>
+        <li class="toolbox">
+          <a href="../toolbox.html">
+            <img src="http://pic.yupoo.com/wjh15101051/dee9f673/d3cf682a.png" class="list_icon" id="toolbox_image">
+            Toolbox
+          </a>
+        </li>
+        <li class="friends">
+            <div class="friends_text">
+              <img src="http://pic.yupoo.com/wjh15101051/d291ebed/29f9c807.png" id="friends_image">
+              Friends
+            </div>
+            <div id="fp_friends_list">
+              <div id="SGcolin">
+                <a href="http://blog.gyx.me/" target="_blank">SGcolin</a>
+              </div>
+              <div id="Xingcy">
+                <a href="https://www.cnblogs.com/xcysblog/" target="_blank">Xingcy</a>
+              </div>
+              <div id="ZH_comld">
+                <a href="https://www.cnblogs.com/ZH-comld/" target="_blank">ZH_comld</a>
+              </div>
+            </div>
+            <br>
+          </div>
+        </li>
+      </div>
+    <div class="music_player">
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer@1.10.0/dist/APlayer.min.css">
+      <script src="https://blog-static.cnblogs.com/files/yjlaugus/APlayer.min.js"></script>
+      <div id="aplayer" class="aplayer"  data-id="5313691453" data-server="netease" data-type="playlist" data-fixed="true" data-listfolded="true" data-order="random" data-theme="#F58EA8"></div>
+      <script src="https://unpkg.com/meting@1.2/dist/Meting.min.js"></script>
+    </div>
+    <div class="bottom">
+      <div>
+        Copyright © 2020
+        <a id="copyright_user_a" href="index.html">
+          <span id="copyright_user">wjh15101051</span>
+        </a>
+      </div>
+      <div class="bottom_anime">ღゝ◡╹)ノ♡</div>
+    </div>
+  </div>
+</body>
+</html>

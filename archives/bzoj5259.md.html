@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>CERC2017 区间</title>
+  <link rel="stylesheet" type="text/css" id="frame_style" href="../css/frame_style1.css">
+  <link rel="stylesheet" type="text/css" id="Markdown_style" href="../css/Markdown_style.css">
+  <script type="text/javascript" src="../jscode/frame.js"></script>
+  <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+  <link rel="stylesheet" href="https://ziyuan.fenxianglu.cn/js/highlight/styles/default.css">
+  <script src="https://ziyuan.fenxianglu.cn/js/highlight/highlight.pack.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+        inlineMath: [['$','$']]
+      }
+    });
+  </script>
+</head>
+<body>
+  <div class="main">
+    <div class="head">
+      <div class="title1">
+        <a href="../index.html">wjh15101051's space</a>
+      </div>
+      <div class="title2">
+        卧薪尝胆，厚积薄发。
+      </div>
+    </div>
+    <div id="middle_blogfile">
+      <div class="blog_blogfile">
+        <div class="blogfile_title">
+            CERC2017 区间
+        </div>
+        <div class="blogfile_stitle">
+          <img src="http://pic.yupoo.com/wjh15101051/1e0e1b3a/118165c5.jpg">
+          Date: Fri Dec 21 18:42:36 CST 2018
+          <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png">
+          In Category:
+          <a href="../categories/NoCategory.html">NoCategory</a>
+        </div>
+        <div class="blogfile_content">
+<div class = "MarkdownCommonContent">
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Description：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+给出一个排列，多次询问包含某个区间的长度最小的连续段，多解输出最左边的。
+</div>
+<div class = "MarkdownCommonContent">
+$1\leqslant n\leqslant 10^5$
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Solution1：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+首先可以注意到最后的答案一定是唯一的，因为连续段的交也是连续段，不可能有两个最短的包含他的连续段。
+</div>
+<div class = "MarkdownCommonContent">
+一个段能否构成连续段的充要条件是
+$mx-mn=r-l$
+，移项就是
+$(mx-mn)-(r-l)=0$
+，并且无论是不是连续段都有
+$mx-mn\geqslant r-l$
+，我们可以求出来一个
+$l[i]$
+表示以
+$i$
+为右端点最长的连续段的左端点，
+$r[i]$
+与他相反，设询问的区间为
+$L,R$
+，这时由上面那个结论我们可以发现我们只要找一组
+$l',r'$
+满足
+$l[r']\leqslant L,r[l']\geqslant R$
+那么
+$l',r'$
+一定是一组合法的答案，因为他们是两个连续段的交，如果求出来了
+$l,r$
+我们就可以在
+$ST$
+表上二分求解。
+</div>
+<div class = "MarkdownCommonContent">
+现在的问题变成了怎么求这两个数组，我们可以扫描线枚举
+$r$
+，用线段树维护
+$(mx_{i,r}-mn_{i,r})-(-i)$
+的值，然后在线段树上维护一个最小值，每次在线段树上二分出最靠左的值为
+$r$
+的位置，现在的问题就变成了如何维护
+$mx$
+和
+$mn$
+，我们可以维护一个单调栈，那么每次弹栈的区间就是需要修改最大
+$/$
+最小值的范围。
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Code1：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+<pre><code class="MarkdownParaCode">
+#include&lt;algorithm&gt;<br />
+#include&lt;iostream&gt;<br />
+#include&lt;cstdlib&gt;<br />
+#include&lt;cstdio&gt;<br />
+#include&lt;cmath&gt;<br />
+#include&lt;stack&gt;<br />
+#include&lt;cctype&gt;<br />
+#include&lt;cstring&gt;<br />
+using namespace std;<br />
+int n,q;<br />
+#define MAXN 400010<br />
+int p[MAXN];<br />
+struct node<br />
+{<br />
+	int lc,rc;<br />
+	int minv,tag;<br />
+	node(){tag = 0;}<br />
+}t[MAXN &lt;&lt; 1];<br />
+int ptr = 0;<br />
+int newnode(){return ++ptr;}<br />
+int root;<br />
+#define mid ((l + r) &gt;&gt; 1)<br />
+void build(int &rt,int l,int r)<br />
+{<br />
+	rt = newnode();<br />
+	if(l == r)return;<br />
+	build(t[rt].lc,l,mid);<br />
+	build(t[rt].rc,mid + 1,r);<br />
+	return;<br />
+}<br />
+void pushdown(int rt)<br />
+{<br />
+	t[t[rt].lc].tag += t[rt].tag;t[t[rt].lc].minv += t[rt].tag;<br />
+	t[t[rt].rc].tag += t[rt].tag;t[t[rt].rc].minv += t[rt].tag;<br />
+	t[rt].tag = 0;<br />
+	return;<br />
+}<br />
+void add(int rt,int L,int R,int k,int l,int r)<br />
+{<br />
+	if(L &lt;= l && r &lt;= R)<br />
+	{<br />
+		t[rt].tag += k;t[rt].minv += k;<br />
+		return;<br />
+	}<br />
+	pushdown(rt);<br />
+	if(L &lt;= mid)add(t[rt].lc,L,R,k,l,mid);<br />
+	if(R &gt; mid)add(t[rt].rc,L,R,k,mid + 1,r);<br />
+	t[rt].minv = min(t[t[rt].lc].minv,t[t[rt].rc].minv);<br />
+	return;<br />
+}<br />
+int query(int rt,int L,int R,int k,int l,int r)<br />
+{<br />
+	if(t[rt].minv &gt; k)return -1;<br />
+	if(l == r)return l;<br />
+	pushdown(rt);<br />
+	if(L &lt;= l && r &lt;= R)<br />
+	{<br />
+		if(t[t[rt].lc].minv == k)return query(t[rt].lc,L,R,k,l,mid);<br />
+		else return query(t[rt].rc,L,R,k,mid + 1,r);<br />
+	}<br />
+	int res = -1;<br />
+	if(L &lt;= mid)res = query(t[rt].lc,L,R,k,l,mid);<br />
+	if(res != -1)return res;<br />
+	else return query(t[rt].rc,L,R,k,mid + 1,r);<br />
+}<br />
+void reset(int rt,int l,int r)<br />
+{<br />
+	t[rt].minv = t[rt].tag = 0;<br />
+	if(l == r)return;<br />
+	reset(t[rt].lc,l,mid);<br />
+	reset(t[rt].rc,mid + 1,r);<br />
+	return;<br />
+}<br />
+struct state<br />
+{<br />
+	int l,r,h;<br />
+};<br />
+stack&lt;state&gt; s1,s2;<br />
+int lef[MAXN],rig[MAXN];<br />
+int f1[MAXN][17],f2[MAXN][17];<br />
+int lg[MAXN];<br />
+int query1(int l,int r)<br />
+{<br />
+	int len = lg[r - l + 1];<br />
+	return min(f1[l][len],f1[r - (1 &lt;&lt; len) + 1][len]);<br />
+}<br />
+int query2(int l,int r)<br />
+{<br />
+	int len = lg[r - l + 1];<br />
+	return max(f2[l][len],f2[r - (1 &lt;&lt; len) + 1][len]);<br />
+}<br />
+int main()<br />
+{<br />
+	scanf("%d",&n);<br />
+	for(int i = 1;i &lt;= n;++i)scanf("%d",&p[i]);<br />
+	build(root,1,n);<br />
+	for(int i = 1;i &lt;= n;++i)add(root,i,i,i,1,n);<br />
+	for(int i = 2;i &lt;= n;++i)lg[i] = lg[i &gt;&gt; 1] + 1;<br />
+	for(int i = 1;i &lt;= n;++i)<br />
+	{<br />
+		while(!s1.empty() && s1.top().h &lt;= p[i])<br />
+		{<br />
+			add(root,s1.top().l,s1.top().r,p[i] - s1.top().h,1,n);<br />
+			s1.pop();<br />
+		}<br />
+		if(!s1.empty())s1.push((state){s1.top().r + 1,i,p[i]});<br />
+		else s1.push((state){1,i,p[i]});<br />
+		while(!s2.empty() && s2.top().h &gt;= p[i])<br />
+		{<br />
+			add(root,s2.top().l,s2.top().r,s2.top().h - p[i],1,n);<br />
+			s2.pop();<br />
+		}<br />
+		if(!s2.empty())s2.push((state){s2.top().r + 1,i,p[i]});<br />
+		else s2.push((state){1,i,p[i]});<br />
+		lef[i] = query(root,1,i,i,1,n);<br />
+	}<br />
+	reset(root,1,n);<br />
+	while(!s1.empty())s1.pop();<br />
+	while(!s2.empty())s2.pop();<br />
+	for(int i = 1,j = n;i &lt; j;++i,--j)swap(p[i],p[j]);<br />
+	for(int i = 1;i &lt;= n;++i)add(root,i,i,i,1,n);<br />
+	for(int i = 1;i &lt;= n;++i)<br />
+	{<br />
+		while(!s1.empty() && s1.top().h &lt;= p[i])<br />
+		{<br />
+			add(root,s1.top().l,s1.top().r,p[i] - s1.top().h,1,n);<br />
+			s1.pop();<br />
+		}<br />
+		if(!s1.empty())s1.push((state){s1.top().r + 1,i,p[i]});<br />
+		else s1.push((state){1,i,p[i]});<br />
+		while(!s2.empty() && s2.top().h &gt;= p[i])<br />
+		{<br />
+			add(root,s2.top().l,s2.top().r,s2.top().h - p[i],1,n);<br />
+			s2.pop();<br />
+		}<br />
+		if(!s2.empty())s2.push((state){s2.top().r + 1,i,p[i]});<br />
+		else s2.push((state){1,i,p[i]});<br />
+		rig[i] = n - query(root,1,i,i,1,n) + 1;<br />
+	}<br />
+	for(int i = 1,j = n;i &lt; j;++i,--j)swap(rig[i],rig[j]);<br />
+	for(int i = 1;i &lt;= n;++i)f1[i][0] = lef[i];<br />
+	for(int i = 1;i &lt;= n;++i)f2[i][0] = rig[i];<br />
+	for(int k = 1;k &lt;= 16;++k)<br />
+	{<br />
+		for(int i = 1;i &lt;= n - (1 &lt;&lt; k) + 1;++i)<br />
+		{<br />
+			f1[i][k] = min(f1[i][k - 1],f1[i + (1 &lt;&lt; (k - 1))][k - 1]);<br />
+			f2[i][k] = max(f2[i][k - 1],f2[i + (1 &lt;&lt; (k - 1))][k - 1]);<br />
+		}<br />
+	}<br />
+	scanf("%d",&q);<br />
+	int L,R,ansl,ansr;<br />
+	for(int i = 1;i &lt;= q;++i)<br />
+	{<br />
+		scanf("%d%d",&L,&R);<br />
+		int l,r,m;<br />
+		l = R;r = n;<br />
+		while(l &lt; r)<br />
+		{<br />
+			m = ((l + r) &gt;&gt; 1);<br />
+			if(query1(R,m) &lt;= L)r = m;<br />
+			else l = m + 1;<br />
+		}<br />
+		ansr = l;<br />
+		l = 1;r = L;<br />
+		while(l &lt; r)<br />
+		{<br />
+			m = ((l + r + 1) &gt;&gt; 1);<br />
+			if(query2(m,L) &gt;= R)l = m;<br />
+			else r = m - 1;<br />
+		}<br />
+		ansl = l;<br />
+		printf("%d %d\n",ansl,ansr);<br />
+	}<br />
+	return 0;<br />
+}<br />
+</pre></code>
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Solution2：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+上面那个做法不好推广，我们知道解决连续段问题有一个非常有效的手段，就是利用本原连续段树。
+</div>
+<div class = "MarkdownCommonContent">
+具体建树的方法是先对于每两个相邻的位置，求出包含他们的最短的连续段，这个的求法就是从这个位置向在这两个数之间的最靠前的和最靠后的这个区间连边，这个可以用线段树优化建图，然后
+$tarjan$
+之后拓扑排序
+$dp$
+出每个强连通分量的左端点和右端点，然后就可以按照这个区间长度从小往大建树了，因为每个节点不可能有
+$1$
+个儿子，总共
+$n$
+个叶子，所以节点至多只有
+$O(n)$
+个。
+</div>
+<div class = "MarkdownCommonContent">
+不过这题不用真的建树，我们求出了包含每个相邻位置的最短的连续段之后只要区间查询左端点最大值和右端点最小值就行了。
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Code2：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+<pre><code class="MarkdownParaCode">
+#include&lt;algorithm&gt;<br />
+#include&lt;iostream&gt;<br />
+#include&lt;cstdlib&gt;<br />
+#include&lt;cstdio&gt;<br />
+#include&lt;cmath&gt;<br />
+#include&lt;queue&gt;<br />
+#include&lt;vector&gt;<br />
+#include&lt;cctype&gt;<br />
+#include&lt;cstring&gt;<br />
+using namespace std;<br />
+int n;<br />
+#define MAXN 200010<br />
+struct edge<br />
+{<br />
+	int to,nxt;<br />
+}e[MAXN * 2 + MAXN * 30];<br />
+int edgenum = 0;<br />
+int lin[MAXN] = {0};<br />
+void add(int a,int b)<br />
+{<br />
+	e[++edgenum] = (edge){b,lin[a]};lin[a] = edgenum;<br />
+	return;<br />
+}<br />
+int p[MAXN];<br />
+struct node<br />
+{<br />
+	int lc,rc;<br />
+}t[MAXN &lt;&lt; 1];<br />
+int ptr = 0;<br />
+int newnode(){return ++ptr;}<br />
+int root;<br />
+#define mid ((l + r) &gt;&gt; 1)<br />
+void build(int &rt,int l,int r)<br />
+{<br />
+	if(l == r){rt = l;return;}<br />
+	rt = newnode();<br />
+	build(t[rt].lc,l,mid);add(rt,t[rt].lc);<br />
+	build(t[rt].rc,mid + 1,r);add(rt,t[rt].rc);<br />
+	return;<br />
+}<br />
+void add(int rt,int L,int R,int k,int l,int r)<br />
+{<br />
+	if(L &lt;= l && r &lt;= R){add(k,rt);return;}<br />
+	if(L &lt;= mid)add(t[rt].lc,L,R,k,l,mid);<br />
+	if(R &gt; mid)add(t[rt].rc,L,R,k,mid + 1,r);<br />
+	return;<br />
+}<br />
+int pos[MAXN];<br />
+int lef[MAXN][17],rig[MAXN][17];<br />
+int lg[MAXN];<br />
+int query_max(int f[MAXN][17],int l,int r)<br />
+{<br />
+	int len = lg[r - l + 1];<br />
+	return max(f[l][len],f[r - (1 &lt;&lt; len) + 1][len]);<br />
+}<br />
+int query_min(int f[MAXN][17],int l,int r)<br />
+{<br />
+	int len = lg[r - l + 1];<br />
+	return min(f[l][len],f[r - (1 &lt;&lt; len) + 1][len]);<br />
+}<br />
+int dfn[MAXN],low[MAXN],tot = 0;<br />
+int stack[MAXN],top = 0;<br />
+bool v[MAXN];<br />
+int ins[MAXN],scc = 0;<br />
+void tarjan(int k)<br />
+{<br />
+	dfn[k] = low[k] = ++tot;<br />
+	v[k] = true;stack[++top] = k;<br />
+	for(int i = lin[k];i != 0;i = e[i].nxt)<br />
+	{<br />
+		if(dfn[e[i].to] == 0)<br />
+		{<br />
+			tarjan(e[i].to);<br />
+			low[k] = min(low[k],low[e[i].to]);<br />
+		}<br />
+		else if(v[e[i].to])<br />
+		{<br />
+			low[k] = min(low[k],dfn[e[i].to]);<br />
+		}<br />
+	}<br />
+	if(low[k] &gt;= dfn[k])<br />
+	{<br />
+		int t;<br />
+		++scc;<br />
+		do<br />
+		{<br />
+			t = stack[top--];<br />
+			v[t] = false;<br />
+			ins[t] = scc;<br />
+		}while(t != k);<br />
+	}<br />
+	return;<br />
+}<br />
+int lbound[MAXN],rbound[MAXN];<br />
+vector&lt;int&gt; g[MAXN];<br />
+int ind[MAXN];<br />
+int f1[MAXN][17],f2[MAXN][17];<br />
+int main()<br />
+{<br />
+	scanf("%d",&n);<br />
+	ptr = n;<br />
+	build(root,1,n);<br />
+	for(int i = 1;i &lt;= n;++i)scanf("%d",&p[i]);<br />
+	for(int i = 1;i &lt;= n;++i)pos[p[i]] = i;<br />
+	for(int i = 1;i &lt;= n;++i)lef[i][0] = rig[i][0] = pos[i];<br />
+	for(int i = 2;i &lt;= n;++i)lg[i] = lg[i &gt;&gt; 1] + 1;<br />
+	for(int k = 1;k &lt;= 16;++k)<br />
+	{<br />
+		for(int i = 1;i &lt;= n - (1 &lt;&lt; k) + 1;++i)<br />
+		{<br />
+			lef[i][k] = min(lef[i][k - 1],lef[i + (1 &lt;&lt; (k - 1))][k - 1]);<br />
+			rig[i][k] = max(rig[i][k - 1],rig[i + (1 &lt;&lt; (k - 1))][k - 1]);<br />
+		}<br />
+	}<br />
+	for(int i = 1;i &lt; n;++i)<br />
+	{<br />
+		int l = query_min(lef,min(p[i],p[i + 1]),max(p[i],p[i + 1]));<br />
+		int r = query_max(rig,min(p[i],p[i + 1]),max(p[i],p[i + 1]));<br />
+		add(root,l,r - 1,i,1,n);<br />
+	}<br />
+	for(int i = 1;i &lt;= ptr;++i)<br />
+	{<br />
+		if(dfn[i] == 0)tarjan(i);<br />
+	}<br />
+	memset(lbound,0x3f,sizeof(lbound));<br />
+	for(int i = 1;i &lt;= n;++i)<br />
+	{<br />
+		lbound[ins[i]] = min(lbound[ins[i]],i);<br />
+		rbound[ins[i]] = max(rbound[ins[i]],i);<br />
+	}<br />
+	for(int k = 1;k &lt;= ptr;++k)<br />
+	{<br />
+		for(int i = lin[k];i != 0;i = e[i].nxt)<br />
+		{<br />
+			if(ins[k] != ins[e[i].to])<br />
+			{<br />
+				g[ins[e[i].to]].push_back(ins[k]);<br />
+				++ind[ins[k]];<br />
+			}<br />
+		}<br />
+	}<br />
+	queue&lt;int&gt; q;<br />
+	for(int i = 1;i &lt;= scc;++i)<br />
+	{<br />
+		if(ind[i] == 0)q.push(i);<br />
+	}<br />
+	while(!q.empty())<br />
+	{<br />
+		int k = q.front();q.pop();<br />
+		for(vector&lt;int&gt;::iterator it = g[k].begin();it != g[k].end();++it)<br />
+		{<br />
+			lbound[*it] = min(lbound[*it],lbound[k]);<br />
+			rbound[*it] = max(rbound[*it],rbound[k]);<br />
+			if((--ind[*it]) == 0)q.push(*it);<br />
+		}<br />
+	}<br />
+	for(int i = 1;i &lt; n;++i)<br />
+	{<br />
+		f1[i][0] = lbound[ins[i]];<br />
+		f2[i][0] = rbound[ins[i]];<br />
+	}<br />
+	for(int k = 1;k &lt;= 16;++k)<br />
+	{<br />
+		for(int i = 1;i &lt;= n - (1 &lt;&lt; k);++i)<br />
+		{<br />
+			f1[i][k] = min(f1[i][k - 1],f1[i + (1 &lt;&lt; (k - 1))][k - 1]);<br />
+			f2[i][k] = max(f2[i][k - 1],f2[i + (1 &lt;&lt; (k - 1))][k - 1]);<br />
+		}<br />
+	}<br />
+	int m;<br />
+	scanf("%d",&m);<br />
+	int l,r;<br />
+	for(int i = 1;i &lt;= m;++i)<br />
+	{<br />
+		scanf("%d%d",&l,&r);<br />
+		printf("%d %d\n",query_min(f1,l,r - 1),query_max(f2,l,r - 1) + 1);<br />
+	}<br />
+	return 0;<br />
+}<br />
+</pre></code>
+</div>
+        </div>
+        <div class="blogfile_showtag">
+          <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png">
+          In tag:
+<a href="../tags/图论-tarjan.html">图论-tarjan</a> <a href="../tags/数据结构-线段树优化建图.html">数据结构-线段树优化建图</a> <a href="../tags/数据结构-ST表.html">数据结构-ST表</a> <a href="../tags/数据结构-线段树.html">数据结构-线段树</a> <a href="../tags/数据结构-单调栈.html">数据结构-单调栈</a> 
+          <!--<a href="../tags/blog.html">blog</a>-->
+        </div>
+      </div>
+    </div>
+    <div id="middle_nav">
+      <div class="blog_host">
+        <div class="nav_avator">
+          <img src="http://pic.yupoo.com/wjh15101051/72c1aeab/f51d56e0.jpg" alt="avator">
+        </div>
+        <div class="nav_ID">
+          wjh15101051
+        </div>
+      </div>
+      <div class="nav_list">
+        <li class="tags">
+          <a href="../tags.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png" class="list_icon" id="tags_image">
+            Tags
+          </a>
+        </li>
+        <li class="categories">
+          <a href="../categories.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png" class="list_icon" id="categories_image">
+            Categories
+          </a>
+        </li>
+        <li class="timeline">
+          <a href="../timeline.html">
+            <img src="http://pic.yupoo.com/wjh15101051/30365cc7/c1a3be15.png" class="list_icon" id="timeline_image">
+            Timeline
+          </a>
+        </li>
+        <li class="about">
+          <a href="../about.html">
+            <img src="http://pic.yupoo.com/wjh15101051/24f1cb41/e239086e.png" class="list_icon" id="about_image">
+            About
+          </a>
+        </li>
+        <li class="toolbox">
+          <a href="../toolbox.html">
+            <img src="http://pic.yupoo.com/wjh15101051/dee9f673/d3cf682a.png" class="list_icon" id="toolbox_image">
+            Toolbox
+          </a>
+        </li>
+        <li class="friends">
+            <div class="friends_text">
+              <img src="http://pic.yupoo.com/wjh15101051/d291ebed/29f9c807.png" id="friends_image">
+              Friends
+            </div>
+            <div id="fp_friends_list">
+              <div id="SGcolin">
+                <a href="http://blog.gyx.me/" target="_blank">SGcolin</a>
+              </div>
+              <div id="Xingcy">
+                <a href="https://www.cnblogs.com/xcysblog/" target="_blank">Xingcy</a>
+              </div>
+              <div id="ZH_comld">
+                <a href="https://www.cnblogs.com/ZH-comld/" target="_blank">ZH_comld</a>
+              </div>
+            </div>
+            <br>
+          </div>
+        </li>
+      </div>
+    <div class="music_player">
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer@1.10.0/dist/APlayer.min.css">
+      <script src="https://blog-static.cnblogs.com/files/yjlaugus/APlayer.min.js"></script>
+      <div id="aplayer" class="aplayer"  data-id="5313691453" data-server="netease" data-type="playlist" data-fixed="true" data-listfolded="true" data-order="random" data-theme="#F58EA8"></div>
+      <script src="https://unpkg.com/meting@1.2/dist/Meting.min.js"></script>
+    </div>
+    <div class="bottom">
+      <div>
+        Copyright © 2020
+        <a id="copyright_user_a" href="index.html">
+          <span id="copyright_user">wjh15101051</span>
+        </a>
+      </div>
+      <div class="bottom_anime">ღゝ◡╹)ノ♡</div>
+    </div>
+  </div>
+</body>
+</html>

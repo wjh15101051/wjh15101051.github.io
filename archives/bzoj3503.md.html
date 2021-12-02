@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>CQOI2014 和谐矩阵</title>
+  <link rel="stylesheet" type="text/css" id="frame_style" href="../css/frame_style1.css">
+  <link rel="stylesheet" type="text/css" id="Markdown_style" href="../css/Markdown_style.css">
+  <script type="text/javascript" src="../jscode/frame.js"></script>
+  <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+  <link rel="stylesheet" href="https://ziyuan.fenxianglu.cn/js/highlight/styles/default.css">
+  <script src="https://ziyuan.fenxianglu.cn/js/highlight/highlight.pack.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+        inlineMath: [['$','$']]
+      }
+    });
+  </script>
+</head>
+<body>
+  <div class="main">
+    <div class="head">
+      <div class="title1">
+        <a href="../index.html">wjh15101051's space</a>
+      </div>
+      <div class="title2">
+        卧薪尝胆，厚积薄发。
+      </div>
+    </div>
+    <div id="middle_blogfile">
+      <div class="blog_blogfile">
+        <div class="blogfile_title">
+            CQOI2014 和谐矩阵
+        </div>
+        <div class="blogfile_stitle">
+          <img src="http://pic.yupoo.com/wjh15101051/1e0e1b3a/118165c5.jpg">
+          Date: Mon Sep 10 20:24:06 CST 2018
+          <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png">
+          In Category:
+          <a href="../categories/NoCategory.html">NoCategory</a>
+        </div>
+        <div class="blogfile_content">
+<div class = "MarkdownCommonContent">
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Description：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+构造一个
+$01$
+矩阵使得任何一个元素他和他周围五个元素有偶数个
+$1$
+。
+</div>
+<div class = "MarkdownCommonContent">
+$1\le n \le 40$
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Solution：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+高斯消元解异或方程组，对于方程组中的所有系数，只有
+$0$
+和
+$1$
+，分别代表这个未知数对这个方程有无影响，但是感觉影响会有正有负，其实是没有区别的，只要调整一下方程右边的结果即可。
+</div>
+<div class = "MarkdownCommonContent">
+对于这题，发现如果第一行的结果确定了（第零行其实已经确定了，都是零），那么整个矩阵的状态就已经确定了，可以递推一下每个数受第一行那些数字影响，而存在一个矩阵合法当且仅当第
+$m+1$
+行全为零，这样我们就有了
+$m$
+个方程，方程右边都是零，用高斯消元解一遍方程，在回代的时候，把所有自由元的取值都设成一，因为不允许全零矩阵，主元直接解出即可。
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Code：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+<pre><code class="MarkdownParaCode">
+#include&lt;algorithm&gt;<br />
+#include&lt;iostream&gt;<br />
+#include&lt;cstdlib&gt;<br />
+#include&lt;cstdio&gt;<br />
+#include&lt;cmath&gt;<br />
+#include&lt;cstring&gt;<br />
+using namespace std;<br />
+int n,m;<br />
+#define MAXN 43<br />
+typedef long long ll;<br />
+ll f[MAXN][MAXN];<br />
+ll a[MAXN];<br />
+ll res[MAXN][MAXN];<br />
+ll c[MAXN][MAXN];<br />
+void gauss(int k)<br />
+{<br />
+	for(int i = 1;i &lt;= k;++i)<br />
+	{<br />
+		if(!(a[i] & (1ll &lt;&lt; i)))<br />
+			for(int j = i + 1;j &lt;= k && !(a[i] & (1ll &lt;&lt; i));++j)<br />
+				if(a[j] & (1ll &lt;&lt; i))<br />
+					swap(a[i],a[j]);<br />
+		if((a[i] & (1ll &lt;&lt; i)) == 0)continue;<br />
+		for(int j = i + 1;j &lt;= k;++j)<br />
+			if(a[j] & (1ll &lt;&lt; i))<br />
+				a[j] ^= a[i];<br />
+	}<br />
+	for(int i = k;i &gt;= 1;--i)<br />
+	{<br />
+		if(a[i] & (1ll &lt;&lt; i))c[1][i] = ((a[i] &gt;&gt; (m + 1)) & 1);<br />
+		else c[1][i] = 1;<br />
+		for(int j = i - 1;j &gt;= 1;--j)<br />
+			if(a[j] & (1ll &lt;&lt; i))a[j] ^= (c[1][i] &lt;&lt; (m + 1));<br />
+	}<br />
+	return;<br />
+}<br />
+int main()<br />
+{<br />
+	scanf("%d%d",&n,&m);<br />
+	for(int i = 1;i &lt;= m;++i)<br />
+		f[1][i] |= (1ll &lt;&lt; i);<br />
+	for(int i = 2;i &lt;= n + 1;++i)<br />
+		for(int j = 1;j &lt;= m;++j)<br />
+			f[i][j] = f[i - 1][j] ^ f[i - 1][j - 1] ^ f[i - 1][j + 1] ^ f[i - 2][j];<br />
+	for(int i = 1;i &lt;= m;++i)a[i] = f[n + 1][i];<br />
+	gauss(m);<br />
+	for(int i = 2;i &lt;= n;++i)<br />
+		for(int j = 1;j &lt;= m;++j)<br />
+			c[i][j] = c[i - 1][j] ^ c[i - 1][j - 1] ^ c[i - 1][j + 1] ^ c[i - 2][j];<br />
+	for(int i = 1;i &lt;= n;++i)<br />
+	{<br />
+		for(int j = 1;j &lt;= m;++j)<br />
+		{<br />
+			putchar('0' + c[i][j]);<br />
+			putchar(' ');<br />
+		}<br />
+		puts("");<br />
+	}<br />
+	return 0;<br />
+}<br />
+</pre></code>
+</div>
+        </div>
+        <div class="blogfile_showtag">
+          <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png">
+          In tag:
+<a href="../tags/数学-高斯消元.html">数学-高斯消元</a> 
+          <!--<a href="../tags/blog.html">blog</a>-->
+        </div>
+      </div>
+    </div>
+    <div id="middle_nav">
+      <div class="blog_host">
+        <div class="nav_avator">
+          <img src="http://pic.yupoo.com/wjh15101051/72c1aeab/f51d56e0.jpg" alt="avator">
+        </div>
+        <div class="nav_ID">
+          wjh15101051
+        </div>
+      </div>
+      <div class="nav_list">
+        <li class="tags">
+          <a href="../tags.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png" class="list_icon" id="tags_image">
+            Tags
+          </a>
+        </li>
+        <li class="categories">
+          <a href="../categories.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png" class="list_icon" id="categories_image">
+            Categories
+          </a>
+        </li>
+        <li class="timeline">
+          <a href="../timeline.html">
+            <img src="http://pic.yupoo.com/wjh15101051/30365cc7/c1a3be15.png" class="list_icon" id="timeline_image">
+            Timeline
+          </a>
+        </li>
+        <li class="about">
+          <a href="../about.html">
+            <img src="http://pic.yupoo.com/wjh15101051/24f1cb41/e239086e.png" class="list_icon" id="about_image">
+            About
+          </a>
+        </li>
+        <li class="toolbox">
+          <a href="../toolbox.html">
+            <img src="http://pic.yupoo.com/wjh15101051/dee9f673/d3cf682a.png" class="list_icon" id="toolbox_image">
+            Toolbox
+          </a>
+        </li>
+        <li class="friends">
+            <div class="friends_text">
+              <img src="http://pic.yupoo.com/wjh15101051/d291ebed/29f9c807.png" id="friends_image">
+              Friends
+            </div>
+            <div id="fp_friends_list">
+              <div id="SGcolin">
+                <a href="http://blog.gyx.me/" target="_blank">SGcolin</a>
+              </div>
+              <div id="Xingcy">
+                <a href="https://www.cnblogs.com/xcysblog/" target="_blank">Xingcy</a>
+              </div>
+              <div id="ZH_comld">
+                <a href="https://www.cnblogs.com/ZH-comld/" target="_blank">ZH_comld</a>
+              </div>
+            </div>
+            <br>
+          </div>
+        </li>
+      </div>
+    <div class="music_player">
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer@1.10.0/dist/APlayer.min.css">
+      <script src="https://blog-static.cnblogs.com/files/yjlaugus/APlayer.min.js"></script>
+      <div id="aplayer" class="aplayer"  data-id="5313691453" data-server="netease" data-type="playlist" data-fixed="true" data-listfolded="true" data-order="random" data-theme="#F58EA8"></div>
+      <script src="https://unpkg.com/meting@1.2/dist/Meting.min.js"></script>
+    </div>
+    <div class="bottom">
+      <div>
+        Copyright © 2020
+        <a id="copyright_user_a" href="index.html">
+          <span id="copyright_user">wjh15101051</span>
+        </a>
+      </div>
+      <div class="bottom_anime">ღゝ◡╹)ノ♡</div>
+    </div>
+  </div>
+</body>
+</html>

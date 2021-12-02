@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Surprise me!</title>
+  <link rel="stylesheet" type="text/css" id="frame_style" href="../css/frame_style1.css">
+  <link rel="stylesheet" type="text/css" id="Markdown_style" href="../css/Markdown_style.css">
+  <script type="text/javascript" src="../jscode/frame.js"></script>
+  <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+  <link rel="stylesheet" href="https://ziyuan.fenxianglu.cn/js/highlight/styles/default.css">
+  <script src="https://ziyuan.fenxianglu.cn/js/highlight/highlight.pack.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+        inlineMath: [['$','$']]
+      }
+    });
+  </script>
+</head>
+<body>
+  <div class="main">
+    <div class="head">
+      <div class="title1">
+        <a href="../index.html">wjh15101051's space</a>
+      </div>
+      <div class="title2">
+        卧薪尝胆，厚积薄发。
+      </div>
+    </div>
+    <div id="middle_blogfile">
+      <div class="blog_blogfile">
+        <div class="blogfile_title">
+            Surprise me!
+        </div>
+        <div class="blogfile_stitle">
+          <img src="http://pic.yupoo.com/wjh15101051/1e0e1b3a/118165c5.jpg">
+          Date: Wed Jan 16 11:57:42 CST 2019
+          <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png">
+          In Category:
+          <a href="../categories/NoCategory.html">NoCategory</a>
+        </div>
+        <div class="blogfile_content">
+<div class = "MarkdownCommonContent">
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Description：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+给定一棵
+$n$
+个节点的树，每个点有一个权值
+$a[i]$
+，保证
+$a[i]$
+是一个排列。 求：
+$$
+\frac{1}{n(n-1)}\sum_{i=1}^n\sum_{j=1}^n\varphi(a_i\times a_j)\times dist(i,j)
+$$
+$1\leqslant n\leqslant 2\times 10^5$
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Solution：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+首先有结论：
+$$
+\varphi(ab)=\frac{\varphi(a)\times\varphi(b)\gcd(a,b)}{\varphi(\gcd(a,b))}
+$$
+于是：
+$$
+\begin{align}
+ans&=\frac{1}{n(n-1)}\sum_{i=1}^n\sum_{j=1}^n\varphi(a_i\times a_j)\times dist(i,j)\\
+&=\frac{1}{n(n-1)}\sum_{i=1}^n\sum_{j=1}^n\varphi(ij)\times dist(p_i,p_j)\\
+&=\frac{1}{n(n-1)}\sum_{i=1}^n\sum_{j=1}^n\varphi(i)\varphi(j)\frac{\gcd(i,j)}{\varphi(\gcd(i,j))}dist(p_i,p_j)\\
+&=\frac{1}{n(n-1)}\sum_{d=1}^n\frac d{\varphi(d)}\sum_{i=1}^n\sum_{j=1}^n\varphi(i)\varphi(j)dist(p_i,p_j)[\gcd(i,j)=d]\\
+\end{align}
+$$
+然后我们只要求出：
+$$
+\begin{align}
+f(d)&=\sum_{i=1}^n\sum_{j=1}^n\varphi(i)\varphi(j)dist(p_i,p_j)[\gcd(i,j)=d]\\
+\end{align}
+$$
+就可以计算答案了。
+</div>
+<div class = "MarkdownCommonContent">
+考虑怎么计算
+$f$
+，我们可以把所有
+$a_i$
+是
+$d$
+的倍数的点拿出来建虚树，然后在虚树上树形
+$dp$
+，大概是：
+$$
+\begin{align}
+sum&=\sum_{i=1}^n\varphi(i)\\
+f(d)&=\sum_{i=1}^n\sum_{j=1}^n\varphi(i)\varphi(j)dist(p_i,p_j)\\
+&=\sum_{i=1}^n\sum_{j=1}^n\varphi(i)\varphi(j)(dep[i]+dep[j]-2\times dep[LCA(i,j)])\\
+&=\sum_{i=1}^n\sum_{j=1}^n\varphi(i)\varphi(j)dep[i]+\varphi(i)\varphi(j)dep[j]-2\times \varphi(i)\varphi(j)dep[LCA(i,j)])\\
+&=2\times \sum_{i=1}^n\varphi(i)dep[i]\times sum-\sum_{i=1}^n\sum_{j=1}^n2\times \varphi(i)\varphi(j)dep[LCA(i,j)])\\
+\end{align}
+$$
+在某个点合并所有的子树然后计算贡献就行了。
+</div>
+<div class = "MarkdownCommonContent">
+然后再倒序枚举每个
+$f$
+减掉它的所有倍数就可以计算了。
+</div>
+<div class = "MarkdownCommonContent">
+复杂度
+$O(n\log^2n)$
+。
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Code：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+<pre><code class="MarkdownParaCode">
+#include&lt;algorithm&gt;<br />
+#include&lt;iostream&gt;<br />
+#include&lt;cstdlib&gt;<br />
+#include&lt;cstdio&gt;<br />
+#include&lt;cmath&gt;<br />
+#include&lt;vector&gt;<br />
+#include&lt;cctype&gt;<br />
+#include&lt;cstring&gt;<br />
+using namespace std;<br />
+int n;<br />
+#define MAXN 200010<br />
+#define MOD 1000000007<br />
+bool isprime[MAXN];<br />
+int prime[MAXN],pr = 0;<br />
+int phi[MAXN];<br />
+int power(int a,int b)<br />
+{<br />
+	int res = 1;<br />
+	while(b &gt; 0)<br />
+	{<br />
+		if(b & 1)res = 1ll * res * a % MOD;<br />
+		a = 1ll * a * a % MOD;<br />
+		b = b &gt;&gt; 1;<br />
+	}<br />
+	return res;<br />
+}<br />
+void sieve(int n)<br />
+{<br />
+	for(int i = 2;i &lt;= n;++i)isprime[i] = true;<br />
+	phi[1] = 1;<br />
+	for(int i = 2;i &lt;= n;++i)<br />
+	{<br />
+		if(isprime[i])prime[++pr] = i,phi[i] = i - 1;<br />
+		for(int j = 1;j &lt;= pr && i * prime[j] &lt;= n;++j)<br />
+		{<br />
+			isprime[i * prime[j]] = false;<br />
+			if(i % prime[j] == 0)<br />
+			{<br />
+				phi[i * prime[j]] = phi[i] * prime[j];<br />
+				break;<br />
+			}<br />
+			else phi[i * prime[j]] = phi[i] * phi[prime[j]];<br />
+		}<br />
+	}<br />
+	return;<br />
+}<br />
+int s[MAXN],p[MAXN];<br />
+struct edge<br />
+{<br />
+	int to,nxt;<br />
+}e[MAXN &lt;&lt; 1];<br />
+int edgenum = 0;<br />
+int lin[MAXN] = {0};<br />
+void add(int a,int b)<br />
+{<br />
+	e[++edgenum] = (edge){b,lin[a]};lin[a] = edgenum;<br />
+	e[++edgenum] = (edge){a,lin[b]};lin[b] = edgenum;<br />
+	return;<br />
+}<br />
+int fa[MAXN],dep[MAXN],son[MAXN],siz[MAXN],top[MAXN],rnk[MAXN],tot = 0;<br />
+void dfs1(int k,int depth)<br />
+{<br />
+	siz[k] = 1;dep[k] = depth;<br />
+	for(int i = lin[k];i != 0;i = e[i].nxt)<br />
+	{<br />
+		if(e[i].to != fa[k])<br />
+		{<br />
+			fa[e[i].to] = k;<br />
+			dfs1(e[i].to,depth + 1);<br />
+			siz[k] += siz[e[i].to];<br />
+			if(son[k] == 0 || siz[e[i].to] &gt; siz[son[k]])<br />
+			{<br />
+				son[k] = e[i].to;<br />
+			}<br />
+		}<br />
+	}<br />
+	return;<br />
+}<br />
+void dfs2(int k,int tp)<br />
+{<br />
+	rnk[k] = ++tot;<br />
+	top[k] = tp;<br />
+	if(son[k] == 0)return;<br />
+	dfs2(son[k],tp);<br />
+	for(int i = lin[k];i != 0;i = e[i].nxt)<br />
+	{<br />
+		if(e[i].to != fa[k] && e[i].to != son[k])<br />
+		{<br />
+			dfs2(e[i].to,e[i].to);<br />
+		}<br />
+	}<br />
+	return;<br />
+}<br />
+int LCA(int a,int b)<br />
+{<br />
+	while(top[a] != top[b])<br />
+	{<br />
+		if(dep[top[a]] &lt; dep[top[b]])swap(a,b);<br />
+		a = fa[top[a]];<br />
+	}<br />
+	return (dep[a] &lt; dep[b] ? a : b);<br />
+}<br />
+int F[MAXN];<br />
+int v[MAXN];<br />
+bool cmp_dfn(int a,int b){return rnk[a] &lt; rnk[b];}<br />
+int st[MAXN],tp = 0;<br />
+vector&lt;int&gt; g[MAXN];<br />
+int f[MAXN];<br />
+bool tag[MAXN];<br />
+int dp(int k)<br />
+{<br />
+	int res = 0,sum = 0;<br />
+	int tot = 0;<br />
+	if(tag[k])tot = phi[s[k]];<br />
+	for(vector&lt;int&gt;::iterator it = g[k].begin();it != g[k].end();++it)<br />
+	{<br />
+		res = (res + dp(*it)) % MOD;<br />
+		sum = (sum + 1ll * tot * f[*it] % MOD) % MOD;<br />
+		tot = (tot + f[*it]) % MOD;<br />
+	}<br />
+	g[k].clear();<br />
+	f[k] = tot;<br />
+	sum = sum * 2 % MOD;<br />
+	if(tag[k])sum = (sum + 1ll * phi[s[k]] * phi[s[k]] % MOD) % MOD;<br />
+	res = (res + 1ll * sum * dep[k] % MOD) % MOD;<br />
+	return res;<br />
+}<br />
+int calc(int k)<br />
+{<br />
+	v[0] = 0;<br />
+	for(int i = k;i &lt;= n;i += k)v[++v[0]] = p[i];<br />
+	int sum = 0;<br />
+	for(int i = 1;i &lt;= v[0];++i)sum = (sum + phi[s[v[i]]]) % MOD;<br />
+	int ans = 0;<br />
+	for(int i = 1;i &lt;= v[0];++i)ans = (ans + 1ll * phi[s[v[i]]] * dep[v[i]] % MOD * sum % MOD) % MOD;<br />
+	ans = ans * 2 % MOD;<br />
+	sort(v + 1,v + 1 + v[0],cmp_dfn);<br />
+	st[tp = 1] = v[1];<br />
+	for(int i = 1;i &lt;= v[0];++i)tag[v[i]] = true;<br />
+	for(int i = 2;i &lt;= v[0];++i)<br />
+	{<br />
+		int lca = LCA(v[i],st[tp]);<br />
+		if(lca == st[tp])<br />
+		{<br />
+			st[++tp] = v[i];<br />
+			continue;<br />
+		}<br />
+		while(tp &gt;= 2)<br />
+		{<br />
+			if(rnk[lca] &lt; rnk[st[tp - 1]])<br />
+			{<br />
+				g[st[tp - 1]].push_back(st[tp]);<br />
+				--tp;<br />
+			}<br />
+			else<br />
+			{<br />
+				if(lca != st[tp])<br />
+				{<br />
+					g[lca].push_back(st[tp]);<br />
+				}<br />
+				--tp;<br />
+				break;<br />
+			}<br />
+		}<br />
+		if(tp == 1 && rnk[lca] &lt; rnk[st[tp]])<br />
+		{<br />
+			g[lca].push_back(st[tp]);<br />
+			st[tp] = lca;<br />
+		}<br />
+		if(lca != st[tp])st[++tp] = lca;<br />
+		st[++tp] = v[i];<br />
+	}<br />
+	while(tp &gt;= 2)<br />
+	{<br />
+		g[st[tp - 1]].push_back(st[tp]);<br />
+		--tp;<br />
+	}<br />
+	ans = (ans - 2 * dp(st[tp]) % MOD + MOD) % MOD;<br />
+	for(int i = 1;i &lt;= v[0];++i)tag[v[i]] = false;<br />
+	return ans;<br />
+}<br />
+int main()<br />
+{<br />
+	scanf("%d",&n);<br />
+	sieve(n);<br />
+	for(int i = 1;i &lt;= n;++i)scanf("%d",&s[i]);<br />
+	for(int i = 1;i &lt;= n;++i)p[s[i]] = i;<br />
+	int a,b;<br />
+	for(int i = 1;i &lt; n;++i)<br />
+	{<br />
+		scanf("%d%d",&a,&b);<br />
+		add(a,b);<br />
+	}<br />
+	dfs1(1,1);dfs2(1,1);<br />
+	for(int d = 1;d &lt;= n;++d)F[d] = calc(d);<br />
+	for(int i = n;i &gt;= 1;--i)<br />
+		for(int j = i + i;j &lt;= n;j += i)F[i] = (F[i] - F[j] + MOD) % MOD;<br />
+	int ans = 0;<br />
+	for(int d = 1;d &lt;= n;++d)<br />
+	{<br />
+		ans = (ans + 1ll * d * power(phi[d],MOD - 2) % MOD * F[d] % MOD) % MOD;<br />
+	}<br />
+	ans = 1ll * ans * power(n,MOD - 2) % MOD * power(n - 1,MOD - 2) % MOD;<br />
+	cout &lt;&lt; ans &lt;&lt; endl;<br />
+	return 0;<br />
+}<br />
+</pre></code>
+</div>
+        </div>
+        <div class="blogfile_showtag">
+          <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png">
+          In tag:
+<a href="../tags/数学-莫比乌斯反演.html">数学-莫比乌斯反演</a> <a href="../tags/树-虚树.html">树-虚树</a> 
+          <!--<a href="../tags/blog.html">blog</a>-->
+        </div>
+      </div>
+    </div>
+    <div id="middle_nav">
+      <div class="blog_host">
+        <div class="nav_avator">
+          <img src="http://pic.yupoo.com/wjh15101051/72c1aeab/f51d56e0.jpg" alt="avator">
+        </div>
+        <div class="nav_ID">
+          wjh15101051
+        </div>
+      </div>
+      <div class="nav_list">
+        <li class="tags">
+          <a href="../tags.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png" class="list_icon" id="tags_image">
+            Tags
+          </a>
+        </li>
+        <li class="categories">
+          <a href="../categories.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png" class="list_icon" id="categories_image">
+            Categories
+          </a>
+        </li>
+        <li class="timeline">
+          <a href="../timeline.html">
+            <img src="http://pic.yupoo.com/wjh15101051/30365cc7/c1a3be15.png" class="list_icon" id="timeline_image">
+            Timeline
+          </a>
+        </li>
+        <li class="about">
+          <a href="../about.html">
+            <img src="http://pic.yupoo.com/wjh15101051/24f1cb41/e239086e.png" class="list_icon" id="about_image">
+            About
+          </a>
+        </li>
+        <li class="toolbox">
+          <a href="../toolbox.html">
+            <img src="http://pic.yupoo.com/wjh15101051/dee9f673/d3cf682a.png" class="list_icon" id="toolbox_image">
+            Toolbox
+          </a>
+        </li>
+        <li class="friends">
+            <div class="friends_text">
+              <img src="http://pic.yupoo.com/wjh15101051/d291ebed/29f9c807.png" id="friends_image">
+              Friends
+            </div>
+            <div id="fp_friends_list">
+              <div id="SGcolin">
+                <a href="http://blog.gyx.me/" target="_blank">SGcolin</a>
+              </div>
+              <div id="Xingcy">
+                <a href="https://www.cnblogs.com/xcysblog/" target="_blank">Xingcy</a>
+              </div>
+              <div id="ZH_comld">
+                <a href="https://www.cnblogs.com/ZH-comld/" target="_blank">ZH_comld</a>
+              </div>
+            </div>
+            <br>
+          </div>
+        </li>
+      </div>
+    <div class="music_player">
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer@1.10.0/dist/APlayer.min.css">
+      <script src="https://blog-static.cnblogs.com/files/yjlaugus/APlayer.min.js"></script>
+      <div id="aplayer" class="aplayer"  data-id="5313691453" data-server="netease" data-type="playlist" data-fixed="true" data-listfolded="true" data-order="random" data-theme="#F58EA8"></div>
+      <script src="https://unpkg.com/meting@1.2/dist/Meting.min.js"></script>
+    </div>
+    <div class="bottom">
+      <div>
+        Copyright © 2020
+        <a id="copyright_user_a" href="index.html">
+          <span id="copyright_user">wjh15101051</span>
+        </a>
+      </div>
+      <div class="bottom_anime">ღゝ◡╹)ノ♡</div>
+    </div>
+  </div>
+</body>
+</html>

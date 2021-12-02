@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>NOI2005 月下柠檬树</title>
+  <link rel="stylesheet" type="text/css" id="frame_style" href="../css/frame_style1.css">
+  <link rel="stylesheet" type="text/css" id="Markdown_style" href="../css/Markdown_style.css">
+  <script type="text/javascript" src="../jscode/frame.js"></script>
+  <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+  <link rel="stylesheet" href="https://ziyuan.fenxianglu.cn/js/highlight/styles/default.css">
+  <script src="https://ziyuan.fenxianglu.cn/js/highlight/highlight.pack.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+        inlineMath: [['$','$']]
+      }
+    });
+  </script>
+</head>
+<body>
+  <div class="main">
+    <div class="head">
+      <div class="title1">
+        <a href="../index.html">wjh15101051's space</a>
+      </div>
+      <div class="title2">
+        卧薪尝胆，厚积薄发。
+      </div>
+    </div>
+    <div id="middle_blogfile">
+      <div class="blog_blogfile">
+        <div class="blogfile_title">
+            NOI2005 月下柠檬树
+        </div>
+        <div class="blogfile_stitle">
+          <img src="http://pic.yupoo.com/wjh15101051/1e0e1b3a/118165c5.jpg">
+          Date: Fri Dec 14 13:46:07 CST 2018
+          <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png">
+          In Category:
+          <a href="../categories/NoCategory.html">NoCategory</a>
+        </div>
+        <div class="blogfile_content">
+<div class = "MarkdownCommonContent">
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Description：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+给一堆摞在一起的圆台和圆锥，求他们投影的面积。
+</div>
+<div class = "MarkdownCommonContent">
+$1\leqslant n\leqslant 500$
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Solution：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+最后的图形就是一堆圆还有这些圆的切线，圆的切线可以用相似三角形求，最后用自适应辛普森积分求即可。
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Code：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+<pre><code class="MarkdownParaCode">
+#include&lt;algorithm&gt;<br />
+#include&lt;iostream&gt;<br />
+#include&lt;cstdlib&gt;<br />
+#include&lt;cstdio&gt;<br />
+#include&lt;cmath&gt;<br />
+#include&lt;cctype&gt;<br />
+#include&lt;cstring&gt;<br />
+using namespace std;<br />
+int n;<br />
+double alpha;<br />
+#define MAXN 510<br />
+double r[MAXN],h[MAXN];<br />
+struct circ<br />
+{<br />
+	double x,r;<br />
+}c[MAXN];<br />
+struct line<br />
+{<br />
+	double k,b;<br />
+	double l,r;<br />
+}l[MAXN];<br />
+const double eps = 1e-10;<br />
+line build_line(circ a,circ b)<br />
+{<br />
+	if((a.x - a.r &lt;= b.x - b.r && a.x + a.r &gt;= b.x + b.r) || (b.x - b.r &lt;= a.x - a.r && b.x + b.r &gt;= a.x + a.r))<br />
+	{<br />
+		return (line){0,0,0,0};<br />
+	}<br />
+	line res;<br />
+	if(fabs(a.r - b.r) &lt;= eps)<br />
+	{<br />
+		res.l = a.x;res.r = b.x;<br />
+		res.k = 0;res.b = a.r;<br />
+		return res;<br />
+	}<br />
+	else<br />
+	{<br />
+		double x = (b.r * a.x - b.x * a.r) / (b.r - a.r);<br />
+		double xa,ya,xb,yb;<br />
+		if(fabs(a.x - x) &gt; eps)xa = a.x - a.r * a.r / (a.x - x);<br />
+		else xa = a.x;<br />
+		ya = sqrt(a.r * a.r - (a.x - xa) * (a.x - xa));<br />
+		if(fabs(b.x - x) &gt; eps)xb = b.x - b.r * b.r / (b.x - x);<br />
+		else xb = b.x;<br />
+		yb = sqrt(b.r * b.r - (b.x - xb) * (b.x - xb));<br />
+		res.l = xa;res.r = xb;<br />
+		res.k = (ya - yb) / (xa - xb);<br />
+		res.b = yb - xb * res.k;<br />
+		return res;<br />
+	}<br />
+}<br />
+double f(double x)<br />
+{<br />
+	double res = 0;<br />
+	for(int i = 1;i &lt;= n;++i)<br />
+	{<br />
+		if(x &lt;= c[i].x - c[i].r || x &gt; c[i].x + c[i].r)continue;<br />
+		res = max(res,sqrt(c[i].r * c[i].r - (x - c[i].x) * (x - c[i].x)));<br />
+	}<br />
+	for(int i = 1;i &lt; n;++i)<br />
+	{<br />
+		if(x &lt; l[i].l || x &gt; l[i].r)continue;<br />
+		res = max(res,l[i].k * x + l[i].b);<br />
+	}<br />
+	return res;<br />
+}<br />
+double simpson(double l,double r)<br />
+{<br />
+	return (r - l) * (f(l) + 4 * f((l + r) / 2) + f(r)) / 6;<br />
+}<br />
+double solve(double l,double r,double k)<br />
+{<br />
+	double mid = (l + r) / 2;<br />
+	double L = simpson(l,mid),R = simpson(mid,r);<br />
+	if(fabs(L + R - k) &lt;= eps)return k;<br />
+	else return solve(l,mid,L) + solve(mid,r,R);<br />
+}<br />
+int main()<br />
+{<br />
+	scanf("%d%lf",&n,&alpha);<br />
+	for(int i = 1;i &lt;= n + 1;++i)scanf("%lf",&h[i]);<br />
+	for(int i = 1;i &lt;= n;++i)scanf("%lf",&r[i]);<br />
+	r[++n] = 0;<br />
+	double H = 0;<br />
+	for(int i = 1;i &lt;= n;++i)<br />
+	{<br />
+		H += h[i];<br />
+		c[i].x = H / tan(alpha);<br />
+		c[i].r = r[i];<br />
+	}<br />
+	for(int i = 1;i &lt; n;++i)l[i] = build_line(c[i],c[i + 1]);<br />
+	double l = 10000000,r = 0;<br />
+	for(int i = 1;i &lt;= n;++i)<br />
+	{<br />
+		l = min(l,c[i].x - c[i].r);<br />
+		r = max(r,c[i].x + c[i].r);<br />
+	} <br />
+	printf("%.2lf\n",solve(l,r,simpson(l,r)) * 2);<br />
+	return 0;<br />
+}<br />
+</pre></code>
+</div>
+        </div>
+        <div class="blogfile_showtag">
+          <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png">
+          In tag:
+<a href="../tags/数学-自适应辛普森积分.html">数学-自适应辛普森积分</a> 
+          <!--<a href="../tags/blog.html">blog</a>-->
+        </div>
+      </div>
+    </div>
+    <div id="middle_nav">
+      <div class="blog_host">
+        <div class="nav_avator">
+          <img src="http://pic.yupoo.com/wjh15101051/72c1aeab/f51d56e0.jpg" alt="avator">
+        </div>
+        <div class="nav_ID">
+          wjh15101051
+        </div>
+      </div>
+      <div class="nav_list">
+        <li class="tags">
+          <a href="../tags.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png" class="list_icon" id="tags_image">
+            Tags
+          </a>
+        </li>
+        <li class="categories">
+          <a href="../categories.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png" class="list_icon" id="categories_image">
+            Categories
+          </a>
+        </li>
+        <li class="timeline">
+          <a href="../timeline.html">
+            <img src="http://pic.yupoo.com/wjh15101051/30365cc7/c1a3be15.png" class="list_icon" id="timeline_image">
+            Timeline
+          </a>
+        </li>
+        <li class="about">
+          <a href="../about.html">
+            <img src="http://pic.yupoo.com/wjh15101051/24f1cb41/e239086e.png" class="list_icon" id="about_image">
+            About
+          </a>
+        </li>
+        <li class="toolbox">
+          <a href="../toolbox.html">
+            <img src="http://pic.yupoo.com/wjh15101051/dee9f673/d3cf682a.png" class="list_icon" id="toolbox_image">
+            Toolbox
+          </a>
+        </li>
+        <li class="friends">
+            <div class="friends_text">
+              <img src="http://pic.yupoo.com/wjh15101051/d291ebed/29f9c807.png" id="friends_image">
+              Friends
+            </div>
+            <div id="fp_friends_list">
+              <div id="SGcolin">
+                <a href="http://blog.gyx.me/" target="_blank">SGcolin</a>
+              </div>
+              <div id="Xingcy">
+                <a href="https://www.cnblogs.com/xcysblog/" target="_blank">Xingcy</a>
+              </div>
+              <div id="ZH_comld">
+                <a href="https://www.cnblogs.com/ZH-comld/" target="_blank">ZH_comld</a>
+              </div>
+            </div>
+            <br>
+          </div>
+        </li>
+      </div>
+    <div class="music_player">
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer@1.10.0/dist/APlayer.min.css">
+      <script src="https://blog-static.cnblogs.com/files/yjlaugus/APlayer.min.js"></script>
+      <div id="aplayer" class="aplayer"  data-id="5313691453" data-server="netease" data-type="playlist" data-fixed="true" data-listfolded="true" data-order="random" data-theme="#F58EA8"></div>
+      <script src="https://unpkg.com/meting@1.2/dist/Meting.min.js"></script>
+    </div>
+    <div class="bottom">
+      <div>
+        Copyright © 2020
+        <a id="copyright_user_a" href="index.html">
+          <span id="copyright_user">wjh15101051</span>
+        </a>
+      </div>
+      <div class="bottom_anime">ღゝ◡╹)ノ♡</div>
+    </div>
+  </div>
+</body>
+</html>

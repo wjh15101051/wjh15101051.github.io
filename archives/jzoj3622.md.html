@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>BOI2011 2circles</title>
+  <link rel="stylesheet" type="text/css" id="frame_style" href="../css/frame_style1.css">
+  <link rel="stylesheet" type="text/css" id="Markdown_style" href="../css/Markdown_style.css">
+  <script type="text/javascript" src="../jscode/frame.js"></script>
+  <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+  <link rel="stylesheet" href="https://ziyuan.fenxianglu.cn/js/highlight/styles/default.css">
+  <script src="https://ziyuan.fenxianglu.cn/js/highlight/highlight.pack.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+        inlineMath: [['$','$']]
+      }
+    });
+  </script>
+</head>
+<body>
+  <div class="main">
+    <div class="head">
+      <div class="title1">
+        <a href="../index.html">wjh15101051's space</a>
+      </div>
+      <div class="title2">
+        卧薪尝胆，厚积薄发。
+      </div>
+    </div>
+    <div id="middle_blogfile">
+      <div class="blog_blogfile">
+        <div class="blogfile_title">
+            BOI2011 2circles
+        </div>
+        <div class="blogfile_stitle">
+          <img src="http://pic.yupoo.com/wjh15101051/1e0e1b3a/118165c5.jpg">
+          Date: Wed Aug 15 07:15:19 CST 2018
+          <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png">
+          In Category:
+          <a href="../categories/NoCategory.html">NoCategory</a>
+        </div>
+        <div class="blogfile_content">
+<div class = "MarkdownCommonContent">
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Description：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+有
+$N$
+个顶点的凸多边形，求一个最大的半径
+$R$
+使得两个半径为
+$R$
+的圆能完全的放置在给出的多边形内且无重叠。
+</div>
+<div class = "MarkdownCommonContent">
+$1\le n \le 50000$
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Solution：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+二分一个值
+$mid$
+，把所有凸多边形的边拆开并向里移
+$mid$
+的距离，对这些半平面作半平面交，得到一个凸包，再对这个凸包做旋转卡壳，求出凸包后用旋转卡壳求出凸包最远点对判断距离是否大于
+$mid$
+。
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Code：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+<pre><code class="MarkdownParaCode">
+#include&lt;algorithm&gt;<br />
+#include&lt;iostream&gt;<br />
+#include&lt;cstdlib&gt;<br />
+#include&lt;cstdio&gt;<br />
+#include&lt;cmath&gt;<br />
+#include&lt;cstring&gt;<br />
+using namespace std;<br />
+struct point<br />
+{<br />
+	double x,y;<br />
+	point(double x_ = 0.0,double y_ = 0.0){x = x_;y = y_;}<br />
+};<br />
+inline double dis(point a,point b){return sqrt((a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y));}<br />
+inline double RotatingCalipers(point p[],int n)<br />
+{<br />
+	register double ans = 0;<br />
+	register int i,j;<br />
+	for(i = 2;i &lt;= n;++i)<br />
+	{<br />
+		if(dis(p[1],p[i]) &gt; ans)<br />
+		{<br />
+			ans = dis(p[1],p[i]);<br />
+			j = i;<br />
+		}<br />
+	}<br />
+	for(i = 1;i &lt;= n;++i)<br />
+	{<br />
+		while(1)<br />
+		{<br />
+			if(dis(p[j % n + 1],p[i]) &gt; dis(p[j],p[i]))j = j % n + 1;<br />
+			else break;<br />
+		}<br />
+		ans = max(ans,dis(p[i],p[j]));<br />
+	}<br />
+	return ans;<br />
+}<br />
+int n;<br />
+#define MAXN 50010<br />
+#define eps 1e-6<br />
+point ps[MAXN],p[MAXN];<br />
+point operator + (point a,point b){return point(a.x + b.x,a.y + b.y);}<br />
+point operator - (point a,point b){return point(a.x - b.x,a.y - b.y);}<br />
+point operator * (point a,double k){return point(a.x * k,a.y * k);}<br />
+inline double dotmul(point a,point b){return a.x * b.x + a.y * b.y;}<br />
+inline double crossmul(point a,point b){return a.x * b.y - a.y * b.x;}<br />
+inline double angle(point v){return atan2(v.y,v.x);}<br />
+inline bool equal(double a,double b){return fabs(a - b) &lt; eps;}<br />
+inline int sign(double k){return (equal(k,0.0) ? 0 : (k &lt; 0 ? -1 : 1));}<br />
+struct plane<br />
+{<br />
+	point p;point v;<br />
+	plane(){};<br />
+	plane(point p_,point v_){p = p_;v = v_;}<br />
+}pl[MAXN],q[MAXN];<br />
+bool cmp(plane a,plane b){return angle(a.v) &lt; angle(b.v);}<br />
+inline bool in(point a,plane b){return sign(crossmul(b.v,(a - b.p))) &lt;= 0;}<br />
+inline point intersection(plane a,plane b){return b.p + b.v * (crossmul(a.v,a.p - b.p) / crossmul(a.v,b.v));}<br />
+#define F 10000000<br />
+#define N -10000000<br />
+int head,tail;<br />
+inline int HPI(int n)<br />
+{<br />
+	sort(pl + 1,pl + 1 + n,cmp);<br />
+	register int n0 = 0;<br />
+	for(register int i = 1;i &lt;= n;++i)<br />
+	{<br />
+		if(n0 == 0)pl[++n0] = pl[i];<br />
+		else if(!equal(angle(pl[n0].v),angle(pl[i].v)))pl[++n0] = pl[i];<br />
+		else if(!in(pl[n0].p,pl[i]))pl[n0] = pl[i];<br />
+	}<br />
+	n = n0;<br />
+	head = 1;tail = 2;<br />
+	q[1] = pl[1];q[2] = pl[2];<br />
+	for(register int i = 3;i &lt;= n;++i)<br />
+	{<br />
+		while(head &lt; tail && !in(intersection(q[tail],q[tail - 1]),pl[i]))--tail;<br />
+		while(head &lt; tail && !in(intersection(q[head],q[head + 1]),pl[i]))++head;<br />
+		if(head == tail && sign(crossmul(q[head].v,pl[i].v)) &lt;= 0)return -1;<br />
+		q[++tail] = pl[i];<br />
+	}<br />
+	while(head &lt; tail && !in(intersection(q[tail],q[tail - 1]),q[head]))--tail;<br />
+	register int m = tail - head + 1;<br />
+	for(register int i = 1;i &lt; m;++i)p[i] = intersection(q[head + i],q[head + i - 1]);<br />
+	p[m] = intersection(q[head],q[tail]);<br />
+	return m;<br />
+}<br />
+double leng(point v){return sqrt(v.x * v.x + v.y * v.y);}<br />
+inline void getplane(double len)<br />
+{<br />
+	register plane k;<br />
+	for(register int i = 2,c = 2,p = 1;i &lt;= n + 1;++i,c = (i - 1) % n + 1,p = i - 1)<br />
+	{<br />
+		k = plane(ps[c],ps[p] - ps[c]);<br />
+		register point s = k.v;<br />
+		swap(s.y,s.x);s.y = -s.y;<br />
+		register double l = leng(s);<br />
+		s = s * (len / l);<br />
+		k.p = (k.p + s);<br />
+		pl[i - 1] = k;<br />
+	}<br />
+	return;<br />
+}<br />
+int main()<br />
+{<br />
+	freopen("2circles.in","r",stdin);<br />
+	freopen("2circles.out","w",stdout);<br />
+	scanf("%d",&n);<br />
+	for(register int i = 1;i &lt;= n;++i)<br />
+	{<br />
+		scanf("%lf%lf",&ps[i].x,&ps[i].y);<br />
+	}<br />
+	register double maxl = RotatingCalipers(ps,n);<br />
+	register double l = 0.0,r = maxl,mid;<br />
+	while(r - l &gt; 1e-3)<br />
+	{<br />
+		mid = (l + r) / 2;<br />
+		getplane(mid);<br />
+		int k = HPI(n);<br />
+		if(k == -1){r = mid;continue;}<br />
+		if(RotatingCalipers(p,k) &gt;= mid * 2)l = mid;<br />
+		else r = mid;<br />
+	}<br />
+	printf("%.3lf\n",l);<br />
+	fclose(stdin);<br />
+	fclose(stdout);<br />
+	return 0;<br />
+}<br />
+</pre></code>
+</div>
+        </div>
+        <div class="blogfile_showtag">
+          <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png">
+          In tag:
+<a href="../tags/数学-计算几何-旋转卡壳.html">数学-计算几何-旋转卡壳</a> <a href="../tags/数学-计算几何-半平面交.html">数学-计算几何-半平面交</a> 
+          <!--<a href="../tags/blog.html">blog</a>-->
+        </div>
+      </div>
+    </div>
+    <div id="middle_nav">
+      <div class="blog_host">
+        <div class="nav_avator">
+          <img src="http://pic.yupoo.com/wjh15101051/72c1aeab/f51d56e0.jpg" alt="avator">
+        </div>
+        <div class="nav_ID">
+          wjh15101051
+        </div>
+      </div>
+      <div class="nav_list">
+        <li class="tags">
+          <a href="../tags.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png" class="list_icon" id="tags_image">
+            Tags
+          </a>
+        </li>
+        <li class="categories">
+          <a href="../categories.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png" class="list_icon" id="categories_image">
+            Categories
+          </a>
+        </li>
+        <li class="timeline">
+          <a href="../timeline.html">
+            <img src="http://pic.yupoo.com/wjh15101051/30365cc7/c1a3be15.png" class="list_icon" id="timeline_image">
+            Timeline
+          </a>
+        </li>
+        <li class="about">
+          <a href="../about.html">
+            <img src="http://pic.yupoo.com/wjh15101051/24f1cb41/e239086e.png" class="list_icon" id="about_image">
+            About
+          </a>
+        </li>
+        <li class="toolbox">
+          <a href="../toolbox.html">
+            <img src="http://pic.yupoo.com/wjh15101051/dee9f673/d3cf682a.png" class="list_icon" id="toolbox_image">
+            Toolbox
+          </a>
+        </li>
+        <li class="friends">
+            <div class="friends_text">
+              <img src="http://pic.yupoo.com/wjh15101051/d291ebed/29f9c807.png" id="friends_image">
+              Friends
+            </div>
+            <div id="fp_friends_list">
+              <div id="SGcolin">
+                <a href="http://blog.gyx.me/" target="_blank">SGcolin</a>
+              </div>
+              <div id="Xingcy">
+                <a href="https://www.cnblogs.com/xcysblog/" target="_blank">Xingcy</a>
+              </div>
+              <div id="ZH_comld">
+                <a href="https://www.cnblogs.com/ZH-comld/" target="_blank">ZH_comld</a>
+              </div>
+            </div>
+            <br>
+          </div>
+        </li>
+      </div>
+    <div class="music_player">
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer@1.10.0/dist/APlayer.min.css">
+      <script src="https://blog-static.cnblogs.com/files/yjlaugus/APlayer.min.js"></script>
+      <div id="aplayer" class="aplayer"  data-id="5313691453" data-server="netease" data-type="playlist" data-fixed="true" data-listfolded="true" data-order="random" data-theme="#F58EA8"></div>
+      <script src="https://unpkg.com/meting@1.2/dist/Meting.min.js"></script>
+    </div>
+    <div class="bottom">
+      <div>
+        Copyright © 2020
+        <a id="copyright_user_a" href="index.html">
+          <span id="copyright_user">wjh15101051</span>
+        </a>
+      </div>
+      <div class="bottom_anime">ღゝ◡╹)ノ♡</div>
+    </div>
+  </div>
+</body>
+</html>

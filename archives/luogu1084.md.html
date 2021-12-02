@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>NOIP2012D2T3 疫情控制</title>
+  <link rel="stylesheet" type="text/css" id="frame_style" href="../css/frame_style1.css">
+  <link rel="stylesheet" type="text/css" id="Markdown_style" href="../css/Markdown_style.css">
+  <script type="text/javascript" src="../jscode/frame.js"></script>
+  <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+  <link rel="stylesheet" href="https://ziyuan.fenxianglu.cn/js/highlight/styles/default.css">
+  <script src="https://ziyuan.fenxianglu.cn/js/highlight/highlight.pack.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+        inlineMath: [['$','$']]
+      }
+    });
+  </script>
+</head>
+<body>
+  <div class="main">
+    <div class="head">
+      <div class="title1">
+        <a href="../index.html">wjh15101051's space</a>
+      </div>
+      <div class="title2">
+        卧薪尝胆，厚积薄发。
+      </div>
+    </div>
+    <div id="middle_blogfile">
+      <div class="blog_blogfile">
+        <div class="blogfile_title">
+            NOIP2012D2T3 疫情控制
+        </div>
+        <div class="blogfile_stitle">
+          <img src="http://pic.yupoo.com/wjh15101051/1e0e1b3a/118165c5.jpg">
+          Date: Sun Sep 02 19:56:29 CST 2018
+          <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png">
+          In Category:
+          <a href="../categories/NoCategory.html">NoCategory</a>
+        </div>
+        <div class="blogfile_content">
+<div class = "MarkdownCommonContent">
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Description：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+给一棵树，每条边有通过时间，在一些节点上已经驻扎有军队，军队可以封锁一个节点，也可以在边上移动，问最少可以用多长时间使得从一号节点无法到达叶子节点。
+</div>
+<div class = "MarkdownCommonContent">
+$1\le n \le 50000$
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Solution：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+如果
+$t$
+时间可以，那么
+$&gt;t$
+的时间都可以，所以可以二分这个
+$t$
+，在给定的时间内，军队驻扎的位置肯定是越靠上越好，分两种情况，一是跳不到根节点的，那就让他驻扎在他能到的最高点上，如果跳到最高点，那么我们把这个点记下来，发现这些点可以越过根节点，他们一定是越过根节点后封锁了根节点的一个子节点，于是把根节点的所有子节点用一个
+$vector$
+记下来，然后二分，这里二分的边界我设的是最大深度的二倍，然后就让每个点往上跳，显然不能一个一个跳，要倍增跳，跳的时候还要注意不能恰好到达根节点，然后把没跳到根节点的军队最终的位置打上封锁标记，然后再
+$dfs$
+这棵树，判断根节点的每个子节点是否已经封锁，如果他的所有子节点都被封锁了，那他也没用了，注意根的特殊性，然后把每个跳过根的军队表示为一个
+$pair$
+，分别记录它跳过根后还能走多远和它来自哪棵子树，每个根节点的子节点也做成一个
+$pair$
+，分别记录深度和编号，然后把这两个都按距离从小到大排序，然后维护双指针，如果当前这个军队来自的子树还没有被封锁，那他就封锁这个子节点，因为它是最小的，所以他自己封锁一定最优，否则找另一个距离最小的封锁，因为反正这个子树迟早要封锁，所以不如现在就封上以后一定不会更劣，注意找最小时可能会跳过很多已经封锁的子树，最后判断根节点的所有子节点是否都被封死。
+</div>
+<div class = "MarkdownCommonContent">
+无解就是军队数
+$&lt;$
+子节点数。
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Code：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+<pre><code class="MarkdownParaCode">
+#include&lt;algorithm&gt;<br />
+#include&lt;iostream&gt;<br />
+#include&lt;cstdlib&gt;<br />
+#include&lt;cstdio&gt;<br />
+#include&lt;cmath&gt;<br />
+#include&lt;set&gt;<br />
+#include&lt;vector&gt;<br />
+#include&lt;cstring&gt;<br />
+using namespace std;<br />
+int n,m;<br />
+#define MAXN 50010<br />
+struct edge<br />
+{<br />
+    int to,nxt,w;<br />
+}e[MAXN &lt;&lt; 1];<br />
+int edgenum = 0;<br />
+int lin[MAXN] = {0};<br />
+void add(int a,int b,int c)<br />
+{<br />
+    ++edgenum;e[edgenum].to = b;e[edgenum].w = c;e[edgenum].nxt = lin[a];lin[a] = edgenum;<br />
+    ++edgenum;e[edgenum].to = a;e[edgenum].w = c;e[edgenum].nxt = lin[b];lin[b] = edgenum;<br />
+    return;<br />
+}<br />
+int f[MAXN][17];<br />
+int dep[MAXN],fa[MAXN];<br />
+bool vis[MAXN];<br />
+bool tag[MAXN];<br />
+void dfs(int k,int depth)<br />
+{<br />
+    dep[k] = depth;vis[k] = true;<br />
+    tag[k] = true;<br />
+    for(int i = lin[k];i != 0;i = e[i].nxt)<br />
+    {<br />
+        if(vis[e[i].to])continue;<br />
+        tag[k] = false;<br />
+        fa[e[i].to] = k;f[e[i].to][0] = k;<br />
+        dfs(e[i].to,depth + e[i].w);<br />
+    }<br />
+    return;<br />
+}<br />
+vector&lt; pair&lt;int,int&gt; &gt; v;<br />
+int pos[MAXN];<br />
+bool hold[MAXN];<br />
+struct army{int subtree,dis;};<br />
+army s[MAXN];<br />
+#define fi first<br />
+#define se second<br />
+int top;<br />
+bool lock[MAXN];<br />
+void mark(int k)<br />
+{<br />
+    vis[k] = true;<br />
+    if(hold[k])<br />
+    {<br />
+        lock[k] = true;<br />
+        return;<br />
+    }<br />
+    if(tag[k])return;<br />
+    for(int i = lin[k];i != 0;i = e[i].nxt)<br />
+    {<br />
+        if(vis[e[i].to])continue;<br />
+        mark(e[i].to);<br />
+        if(k != 1 && !lock[e[i].to])return;<br />
+    }<br />
+    lock[k] = true;<br />
+    return;<br />
+}<br />
+bool cmp_army_from_low_to_high(army x,army y){return x.dis &lt; y.dis;}<br />
+bool check(int k)<br />
+{<br />
+    top = 0;<br />
+    memset(hold,false,sizeof(hold));<br />
+    for(int i = 1;i &lt;= m;++i)<br />
+    {<br />
+        if(dep[pos[i]] &gt;= k)<br />
+        {<br />
+            int t = k;if(dep[pos[i]] == k)--t;<br />
+            int p = pos[i];<br />
+            for(int w = 16;w &gt;= 0;--w)<br />
+                if(dep[pos[i]] - dep[f[p][w]] &lt;= t)<br />
+                    p = f[p][w];<br />
+            hold[p] = true;<br />
+        }<br />
+        else<br />
+        {<br />
+            int p = pos[i];<br />
+            for(int w = 16;w &gt;= 0;--w)<br />
+                if(dep[f[p][w]] != 0)<br />
+                    p = f[p][w];<br />
+            s[++top] = (army){p,k - dep[pos[i]]};<br />
+        }<br />
+    }<br />
+    sort(s + 1,s + 1 + top,cmp_army_from_low_to_high);<br />
+    sort(v.begin(),v.end());<br />
+    memset(lock,false,sizeof(lock));<br />
+    memset(vis,false,sizeof(vis));<br />
+    mark(1);<br />
+    for(int i = 1,j = 0;i &lt;= top && j &lt; v.size();++i)<br />
+    {<br />
+        while(j &lt; v.size() && lock[v[j].se])++j;<br />
+        if(j == v.size())break;<br />
+        if(!lock[s[i].subtree])<br />
+        {<br />
+            lock[s[i].subtree] = true;<br />
+            continue;<br />
+        }<br />
+        else<br />
+        {<br />
+            if(s[i].dis &gt;= v[j].fi)<br />
+            {<br />
+                lock[v[j].se] = true;<br />
+                ++j;<br />
+            }<br />
+        }<br />
+    }<br />
+    for(int i = 0;i &lt; v.size();++i)<br />
+    {<br />
+        if(!lock[v[i].se])return false;<br />
+    }<br />
+    return true;<br />
+}<br />
+int main()<br />
+{<br />
+    scanf("%d",&n);<br />
+    int a,b,c;<br />
+    for(int i = 1;i &lt; n;++i)<br />
+    {<br />
+        scanf("%d%d%d",&a,&b,&c);<br />
+        add(a,b,c);<br />
+    }<br />
+    dfs(1,0);<br />
+    for(int i = 1;i &lt;= 16;++i)<br />
+        for(int k = 1;k &lt;= n;++k)<br />
+            f[k][i] = f[f[k][i - 1]][i - 1];<br />
+    scanf("%d",&m);<br />
+    memset(pos,0,sizeof(pos));<br />
+    for(int i = 1;i &lt;= m;++i)<br />
+    {<br />
+        scanf("%d",&pos[i]);<br />
+    }<br />
+    for(int i = lin[1];i != 0;i = e[i].nxt)v.push_back(make_pair(e[i].w,e[i].to));<br />
+    if(m &lt; v.size())<br />
+    {<br />
+        puts("-1");<br />
+        return 0;<br />
+    }<br />
+    int maxdep = 0;<br />
+    for(int i = 1;i &lt;= n;++i)maxdep = max(maxdep,dep[i]);<br />
+    int l = 0,r = maxdep * 2,mid;<br />
+    while(l &lt; r)<br />
+    {<br />
+        mid = ((l + r) &gt;&gt; 1);<br />
+        if(check(mid))r = mid;<br />
+        else l = mid + 1;<br />
+    }<br />
+    cout &lt;&lt; l &lt;&lt; endl;<br />
+    return 0;<br />
+}<br />
+</pre></code>
+</div>
+        </div>
+        <div class="blogfile_showtag">
+          <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png">
+          In tag:
+<a href="../tags/树-树上倍增.html">树-树上倍增</a> <a href="../tags/算法-贪心.html">算法-贪心</a> 
+          <!--<a href="../tags/blog.html">blog</a>-->
+        </div>
+      </div>
+    </div>
+    <div id="middle_nav">
+      <div class="blog_host">
+        <div class="nav_avator">
+          <img src="http://pic.yupoo.com/wjh15101051/72c1aeab/f51d56e0.jpg" alt="avator">
+        </div>
+        <div class="nav_ID">
+          wjh15101051
+        </div>
+      </div>
+      <div class="nav_list">
+        <li class="tags">
+          <a href="../tags.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png" class="list_icon" id="tags_image">
+            Tags
+          </a>
+        </li>
+        <li class="categories">
+          <a href="../categories.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png" class="list_icon" id="categories_image">
+            Categories
+          </a>
+        </li>
+        <li class="timeline">
+          <a href="../timeline.html">
+            <img src="http://pic.yupoo.com/wjh15101051/30365cc7/c1a3be15.png" class="list_icon" id="timeline_image">
+            Timeline
+          </a>
+        </li>
+        <li class="about">
+          <a href="../about.html">
+            <img src="http://pic.yupoo.com/wjh15101051/24f1cb41/e239086e.png" class="list_icon" id="about_image">
+            About
+          </a>
+        </li>
+        <li class="toolbox">
+          <a href="../toolbox.html">
+            <img src="http://pic.yupoo.com/wjh15101051/dee9f673/d3cf682a.png" class="list_icon" id="toolbox_image">
+            Toolbox
+          </a>
+        </li>
+        <li class="friends">
+            <div class="friends_text">
+              <img src="http://pic.yupoo.com/wjh15101051/d291ebed/29f9c807.png" id="friends_image">
+              Friends
+            </div>
+            <div id="fp_friends_list">
+              <div id="SGcolin">
+                <a href="http://blog.gyx.me/" target="_blank">SGcolin</a>
+              </div>
+              <div id="Xingcy">
+                <a href="https://www.cnblogs.com/xcysblog/" target="_blank">Xingcy</a>
+              </div>
+              <div id="ZH_comld">
+                <a href="https://www.cnblogs.com/ZH-comld/" target="_blank">ZH_comld</a>
+              </div>
+            </div>
+            <br>
+          </div>
+        </li>
+      </div>
+    <div class="music_player">
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer@1.10.0/dist/APlayer.min.css">
+      <script src="https://blog-static.cnblogs.com/files/yjlaugus/APlayer.min.js"></script>
+      <div id="aplayer" class="aplayer"  data-id="5313691453" data-server="netease" data-type="playlist" data-fixed="true" data-listfolded="true" data-order="random" data-theme="#F58EA8"></div>
+      <script src="https://unpkg.com/meting@1.2/dist/Meting.min.js"></script>
+    </div>
+    <div class="bottom">
+      <div>
+        Copyright © 2020
+        <a id="copyright_user_a" href="index.html">
+          <span id="copyright_user">wjh15101051</span>
+        </a>
+      </div>
+      <div class="bottom_anime">ღゝ◡╹)ノ♡</div>
+    </div>
+  </div>
+</body>
+</html>

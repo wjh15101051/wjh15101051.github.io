@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>NOI2011 兔兔与蛋蛋游戏</title>
+  <link rel="stylesheet" type="text/css" id="frame_style" href="../css/frame_style1.css">
+  <link rel="stylesheet" type="text/css" id="Markdown_style" href="../css/Markdown_style.css">
+  <script type="text/javascript" src="../jscode/frame.js"></script>
+  <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+  <link rel="stylesheet" href="https://ziyuan.fenxianglu.cn/js/highlight/styles/default.css">
+  <script src="https://ziyuan.fenxianglu.cn/js/highlight/highlight.pack.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+        inlineMath: [['$','$']]
+      }
+    });
+  </script>
+</head>
+<body>
+  <div class="main">
+    <div class="head">
+      <div class="title1">
+        <a href="../index.html">wjh15101051's space</a>
+      </div>
+      <div class="title2">
+        卧薪尝胆，厚积薄发。
+      </div>
+    </div>
+    <div id="middle_blogfile">
+      <div class="blog_blogfile">
+        <div class="blogfile_title">
+            NOI2011 兔兔与蛋蛋游戏
+        </div>
+        <div class="blogfile_stitle">
+          <img src="http://pic.yupoo.com/wjh15101051/1e0e1b3a/118165c5.jpg">
+          Date: Sat Mar 23 16:06:21 CST 2019
+          <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png">
+          In Category:
+          <a href="../categories/NoCategory.html">NoCategory</a>
+        </div>
+        <div class="blogfile_content">
+<div class = "MarkdownCommonContent">
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Description：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+一个棋盘上有黑棋子和白棋子和一个空格，
+$A$
+可以把一个黑棋子移动到相邻的空格里去，
+$B$
+同理操作白棋子，给出二人的操作序列，求在
+$A$
+哪一步操作的时候
+$A$
+本来有必胜策略后来
+$B$
+有必胜策略。
+</div>
+<div class = "MarkdownCommonContent">
+$1\leqslant n,m\leqslant 40$
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Solution：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+把移动棋子看成是空格在走，首先转移不会出现环，考虑一个移动序列：
+$$
+a_1,a_2,\dots,a_{2n}
+$$
+假设他形成了循环，会发现
+$a_1$
+和
+$a_{2n}$
+应该是同一枚棋子，但是他被两个人动过了。
+</div>
+<div class = "MarkdownCommonContent">
+那么对于一个移动序列，会发现移动的棋子必然是黑
+$-$
+白
+$-$
+黑
+$\cdots$
+，这让我们想到二分图的增广路，把黑色点和起点放在左边，白色点放在右边，那么
+$A$
+一次操作就是把空格从左边移到右边，
+$B$
+相反，那么
+$A$
+有必胜策略当且仅当形成了一个不能更长的有奇数条边的增广路，并且从
+$A$
+出发所有路径最后都是长度为奇数的交替路，换句话说就是不能交换匹配边和非匹配边增加匹配，在换句话说就是这个点一定在最大匹配上。
+</div>
+<div class = "MarkdownCommonContent">
+那检查是否有最优决策就很容易了，我们把这个点删掉再检查是否能增广即可，注意每次操作之后要强行覆盖那一个匹配。
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Code：
+</h2>
+</div>
+<pre><code class="MarkdownParaCode">
+#include&lt;algorithm&gt;<br />
+#include&lt;iostream&gt;<br />
+#include&lt;cstdlib&gt;<br />
+#include&lt;cstdio&gt;<br />
+#include&lt;cmath&gt;<br />
+#include&lt;cctype&gt;<br />
+#include&lt;cstring&gt;<br />
+using namespace std;<br />
+inline int rd()<br />
+{<br />
+	register int res = 0,f = 1;register char c = getchar();<br />
+	while(!isdigit(c)){if(c == '-')f = -1;c = getchar();}<br />
+	while(isdigit(c))res = (res &lt;&lt; 1) + (res &lt;&lt; 3) + c - '0',c = getchar();<br />
+	return res * f;<br />
+}<br />
+int n,m,q;<br />
+#define MAXN 50<br />
+int p[MAXN][MAXN];<br />
+char getc()<br />
+{<br />
+	register char c = getchar();<br />
+	while(c != 'X' && c != 'O' && c != '.')c = getchar();<br />
+	return c;<br />
+}<br />
+int id(int x,int y){return (x - 1) * m + y;}<br />
+struct edge<br />
+{<br />
+	int to,nxt;<br />
+}e[MAXN * MAXN * 4];<br />
+int edgenum = 0;<br />
+int lin[MAXN * MAXN] = {0};<br />
+void add(int a,int b)<br />
+{<br />
+	e[++edgenum] = (edge){b,lin[a]};lin[a] = edgenum;<br />
+	return;<br />
+}<br />
+int mx[4] = {0,0,1,-1};<br />
+int my[4] = {1,-1,0,0};<br />
+int match[MAXN * MAXN];<br />
+int vis[MAXN * MAXN],tim = 0;<br />
+int ban[MAXN * MAXN];<br />
+bool find(int k)<br />
+{<br />
+	if(ban[k])return false;<br />
+	for(int i = lin[k];i != 0;i = e[i].nxt)<br />
+	{<br />
+		if(vis[e[i].to] != tim && !ban[e[i].to])<br />
+		{<br />
+			vis[e[i].to] = tim;<br />
+			if(match[e[i].to] == -1 || find(match[e[i].to]))<br />
+			{<br />
+				match[e[i].to] = k;match[k] = e[i].to;<br />
+				return true;<br />
+			}<br />
+		}<br />
+	}<br />
+	return false;<br />
+}<br />
+int val[2010],ans[1010];<br />
+int stack[MAXN],top = 0;<br />
+int main()<br />
+{<br />
+	scanf("%d%d",&n,&m);<br />
+	int px,py;<br />
+	for(int i = 1;i &lt;= n;++i)<br />
+	{<br />
+		for(int j = 1;j &lt;= m;++j)<br />
+		{<br />
+			char ch = getc();<br />
+			if(ch == 'X')p[i][j] = 1;<br />
+			if(ch == 'O')p[i][j] = 0;<br />
+			if(ch == '.')p[i][j] = 1,px = i,py = j;<br />
+		}<br />
+	}<br />
+	for(int i = 1;i &lt;= n;++i)<br />
+	{<br />
+		for(int j = 1;j &lt;= m;++j)<br />
+		{<br />
+			for(int k = 0;k &lt; 4;++k)<br />
+			{<br />
+				int nx = i + mx[k],ny = j + my[k];<br />
+				if(1 &lt;= nx && nx &lt;= n && 1 &lt;= ny && ny &lt;= m && (p[i][j] ^ p[nx][ny]))add(id(i,j),id(nx,ny));<br />
+			}<br />
+		}<br />
+	}<br />
+	memset(match,-1,sizeof(match));<br />
+	for(int i = 1;i &lt;= n;++i)<br />
+		for(int j = 1;j &lt;= m;++j)<br />
+			if(p[i][j]){++tim;find(id(i,j));}<br />
+	scanf("%d",&q);<br />
+	for(int i = 1;i &lt;= 2 * q;++i)<br />
+	{<br />
+		int x = id(px,py);<br />
+		ban[x] = 1;<br />
+		if(match[x] != -1)<br />
+		{<br />
+			int y = match[x];<br />
+			match[x] = match[y] = -1;<br />
+			++tim;<br />
+			val[i] = !find(y);<br />
+		}<br />
+		px = rd();py = rd();<br />
+	}<br />
+	for(int i = 1;i &lt;= q;++i)<br />
+	{<br />
+		if(val[2 * i - 1] && val[2 * i])ans[i] = 1;<br />
+	}<br />
+	for(int i = 1;i &lt;= q;++i)if(ans[i])stack[++top] = i;<br />
+	cout &lt;&lt; top &lt;&lt; endl;<br />
+	for(int i = 1;i &lt;= top;++i)printf("%d\n",stack[i]);<br />
+	cout &lt;&lt; endl;<br />
+	return 0;<br />
+}<br />
+</pre></code>
+        </div>
+        <div class="blogfile_showtag">
+          <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png">
+          In tag:
+<a href="../tags/图论-二分图博弈.html">图论-二分图博弈</a> 
+          <!--<a href="../tags/blog.html">blog</a>-->
+        </div>
+      </div>
+    </div>
+    <div id="middle_nav">
+      <div class="blog_host">
+        <div class="nav_avator">
+          <img src="http://pic.yupoo.com/wjh15101051/72c1aeab/f51d56e0.jpg" alt="avator">
+        </div>
+        <div class="nav_ID">
+          wjh15101051
+        </div>
+      </div>
+      <div class="nav_list">
+        <li class="tags">
+          <a href="../tags.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png" class="list_icon" id="tags_image">
+            Tags
+          </a>
+        </li>
+        <li class="categories">
+          <a href="../categories.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png" class="list_icon" id="categories_image">
+            Categories
+          </a>
+        </li>
+        <li class="timeline">
+          <a href="../timeline.html">
+            <img src="http://pic.yupoo.com/wjh15101051/30365cc7/c1a3be15.png" class="list_icon" id="timeline_image">
+            Timeline
+          </a>
+        </li>
+        <li class="about">
+          <a href="../about.html">
+            <img src="http://pic.yupoo.com/wjh15101051/24f1cb41/e239086e.png" class="list_icon" id="about_image">
+            About
+          </a>
+        </li>
+        <li class="toolbox">
+          <a href="../toolbox.html">
+            <img src="http://pic.yupoo.com/wjh15101051/dee9f673/d3cf682a.png" class="list_icon" id="toolbox_image">
+            Toolbox
+          </a>
+        </li>
+        <li class="friends">
+            <div class="friends_text">
+              <img src="http://pic.yupoo.com/wjh15101051/d291ebed/29f9c807.png" id="friends_image">
+              Friends
+            </div>
+            <div id="fp_friends_list">
+              <div id="SGcolin">
+                <a href="http://blog.gyx.me/" target="_blank">SGcolin</a>
+              </div>
+              <div id="Xingcy">
+                <a href="https://www.cnblogs.com/xcysblog/" target="_blank">Xingcy</a>
+              </div>
+              <div id="ZH_comld">
+                <a href="https://www.cnblogs.com/ZH-comld/" target="_blank">ZH_comld</a>
+              </div>
+            </div>
+            <br>
+          </div>
+        </li>
+      </div>
+    <div class="music_player">
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer@1.10.0/dist/APlayer.min.css">
+      <script src="https://blog-static.cnblogs.com/files/yjlaugus/APlayer.min.js"></script>
+      <div id="aplayer" class="aplayer"  data-id="5313691453" data-server="netease" data-type="playlist" data-fixed="true" data-listfolded="true" data-order="random" data-theme="#F58EA8"></div>
+      <script src="https://unpkg.com/meting@1.2/dist/Meting.min.js"></script>
+    </div>
+    <div class="bottom">
+      <div>
+        Copyright © 2020
+        <a id="copyright_user_a" href="index.html">
+          <span id="copyright_user">wjh15101051</span>
+        </a>
+      </div>
+      <div class="bottom_anime">ღゝ◡╹)ノ♡</div>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>USACO2008FEB GOLD Hotel 旅馆</title>
+  <link rel="stylesheet" type="text/css" id="frame_style" href="../css/frame_style1.css">
+  <link rel="stylesheet" type="text/css" id="Markdown_style" href="../css/Markdown_style.css">
+  <script type="text/javascript" src="../jscode/frame.js"></script>
+  <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+  <link rel="stylesheet" href="https://ziyuan.fenxianglu.cn/js/highlight/styles/default.css">
+  <script src="https://ziyuan.fenxianglu.cn/js/highlight/highlight.pack.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+        inlineMath: [['$','$']]
+      }
+    });
+  </script>
+</head>
+<body>
+  <div class="main">
+    <div class="head">
+      <div class="title1">
+        <a href="../index.html">wjh15101051's space</a>
+      </div>
+      <div class="title2">
+        卧薪尝胆，厚积薄发。
+      </div>
+    </div>
+    <div id="middle_blogfile">
+      <div class="blog_blogfile">
+        <div class="blogfile_title">
+            USACO2008FEB GOLD Hotel 旅馆
+        </div>
+        <div class="blogfile_stitle">
+          <img src="http://pic.yupoo.com/wjh15101051/1e0e1b3a/118165c5.jpg">
+          Date: Tue Sep 04 21:50:04 CST 2018
+          <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png">
+          In Category:
+          <a href="../categories/NoCategory.html">NoCategory</a>
+        </div>
+        <div class="blogfile_content">
+<div class = "MarkdownCommonContent">
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Description：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+给一个序列，支持两个操作：
+</div>
+<div class = "MarkdownCommonContent">
+$1$
+、找一个最靠前的长度大于等于
+$x$
+的空区间标记。
+</div>
+<div class = "MarkdownCommonContent">
+$2$
+、删除区间
+$[l,r]$
+内的所有标记。
+</div>
+<div class = "MarkdownCommonContent">
+$1\le n \le 50000$
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Solution：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+看上去是个线段树，可以用线段树维护区间最长的空区间的长度，具体来说就是维护最长空前缀，最长空后缀和这个区间是否空三个标记然后合并和最大子段和类似但有点不同，然后每次在线段树上二分出最靠前的长度够大的区间标记，删除区间也可以打标记。
+$tag=-1$
+无标记，
+$tag = 1$
+有覆盖标记，
+$tag=0$
+有清空标记。
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Code：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+<pre><code class="MarkdownParaCode">
+#include&lt;algorithm&gt;<br />
+#include&lt;iostream&gt;<br />
+#include&lt;cstdlib&gt;<br />
+#include&lt;cstdio&gt;<br />
+#include&lt;cmath&gt;<br />
+#include&lt;cstring&gt;<br />
+using namespace std;<br />
+int n,m;<br />
+#define MAXN 50010<br />
+#define INF 0x3f3f3f3f<br />
+struct node<br />
+{<br />
+    int lc,rc;<br />
+    int ls,rs,ms,s;<br />
+    int tag;<br />
+    node(){tag = -1;}<br />
+}t[MAXN &lt;&lt; 1];<br />
+int ptr = 0;<br />
+int newnode(){return ++ptr;}<br />
+int root;<br />
+#define mid ((l + r) &gt;&gt; 1)<br />
+void merge(int rt)<br />
+{<br />
+    int lc = t[rt].lc,rc = t[rt].rc;<br />
+    if(t[lc].s != -INF && t[rc].s != -INF)t[rt].s = t[lc].s + t[rc].s;<br />
+    else t[rt].s = -INF;<br />
+    if(t[lc].ls != -INF)t[rt].ls = max(t[lc].ls,t[lc].s + t[rc].ls);<br />
+    else t[rt].ls = -INF;<br />
+    if(t[rc].rs != -INF)t[rt].rs = max(t[rc].rs,t[rc].s + t[lc].rs);<br />
+    else t[rt].rs = -INF;<br />
+    t[rt].ms = max(t[lc].rs + t[rc].ls,max(t[lc].ms,t[rc].ms));<br />
+    return;<br />
+}<br />
+void build(int &rt,int l,int r)<br />
+{<br />
+    rt = newnode();<br />
+    t[rt].tag = -1;<br />
+    if(l == r)<br />
+    {<br />
+        t[rt].s = t[rt].ls = t[rt].rs = t[rt].ms = 1;<br />
+        return;<br />
+    }<br />
+    build(t[rt].lc,l,mid);<br />
+    build(t[rt].rc,mid + 1,r);<br />
+    merge(rt);<br />
+    return;<br />
+}<br />
+void pushdown(int rt,int l,int r)<br />
+{<br />
+    if(t[rt].tag == -1)return;<br />
+    int lc = t[rt].lc,rc = t[rt].rc;<br />
+    if(t[rt].tag == 1)<br />
+    {<br />
+        t[lc].s = t[lc].ls = t[lc].rs = t[lc].ms = mid - l + 1;<br />
+        t[rc].s = t[rc].ls = t[rc].rs = t[rc].ms = r - mid;<br />
+    }<br />
+    else<br />
+    {<br />
+        t[lc].s = t[lc].ls = t[lc].rs = t[lc].ms = -INF;<br />
+        t[rc].s = t[rc].ls = t[rc].rs = t[rc].ms = -INF;<br />
+    }<br />
+    t[lc].tag = t[rc].tag = t[rt].tag;<br />
+    t[rt].tag = -1;<br />
+    return;<br />
+}<br />
+void insert(int rt,int L,int R,int l,int r)<br />
+{<br />
+    if(L &lt;= l && r &lt;= R)<br />
+    {<br />
+        t[rt].tag = 1;<br />
+        t[rt].ms = t[rt].s = t[rt].ls = t[rt].rs = (r - l + 1);<br />
+        return;<br />
+    }<br />
+    pushdown(rt,l,r);<br />
+    if(L &lt;= mid)insert(t[rt].lc,L,R,l,mid);<br />
+    if(R &gt; mid)insert(t[rt].rc,L,R,mid + 1,r);<br />
+    merge(rt);<br />
+    return;<br />
+}<br />
+void remove(int rt,int L,int R,int l,int r)<br />
+{<br />
+    if(L &lt;= l && r &lt;= R)<br />
+    {<br />
+        t[rt].tag = 0;<br />
+        t[rt].ms = t[rt].s = t[rt].ls = t[rt].rs = -INF;<br />
+        return;<br />
+    }<br />
+    pushdown(rt,l,r);<br />
+    if(L &lt;= mid)remove(t[rt].lc,L,R,l,mid);<br />
+    if(R &gt; mid)remove(t[rt].rc,L,R,mid + 1,r);<br />
+    merge(rt);<br />
+    return;<br />
+}<br />
+int check(int rt,int len,int l,int r)<br />
+{<br />
+    if(l == r)<br />
+    {<br />
+        remove(root,l,l,1,n);<br />
+        return l;<br />
+    }<br />
+    if(t[rt].ms &lt; len)return 0;<br />
+    pushdown(rt,l,r);<br />
+    if(t[t[rt].lc].ms &gt;= len)return check(t[rt].lc,len,l,mid);<br />
+    if(t[t[rt].lc].rs + t[t[rt].rc].ls &gt;= len)<br />
+    {<br />
+        int lef = mid - t[t[rt].lc].rs + 1;<br />
+        remove(root,lef,lef + len - 1,1,n);<br />
+        return lef;<br />
+    }<br />
+    return check(t[rt].rc,len,mid + 1,r);<br />
+}<br />
+int main()<br />
+{<br />
+    scanf("%d%d",&n,&m);<br />
+    build(root,1,n);<br />
+    int opt,x,y;<br />
+    for(int i = 1;i &lt;= m;++i)<br />
+    {<br />
+        scanf("%d",&opt);<br />
+        if(opt == 1)<br />
+        {<br />
+            scanf("%d",&x);<br />
+            printf("%d\n",check(root,x,1,n));<br />
+        }<br />
+        else<br />
+        {<br />
+            scanf("%d%d",&x,&y);<br />
+            insert(root,x,x + y - 1,1,n);<br />
+        }<br />
+    }<br />
+    return 0;<br />
+}<br />
+</pre></code>
+</div>
+        </div>
+        <div class="blogfile_showtag">
+          <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png">
+          In tag:
+<a href="../tags/数据结构-线段树.html">数据结构-线段树</a> 
+          <!--<a href="../tags/blog.html">blog</a>-->
+        </div>
+      </div>
+    </div>
+    <div id="middle_nav">
+      <div class="blog_host">
+        <div class="nav_avator">
+          <img src="http://pic.yupoo.com/wjh15101051/72c1aeab/f51d56e0.jpg" alt="avator">
+        </div>
+        <div class="nav_ID">
+          wjh15101051
+        </div>
+      </div>
+      <div class="nav_list">
+        <li class="tags">
+          <a href="../tags.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png" class="list_icon" id="tags_image">
+            Tags
+          </a>
+        </li>
+        <li class="categories">
+          <a href="../categories.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png" class="list_icon" id="categories_image">
+            Categories
+          </a>
+        </li>
+        <li class="timeline">
+          <a href="../timeline.html">
+            <img src="http://pic.yupoo.com/wjh15101051/30365cc7/c1a3be15.png" class="list_icon" id="timeline_image">
+            Timeline
+          </a>
+        </li>
+        <li class="about">
+          <a href="../about.html">
+            <img src="http://pic.yupoo.com/wjh15101051/24f1cb41/e239086e.png" class="list_icon" id="about_image">
+            About
+          </a>
+        </li>
+        <li class="toolbox">
+          <a href="../toolbox.html">
+            <img src="http://pic.yupoo.com/wjh15101051/dee9f673/d3cf682a.png" class="list_icon" id="toolbox_image">
+            Toolbox
+          </a>
+        </li>
+        <li class="friends">
+            <div class="friends_text">
+              <img src="http://pic.yupoo.com/wjh15101051/d291ebed/29f9c807.png" id="friends_image">
+              Friends
+            </div>
+            <div id="fp_friends_list">
+              <div id="SGcolin">
+                <a href="http://blog.gyx.me/" target="_blank">SGcolin</a>
+              </div>
+              <div id="Xingcy">
+                <a href="https://www.cnblogs.com/xcysblog/" target="_blank">Xingcy</a>
+              </div>
+              <div id="ZH_comld">
+                <a href="https://www.cnblogs.com/ZH-comld/" target="_blank">ZH_comld</a>
+              </div>
+            </div>
+            <br>
+          </div>
+        </li>
+      </div>
+    <div class="music_player">
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer@1.10.0/dist/APlayer.min.css">
+      <script src="https://blog-static.cnblogs.com/files/yjlaugus/APlayer.min.js"></script>
+      <div id="aplayer" class="aplayer"  data-id="5313691453" data-server="netease" data-type="playlist" data-fixed="true" data-listfolded="true" data-order="random" data-theme="#F58EA8"></div>
+      <script src="https://unpkg.com/meting@1.2/dist/Meting.min.js"></script>
+    </div>
+    <div class="bottom">
+      <div>
+        Copyright © 2020
+        <a id="copyright_user_a" href="index.html">
+          <span id="copyright_user">wjh15101051</span>
+        </a>
+      </div>
+      <div class="bottom_anime">ღゝ◡╹)ノ♡</div>
+    </div>
+  </div>
+</body>
+</html>

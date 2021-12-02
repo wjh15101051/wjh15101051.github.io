@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>WC2018 州区划分</title>
+  <link rel="stylesheet" type="text/css" id="frame_style" href="../css/frame_style1.css">
+  <link rel="stylesheet" type="text/css" id="Markdown_style" href="../css/Markdown_style.css">
+  <script type="text/javascript" src="../jscode/frame.js"></script>
+  <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+  <link rel="stylesheet" href="https://ziyuan.fenxianglu.cn/js/highlight/styles/default.css">
+  <script src="https://ziyuan.fenxianglu.cn/js/highlight/highlight.pack.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+        inlineMath: [['$','$']]
+      }
+    });
+  </script>
+</head>
+<body>
+  <div class="main">
+    <div class="head">
+      <div class="title1">
+        <a href="../index.html">wjh15101051's space</a>
+      </div>
+      <div class="title2">
+        卧薪尝胆，厚积薄发。
+      </div>
+    </div>
+    <div id="middle_blogfile">
+      <div class="blog_blogfile">
+        <div class="blogfile_title">
+            WC2018 州区划分
+        </div>
+        <div class="blogfile_stitle">
+          <img src="http://pic.yupoo.com/wjh15101051/1e0e1b3a/118165c5.jpg">
+          Date: Fri Jan 25 18:22:15 CST 2019
+          <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png">
+          In Category:
+          <a href="../categories/NoCategory.html">NoCategory</a>
+        </div>
+        <div class="blogfile_content">
+<div class = "MarkdownCommonContent">
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Description：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+给一个图划分成多个子图，要求每个子图中都不存在欧拉回路，第
+$i$
+个子图的价值为第
+$i$
+个子图所有点的权值和除以前
+$i$
+个子图所有点的权值和的
+$p$
+次方，一个划分的价值是所有子图的权值之积，问所有划分方案的价值和。
+</div>
+<div class = "MarkdownCommonContent">
+$1\leqslant n\leqslant 21$
+，无重边。
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Solution：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+既然
+$n$
+只有
+$21$
+那就可以暴力处理出所有合法的点集，复杂度
+$O(2^nm)=O(2^nn^2)$
+，然后设计一个
+$dp$
+：
+$$
+f[S]=\sum_{T\subseteq S}(\frac{W[T]}{W[S]})^p[check(T)]\times f[S-T]
+$$
+后面的非常像一个卷积，但是却并不是子集卷积，因为
+$S-T\cap T=\empty$
+，因此一个方法就是强行利用
+$cnt[S-T]+cnt[T]=cnt[S]$
+分层卷积就行了。
+$$
+f[i][S]=\frac 1{W[S]^p}\sum_{T\subset S}g[T]\times f[i-cnt[T]][S-T](g[T]=[check(T)](\sum_{i\in T}val[i])^p)
+$$
+直接带着
+$FMT$
+之后的数组做就可以了。
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Code：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+<pre><code class="MarkdownParaCode">
+// luogu-judger-enable-o2<br />
+#include&lt;algorithm&gt;<br />
+#include&lt;iostream&gt;<br />
+#include&lt;cstdlib&gt;<br />
+#include&lt;cstdio&gt;<br />
+#include&lt;cmath&gt;<br />
+#include&lt;cctype&gt;<br />
+#include&lt;cstring&gt;<br />
+using namespace std;<br />
+int n,m,p;<br />
+#define MAXN 22<br />
+int f[MAXN][1 &lt;&lt; MAXN];<br />
+int g[MAXN][1 &lt;&lt; MAXN];<br />
+int check[1 &lt;&lt; MAXN];<br />
+#define I inline<br />
+#define R register<br />
+struct edge<br />
+{<br />
+    int u,v;<br />
+}e[MAXN * MAXN];<br />
+int w[MAXN];<br />
+int deg[MAXN];<br />
+I bool bit(int s,int i){return ((s &gt;&gt; (i - 1)) & 1);}<br />
+I int lowbit(int x){return x & (-x);}<br />
+int cnt[1 &lt;&lt; MAXN],val[1 &lt;&lt; MAXN],valp[1 &lt;&lt; MAXN],valpinv[1 &lt;&lt; MAXN];<br />
+#define MOD 998244353<br />
+I int mul(int a,int b)<br />
+{<br />
+    R int r = a + b;<br />
+    if(r &lt; 0)r += MOD;<br />
+    if(r &gt;= MOD)r -= MOD;<br />
+    return r;<br />
+}<br />
+I void FMT(int f[],int l,int type)<br />
+{<br />
+    for(R int i = 1;i &lt; l;i = i &lt;&lt; 1)<br />
+        for(R int k = 0;k &lt; l;++k)<br />
+            if(k & i)f[k] = mul(f[k],type * f[k ^ i]);<br />
+    return;<br />
+}<br />
+I int power(int a,int b)<br />
+{<br />
+    R int res = 1;<br />
+    while(b &gt; 0)<br />
+    {<br />
+        if(b & 1)res = 1ll * res * a % MOD;<br />
+        a = 1ll * a * a % MOD;<br />
+        b = b &gt;&gt; 1;<br />
+    }<br />
+    return res;<br />
+}<br />
+int fa[MAXN];<br />
+int find(int x){return (x == fa[x] ? x : fa[x] = find(fa[x]));}<br />
+int G[MAXN][MAXN];<br />
+int main()<br />
+{<br />
+    scanf("%d%d%d",&n,&m,&p);<br />
+    for(R int i = 1;i &lt;= m;++i)scanf("%d%d",&e[i].u,&e[i].v),++G[e[i].u][e[i].v];<br />
+    for(R int i = 1;i &lt;= n;++i)scanf("%d",&w[i]);<br />
+    R int tot = (1 &lt;&lt; n) - 1;<br />
+    for(R int s = 1;s &lt;= tot;++s)<br />
+    {<br />
+        memset(deg,0,sizeof(deg));<br />
+        for(R int i = 1;i &lt;= n;++i)fa[i] = i;<br />
+        check[s] = 0;<br />
+        for(R int i = 1;i &lt;= n;++i)if(bit(s,i))<br />
+        {<br />
+            for(R int j = 1;j &lt;= n;++j)if(bit(s,j))<br />
+            {<br />
+                if(G[i][j] == 0)continue;<br />
+                ++deg[i];++deg[j];<br />
+                if(find(i) != find(j))fa[find(i)] = find(j);<br />
+            }<br />
+        }<br />
+        for(R int i = 1;i &lt;= n;++i)if(bit(s,i) && (deg[i] % 2) == 1)check[s] = 1;<br />
+        R int v = 0;<br />
+        for(R int i = 1;i &lt;= n;++i)if(bit(s,i))if(v == 0)v = find(i);else if(find(i) != v)check[s] = 1;<br />
+        cnt[s] = cnt[s ^ lowbit(s)] + 1;<br />
+        for(R int i = 1;i &lt;= n;++i)if(bit(s,i))val[s] += w[i];<br />
+        g[cnt[s]][s] = check[s] * power(val[s],p);<br />
+        valp[s] = power(val[s],p);valpinv[s] = power(valp[s],MOD - 2);<br />
+    }<br />
+    for(R int i = 1;i &lt;= n;++i)FMT(g[i],tot + 1,1);<br />
+    f[0][0] = 1;FMT(f[0],tot + 1,1);<br />
+    for(R int i = 1;i &lt;= n;++i)<br />
+    {<br />
+        for(R int j = 1;j &lt;= i;++j)<br />
+        {<br />
+            for(R int s = 0;s &lt;= tot;++s)f[i][s] = mul(f[i][s],1ll * g[j][s] * f[i - j][s] % MOD);<br />
+        }<br />
+        FMT(f[i],tot + 1,-1);<br />
+        for(R int s = 0;s &lt;= tot;++s)<br />
+            if(cnt[s] != i)f[i][s] = 0;<br />
+            else f[i][s] = 1ll * f[i][s] * valpinv[s] % MOD;<br />
+        FMT(f[i],tot + 1,1);<br />
+    }<br />
+    FMT(f[n],tot + 1,-1);<br />
+    cout &lt;&lt; f[n][tot] &lt;&lt; endl;<br />
+    return 0;<br />
+}<br />
+</pre></code>
+</div>
+        </div>
+        <div class="blogfile_showtag">
+          <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png">
+          In tag:
+<a href="../tags/数学-多项式-快速莫比乌斯变换.html">数学-多项式-快速莫比乌斯变换</a> 
+          <!--<a href="../tags/blog.html">blog</a>-->
+        </div>
+      </div>
+    </div>
+    <div id="middle_nav">
+      <div class="blog_host">
+        <div class="nav_avator">
+          <img src="http://pic.yupoo.com/wjh15101051/72c1aeab/f51d56e0.jpg" alt="avator">
+        </div>
+        <div class="nav_ID">
+          wjh15101051
+        </div>
+      </div>
+      <div class="nav_list">
+        <li class="tags">
+          <a href="../tags.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png" class="list_icon" id="tags_image">
+            Tags
+          </a>
+        </li>
+        <li class="categories">
+          <a href="../categories.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png" class="list_icon" id="categories_image">
+            Categories
+          </a>
+        </li>
+        <li class="timeline">
+          <a href="../timeline.html">
+            <img src="http://pic.yupoo.com/wjh15101051/30365cc7/c1a3be15.png" class="list_icon" id="timeline_image">
+            Timeline
+          </a>
+        </li>
+        <li class="about">
+          <a href="../about.html">
+            <img src="http://pic.yupoo.com/wjh15101051/24f1cb41/e239086e.png" class="list_icon" id="about_image">
+            About
+          </a>
+        </li>
+        <li class="toolbox">
+          <a href="../toolbox.html">
+            <img src="http://pic.yupoo.com/wjh15101051/dee9f673/d3cf682a.png" class="list_icon" id="toolbox_image">
+            Toolbox
+          </a>
+        </li>
+        <li class="friends">
+            <div class="friends_text">
+              <img src="http://pic.yupoo.com/wjh15101051/d291ebed/29f9c807.png" id="friends_image">
+              Friends
+            </div>
+            <div id="fp_friends_list">
+              <div id="SGcolin">
+                <a href="http://blog.gyx.me/" target="_blank">SGcolin</a>
+              </div>
+              <div id="Xingcy">
+                <a href="https://www.cnblogs.com/xcysblog/" target="_blank">Xingcy</a>
+              </div>
+              <div id="ZH_comld">
+                <a href="https://www.cnblogs.com/ZH-comld/" target="_blank">ZH_comld</a>
+              </div>
+            </div>
+            <br>
+          </div>
+        </li>
+      </div>
+    <div class="music_player">
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer@1.10.0/dist/APlayer.min.css">
+      <script src="https://blog-static.cnblogs.com/files/yjlaugus/APlayer.min.js"></script>
+      <div id="aplayer" class="aplayer"  data-id="5313691453" data-server="netease" data-type="playlist" data-fixed="true" data-listfolded="true" data-order="random" data-theme="#F58EA8"></div>
+      <script src="https://unpkg.com/meting@1.2/dist/Meting.min.js"></script>
+    </div>
+    <div class="bottom">
+      <div>
+        Copyright © 2020
+        <a id="copyright_user_a" href="index.html">
+          <span id="copyright_user">wjh15101051</span>
+        </a>
+      </div>
+      <div class="bottom_anime">ღゝ◡╹)ノ♡</div>
+    </div>
+  </div>
+</body>
+</html>

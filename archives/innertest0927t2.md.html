@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>重复段的删除</title>
+  <link rel="stylesheet" type="text/css" id="frame_style" href="../css/frame_style1.css">
+  <link rel="stylesheet" type="text/css" id="Markdown_style" href="../css/Markdown_style.css">
+  <script type="text/javascript" src="../jscode/frame.js"></script>
+  <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+  <link rel="stylesheet" href="https://ziyuan.fenxianglu.cn/js/highlight/styles/default.css">
+  <script src="https://ziyuan.fenxianglu.cn/js/highlight/highlight.pack.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+        inlineMath: [['$','$']]
+      }
+    });
+  </script>
+</head>
+<body>
+  <div class="main">
+    <div class="head">
+      <div class="title1">
+        <a href="../index.html">wjh15101051's space</a>
+      </div>
+      <div class="title2">
+        卧薪尝胆，厚积薄发。
+      </div>
+    </div>
+    <div id="middle_blogfile">
+      <div class="blog_blogfile">
+        <div class="blogfile_title">
+            重复段的删除
+        </div>
+        <div class="blogfile_stitle">
+          <img src="http://pic.yupoo.com/wjh15101051/1e0e1b3a/118165c5.jpg">
+          Date: Thu Sep 27 15:36:32 CST 2018
+          <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png">
+          In Category:
+          <a href="../categories/NoCategory.html">NoCategory</a>
+        </div>
+        <div class="blogfile_content">
+<div class = "MarkdownCommonContent">
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Description：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+如果有一个长度为
+$2x$
+的串前半部分和后半部分完全相同，则称他为重复串，从小到大枚举所有的重复串，从左往右依次删掉所有重复串的左边所有字符和串的左半部分，问最后剩下的字符。
+</div>
+<div class = "MarkdownCommonContent">
+$1\leqslant n \leqslant 10^5$
+ 保证每个字符出现不超过
+$10$
+次。
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Solution：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+剩下的一定是一个后缀（因为每次会消掉一个前缀），每个字符出现不超过
+$10$
+次这样奇怪的数据范围一定是可以做些什么的，对于每个长度为
+$2x$
+重复串，一定连续出现了
+$x$
+个位置差
+$x$
+的相同字符串对，所以离散化开个桶记录每个字符的所有出现位置，然后
+$O(n)\times C_{10}^2$
+的枚举所有相同字符串对把它们拿出来按照差为第一关键字，位置为第二关键字从小到大排序，记一个
+$cur$
+表示当前消到了什么位置，那么判断一下还没有被消过的最短的长度能不能凑成一个重复串，如果能，就更新
+$cur$
+。
+</div>
+<div class = "MarkdownCommonContent">
+<del class = "MarkdownDel">
+其实可以枚举相同字符串对然后hash判两部分是否相同。
+</del>
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Code：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+<pre><code class="MarkdownParaCode">
+#include&lt;algorithm&gt;<br />
+#include&lt;iostream&gt;<br />
+#include&lt;cstdlib&gt;<br />
+#include&lt;cstdio&gt;<br />
+#include&lt;cmath&gt;<br />
+#include&lt;map&gt;<br />
+#include&lt;vector&gt;<br />
+#include&lt;cstring&gt;<br />
+using namespace std;<br />
+int n;<br />
+#define MAXN 100010<br />
+int a[MAXN];<br />
+int b[MAXN],tot = 0,s[MAXN];<br />
+map&lt;int,int&gt; fr;<br />
+vector&lt;int&gt; pos[MAXN];<br />
+struct line<br />
+{<br />
+	int l,r;<br />
+}l[MAXN * 50];<br />
+int cnt = 0;<br />
+bool cmp_len(line a,line b){return (a.r - a.l == b.r - b.l ? a.r &lt; b.r : a.r - a.l &lt; b.r - b.l);}<br />
+int res[MAXN * 50];<br />
+int main()<br />
+{<br />
+	freopen("dor.in","r",stdin);<br />
+	freopen("dor.out","w",stdout);<br />
+	scanf("%d",&n);<br />
+	for(int i = 1;i &lt;= n;++i)scanf("%d",&a[i]);<br />
+	for(int i = 1;i &lt;= n;++i)b[i] = a[i];<br />
+	sort(b + 1,b + 1 + n);<br />
+	for(int i = 1;i &lt;= n;++i)<br />
+		if(i == 1 || b[i] != b[i - 1])<br />
+			fr[b[i]] = ++tot;<br />
+	for(int i = 1;i &lt;= n;++i)s[i] = fr[a[i]];<br />
+	for(int i = 1;i &lt;= n;++i)<br />
+	{<br />
+		for(vector&lt;int&gt;::iterator it = pos[s[i]].begin();it != pos[s[i]].end();++it)<br />
+		{<br />
+			l[++cnt] = (line){*it,i};<br />
+		}<br />
+		pos[s[i]].push_back(i);<br />
+	}<br />
+	sort(l + 1,l + 1 + cnt,cmp_len);<br />
+	int cur = 0;<br />
+	for(int i = 1;i &lt;= cnt;++i)<br />
+	{<br />
+		res[i] = 1;<br />
+		if(l[i].l &lt;= cur)continue;<br />
+		if(i != 1 && l[i].r - l[i].l == l[i - 1].r - l[i - 1].l && l[i].r - 1 == l[i - 1].r)res[i] += res[i - 1];<br />
+		if(res[i] &gt;= l[i].r - l[i].l)cur = l[i].l;<br />
+	}<br />
+	cout &lt;&lt; n - cur &lt;&lt; endl;<br />
+	for(int i = cur + 1;i &lt;= n;++i)printf("%d ",a[i]);puts("");<br />
+	fclose(stdin);<br />
+	fclose(stdout);<br />
+	return 0;<br />
+}<br />
+</pre></code>
+</div>
+        </div>
+        <div class="blogfile_showtag">
+          <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png">
+          In tag:
+<a href="../tags/玄学.html">玄学</a> 
+          <!--<a href="../tags/blog.html">blog</a>-->
+        </div>
+      </div>
+    </div>
+    <div id="middle_nav">
+      <div class="blog_host">
+        <div class="nav_avator">
+          <img src="http://pic.yupoo.com/wjh15101051/72c1aeab/f51d56e0.jpg" alt="avator">
+        </div>
+        <div class="nav_ID">
+          wjh15101051
+        </div>
+      </div>
+      <div class="nav_list">
+        <li class="tags">
+          <a href="../tags.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png" class="list_icon" id="tags_image">
+            Tags
+          </a>
+        </li>
+        <li class="categories">
+          <a href="../categories.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png" class="list_icon" id="categories_image">
+            Categories
+          </a>
+        </li>
+        <li class="timeline">
+          <a href="../timeline.html">
+            <img src="http://pic.yupoo.com/wjh15101051/30365cc7/c1a3be15.png" class="list_icon" id="timeline_image">
+            Timeline
+          </a>
+        </li>
+        <li class="about">
+          <a href="../about.html">
+            <img src="http://pic.yupoo.com/wjh15101051/24f1cb41/e239086e.png" class="list_icon" id="about_image">
+            About
+          </a>
+        </li>
+        <li class="toolbox">
+          <a href="../toolbox.html">
+            <img src="http://pic.yupoo.com/wjh15101051/dee9f673/d3cf682a.png" class="list_icon" id="toolbox_image">
+            Toolbox
+          </a>
+        </li>
+        <li class="friends">
+            <div class="friends_text">
+              <img src="http://pic.yupoo.com/wjh15101051/d291ebed/29f9c807.png" id="friends_image">
+              Friends
+            </div>
+            <div id="fp_friends_list">
+              <div id="SGcolin">
+                <a href="http://blog.gyx.me/" target="_blank">SGcolin</a>
+              </div>
+              <div id="Xingcy">
+                <a href="https://www.cnblogs.com/xcysblog/" target="_blank">Xingcy</a>
+              </div>
+              <div id="ZH_comld">
+                <a href="https://www.cnblogs.com/ZH-comld/" target="_blank">ZH_comld</a>
+              </div>
+            </div>
+            <br>
+          </div>
+        </li>
+      </div>
+    <div class="music_player">
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer@1.10.0/dist/APlayer.min.css">
+      <script src="https://blog-static.cnblogs.com/files/yjlaugus/APlayer.min.js"></script>
+      <div id="aplayer" class="aplayer"  data-id="5313691453" data-server="netease" data-type="playlist" data-fixed="true" data-listfolded="true" data-order="random" data-theme="#F58EA8"></div>
+      <script src="https://unpkg.com/meting@1.2/dist/Meting.min.js"></script>
+    </div>
+    <div class="bottom">
+      <div>
+        Copyright © 2020
+        <a id="copyright_user_a" href="index.html">
+          <span id="copyright_user">wjh15101051</span>
+        </a>
+      </div>
+      <div class="bottom_anime">ღゝ◡╹)ノ♡</div>
+    </div>
+  </div>
+</body>
+</html>

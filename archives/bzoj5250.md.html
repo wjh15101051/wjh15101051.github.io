@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>九省联考2018 秘密袭击coat</title>
+  <link rel="stylesheet" type="text/css" id="frame_style" href="../css/frame_style1.css">
+  <link rel="stylesheet" type="text/css" id="Markdown_style" href="../css/Markdown_style.css">
+  <script type="text/javascript" src="../jscode/frame.js"></script>
+  <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+  <link rel="stylesheet" href="https://ziyuan.fenxianglu.cn/js/highlight/styles/default.css">
+  <script src="https://ziyuan.fenxianglu.cn/js/highlight/highlight.pack.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+        inlineMath: [['$','$']]
+      }
+    });
+  </script>
+</head>
+<body>
+  <div class="main">
+    <div class="head">
+      <div class="title1">
+        <a href="../index.html">wjh15101051's space</a>
+      </div>
+      <div class="title2">
+        卧薪尝胆，厚积薄发。
+      </div>
+    </div>
+    <div id="middle_blogfile">
+      <div class="blog_blogfile">
+        <div class="blogfile_title">
+            九省联考2018 秘密袭击coat
+        </div>
+        <div class="blogfile_stitle">
+          <img src="http://pic.yupoo.com/wjh15101051/1e0e1b3a/118165c5.jpg">
+          Date: Thu Feb 14 08:35:32 CST 2019
+          <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png">
+          In Category:
+          <a href="../categories/NoCategory.html">NoCategory</a>
+        </div>
+        <div class="blogfile_content">
+<div class = "MarkdownCommonContent">
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Description：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+给一颗有
+$N$
+个点的树，点权在
+$1\sim W$
+之间，求树的每一个联通块的第
+$K$
+大点权之和。 
+</div>
+<div class = "MarkdownCommonContent">
+$1\leqslant n\leqslant 1666$
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Solution：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+先转化题目：
+$$
+\begin{align}
+ans&=\sum_{S}kth\ val\ of\ S\\
+&=\sum_{i=1}^W\sum_S[kth\ val\ of\ S\geqslant i]\\
+\end{align}
+$$
+再设
+$cnt_S[i]$
+表示联通块
+$S$
+的权值大于等于
+$i$
+的点的个数，那么：
+$$
+ans=\sum_{i=1}^W\sum_S[cnt_S[i]\geqslant K]
+$$
+那么就可以
+$DP$
+了，设
+$f[i][j][k]$
+表示以
+$i$
+为根的所有联通块中，权值大于等于
+$j$
+的点的个数恰好为
+$k$
+的方案数，在最外面枚举一个
+$j$
+，转移就是先分根节点是
+$\geqslant j$
+还是
+$&lt;j$
+讨论，然后再枚举所有子树的
+$k'$
+来计算：
+$$
+\begin{align}
+&f[i][j][k]=\sum\prod_{v\in son[i]}f[v][j][k_v]&&(val[i]\geqslant j,\sum_{v\in son[i]}k_v=k-1)\\
+&f[i][j][k]=\sum\prod_{v\in son[i]}f[v][j][k_v]&&(val[i]&lt;j,\sum_{v\in son[i]}k_v=k)
+\end{align}
+$$
+显然最后一维就是一个背包，最后的答案就是：
+$$
+ans=\sum_{i=1}^W\sum_{k=K}^n\sum_{x=1}^nf[x][i][k]
+$$
+这个暴力看上去是
+$O(n^4)$
+的，但是可以用树形背包优化到
+$O(n^3)$
+。
+</div>
+<div class = "MarkdownCommonContent">
+我们可以发现最后一维就是一个背包卷积，于是我们就可以想到生成函数还有多项式，考虑设：
+$$
+F[i][j]=\sum_{i=0}^nf[i][j][k]\times x^k
+$$
+那么转移就可以改写成：
+$$
+F[i][j]=\prod_{v\in son[i]}(F[v][j]+1)\times (1(val[i]&lt;j):x(val[i]\geqslant j))
+$$
+之所以要加一是因为当
+$k=0$
+时还要计算一种不选子树的方案。
+</div>
+<div class = "MarkdownCommonContent">
+由于最后的求和还是
+$O(n^3)$
+的，所以再设一个：
+$$
+G[i][j]=\sum_{v\in son[i]}G[v][j]+F[i][j]
+$$
+就可以在最后统计答案时省去枚举
+$i$
+。
+</div>
+<div class = "MarkdownCommonContent">
+由于多项式卷积是
+$O(n^2)$
+的很慢，而模数又不是
+$NTT$
+模数，于是我们可以用拉格朗日插值法把多项式转化成点值，然后就可以
+$O(n)$
+卷积，又由于多项式是线性变换，因此可以在最后把
+$G$
+插出来就可以求解了。
+</div>
+<div class = "MarkdownCommonContent">
+然后我们可以考虑利用整体
+$DP$
+的思想，每个点用一棵线段树维护，线段树的下标是
+$j$
+，线段树每个叶子节点维护这一个多项式代入
+$x=v$
+时的值，考虑我们需要支持的操作：初始化
+$F=1\times x^0$
+，给前缀
+$[1,val[i]]$
+乘上多项式
+$x$
+，给后缀
+$[val[i]+1,W]$
+乘上多项式
+$1$
+，给所有多项式
+$+1$
+还有多项式对应相乘，对应相乘可以在和儿子节点的线段树合并的时候做。具体来说，就是：
+</div>
+<div class = "MarkdownCommonContent">
+$(F,G)=(1,0)/(x,0)$
+：线段树区间覆盖。
+</div>
+<div class = "MarkdownCommonContent">
+$(F,G)=(F\times(F_v+1),G+G_v)$
+：线段树合并
+</div>
+<div class = "MarkdownCommonContent">
+$(F,G)=(F\times x,G)$
+：线段树区间打标记
+</div>
+<div class = "MarkdownCommonContent">
+$(F,G)=(F,G+F)$
+：线段树区间打标记
+</div>
+<div class = "MarkdownCommonContent">
+发现每次变换只会有
+$(F,G)\to(F\times a+b,G+c+d\times F)$
+，因此我们只要用一个
+$(a,b,c,d)$
+的
+$tag$
+就行了。
+</div>
+<div class = "MarkdownCommonContent">
+$tag$
+的合并：
+$$
+(a_1,b_1,c_1,d_1)+(a_2,b_2,c_2,d_2)\to(a_1\times a_2,b_1\times a_2+b_2,c_1+c_2+d_2\times b_1,d_1+d_2\times a_1)
+$$
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Code：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+<pre><code class="MarkdownParaCode">
+#include&lt;algorithm&gt;<br />
+#include&lt;iostream&gt;<br />
+#include&lt;cstdlib&gt;<br />
+#include&lt;cstdio&gt;<br />
+#include&lt;cmath&gt;<br />
+#include&lt;cctype&gt;<br />
+#include&lt;cstring&gt;<br />
+using namespace std;<br />
+int n,m,W;<br />
+#define MAXN 1700<br />
+#define MOD 64123<br />
+typedef unsigned int uint;<br />
+int val[MAXN];<br />
+struct edge<br />
+{<br />
+	int to,nxt;<br />
+}e[MAXN &lt;&lt; 1];<br />
+int edgenum = 0;<br />
+int lin[MAXN] = {0};<br />
+void add(int a,int b)<br />
+{<br />
+	e[++edgenum] = (edge){b,lin[a]};lin[a] = edgenum;<br />
+	e[++edgenum] = (edge){a,lin[b]};lin[b] = edgenum;<br />
+	return;<br />
+}<br />
+int siz[MAXN];<br />
+#define MOD 64123<br />
+uint power(uint a,int b)<br />
+{<br />
+	uint res = 1;<br />
+	while(b &gt; 0)<br />
+	{<br />
+		if(b & 1)res = res * a % MOD;<br />
+		a = a * a % MOD;<br />
+		b = b &gt;&gt; 1;<br />
+	}<br />
+	return res;<br />
+}<br />
+uint inv(uint k){return power(k,MOD - 2);}<br />
+uint res[MAXN];<br />
+uint w[MAXN],a[MAXN];<br />
+void calc(uint res[MAXN],uint val[MAXN],int n)<br />
+{<br />
+	for(int i = 0;i &lt;= n;++i)res[i] = w[i] = a[i] = 0;<br />
+	w[0] = 1;<br />
+	for(int i = 1;i &lt;= n;++i)<br />
+	{<br />
+		a[i] = val[i];<br />
+		for(int j = 1;j &lt;= n;++j)<br />
+			if(i != j)a[i] = a[i] * inv((i - j + MOD) % MOD) % MOD;<br />
+	}<br />
+	for(int i = 1;i &lt;= n;++i)<br />
+		for(int j = n;j &gt;= 0;--j)w[j] = (w[j - 1] - i * w[j] % MOD + MOD) % MOD;<br />
+	uint tmp[MAXN];<br />
+	for(int i = 1;i &lt;= n;++i)<br />
+	{<br />
+		tmp[0] = (-w[0] + MOD) % MOD * inv(i) % MOD;<br />
+		for(int j = 1;j &lt; n;++j)tmp[j] = (tmp[j - 1] - w[j] + MOD) % MOD * inv(i) % MOD;<br />
+		for(int j = 0;j &lt; n;++j)tmp[j] = tmp[j] * a[i] % MOD;<br />
+		for(int j = 0;j &lt; n;++j)res[j] = (res[j] + tmp[j]) % MOD;<br />
+	}<br />
+	return;<br />
+}<br />
+struct data<br />
+{<br />
+	uint a,b,c,d;<br />
+	data(uint a_ = 1,uint b_ = 0,uint c_ = 0,uint d_ = 0){a = a_;b = b_;c = c_;d = d_;}<br />
+	void init(){a = 1;b = c = d = 0;}<br />
+	friend data operator + (data a,data b)<br />
+	{<br />
+		data res;<br />
+		res.a = a.a * b.a % MOD;<br />
+		res.b = (a.b * b.a % MOD + b.b) % MOD;<br />
+		res.c = (a.c + b.c + b.d * a.b % MOD) % MOD;<br />
+		res.d = (a.d + b.d * a.a % MOD) % MOD;<br />
+		return res;<br />
+	}<br />
+};<br />
+struct node<br />
+{<br />
+	int lc,rc;<br />
+	data v;<br />
+}t[MAXN * 60];<br />
+int ptr = 0;<br />
+int newnode()<br />
+{<br />
+	int k = ++ptr;<br />
+	t[k].v.init();<br />
+	t[k].lc = t[k].rc = 0;<br />
+	return k;<br />
+}<br />
+int root[MAXN];<br />
+#define mid ((l + r) &gt;&gt; 1)<br />
+void pushdown(int rt)<br />
+{<br />
+	if(t[rt].lc == 0)t[rt].lc = newnode();t[t[rt].lc].v = t[t[rt].lc].v + t[rt].v;<br />
+	if(t[rt].rc == 0)t[rt].rc = newnode();t[t[rt].rc].v = t[t[rt].rc].v + t[rt].v;<br />
+	t[rt].v.init();<br />
+	return;<br />
+}<br />
+void add(int &rt,int L,int R,data k,int l,int r)<br />
+{<br />
+	if(rt == 0)rt = newnode();<br />
+	if(L &lt;= l && r &lt;= R){t[rt].v = t[rt].v + k;return;}<br />
+	pushdown(rt);<br />
+	if(L &lt;= mid)add(t[rt].lc,L,R,k,l,mid);<br />
+	if(R &gt; mid)add(t[rt].rc,L,R,k,mid + 1,r);<br />
+	return;<br />
+}<br />
+int merge(int x,int y)<br />
+{<br />
+	if(x == 0 || y == 0)return x + y;<br />
+	if(!t[x].lc && !t[x].rc)swap(x,y);<br />
+	if(!t[y].lc && !t[y].rc)<br />
+	{<br />
+		t[x].v = t[x].v + (data){t[y].v.b,0,0,0};<br />
+		t[x].v = t[x].v + (data){1,0,t[y].v.c,0};<br />
+		return x;<br />
+	}<br />
+	pushdown(x);pushdown(y);<br />
+	t[x].lc = merge(t[x].lc,t[y].lc);<br />
+	t[x].rc = merge(t[x].rc,t[y].rc);<br />
+	return x;<br />
+}<br />
+void dp(int k,int fa,uint v)<br />
+{<br />
+	add(root[k],1,W,(data){0,1,0,0},1,W);<br />
+	for(int i = lin[k];i != 0;i = e[i].nxt)<br />
+	{<br />
+		if(e[i].to == fa)continue;<br />
+		dp(e[i].to,k,v);<br />
+		root[k] = merge(root[k],root[e[i].to]);<br />
+	}<br />
+	add(root[k],1,val[k],(data){v,0,0,0},1,W);<br />
+	add(root[k],1,W,(data){1,0,0,1},1,W);<br />
+	add(root[k],1,W,(data){1,1,0,0},1,W);<br />
+	return;<br />
+}<br />
+uint tans[MAXN];<br />
+uint query(int rt,int l,int r)<br />
+{<br />
+	if(l == r)return t[rt].v.c;<br />
+	pushdown(rt);<br />
+	return (query(t[rt].lc,l,mid) + query(t[rt].rc,mid + 1,r)) % MOD;<br />
+}<br />
+int main()<br />
+{<br />
+	scanf("%d%d%d",&n,&m,&W);<br />
+	for(int i = 1;i &lt;= n;++i)scanf("%d",&val[i]);<br />
+	int a,b;<br />
+	for(int i = 1;i &lt; n;++i)<br />
+	{<br />
+		scanf("%d%d",&a,&b);<br />
+		add(a,b);<br />
+	}<br />
+	uint ans = 0;<br />
+	for(int i = 1;i &lt;= n + 1;++i)<br />
+	{<br />
+		ptr = 0;memset(root,0,sizeof(root));<br />
+		dp(1,0,i);<br />
+		tans[i] = query(root[1],1,W);<br />
+	}<br />
+	calc(res,tans,n + 1);<br />
+	for(int x = m;x &lt;= n;++x)ans = (ans + res[x]) % MOD;<br />
+	cout &lt;&lt; ans &lt;&lt; endl;<br />
+	return 0;<br />
+}<br />
+</pre></code>
+</div>
+        </div>
+        <div class="blogfile_showtag">
+          <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png">
+          In tag:
+<a href="../tags/数据结构-线段树合并.html">数据结构-线段树合并</a> <a href="../tags/数学-多项式-拉格朗日插值法.html">数学-多项式-拉格朗日插值法</a> <a href="../tags/数学-组合数学-生成函数.html">数学-组合数学-生成函数</a> <a href="../tags/DP-整体DP.html">DP-整体DP</a> 
+          <!--<a href="../tags/blog.html">blog</a>-->
+        </div>
+      </div>
+    </div>
+    <div id="middle_nav">
+      <div class="blog_host">
+        <div class="nav_avator">
+          <img src="http://pic.yupoo.com/wjh15101051/72c1aeab/f51d56e0.jpg" alt="avator">
+        </div>
+        <div class="nav_ID">
+          wjh15101051
+        </div>
+      </div>
+      <div class="nav_list">
+        <li class="tags">
+          <a href="../tags.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png" class="list_icon" id="tags_image">
+            Tags
+          </a>
+        </li>
+        <li class="categories">
+          <a href="../categories.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png" class="list_icon" id="categories_image">
+            Categories
+          </a>
+        </li>
+        <li class="timeline">
+          <a href="../timeline.html">
+            <img src="http://pic.yupoo.com/wjh15101051/30365cc7/c1a3be15.png" class="list_icon" id="timeline_image">
+            Timeline
+          </a>
+        </li>
+        <li class="about">
+          <a href="../about.html">
+            <img src="http://pic.yupoo.com/wjh15101051/24f1cb41/e239086e.png" class="list_icon" id="about_image">
+            About
+          </a>
+        </li>
+        <li class="toolbox">
+          <a href="../toolbox.html">
+            <img src="http://pic.yupoo.com/wjh15101051/dee9f673/d3cf682a.png" class="list_icon" id="toolbox_image">
+            Toolbox
+          </a>
+        </li>
+        <li class="friends">
+            <div class="friends_text">
+              <img src="http://pic.yupoo.com/wjh15101051/d291ebed/29f9c807.png" id="friends_image">
+              Friends
+            </div>
+            <div id="fp_friends_list">
+              <div id="SGcolin">
+                <a href="http://blog.gyx.me/" target="_blank">SGcolin</a>
+              </div>
+              <div id="Xingcy">
+                <a href="https://www.cnblogs.com/xcysblog/" target="_blank">Xingcy</a>
+              </div>
+              <div id="ZH_comld">
+                <a href="https://www.cnblogs.com/ZH-comld/" target="_blank">ZH_comld</a>
+              </div>
+            </div>
+            <br>
+          </div>
+        </li>
+      </div>
+    <div class="music_player">
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer@1.10.0/dist/APlayer.min.css">
+      <script src="https://blog-static.cnblogs.com/files/yjlaugus/APlayer.min.js"></script>
+      <div id="aplayer" class="aplayer"  data-id="5313691453" data-server="netease" data-type="playlist" data-fixed="true" data-listfolded="true" data-order="random" data-theme="#F58EA8"></div>
+      <script src="https://unpkg.com/meting@1.2/dist/Meting.min.js"></script>
+    </div>
+    <div class="bottom">
+      <div>
+        Copyright © 2020
+        <a id="copyright_user_a" href="index.html">
+          <span id="copyright_user">wjh15101051</span>
+        </a>
+      </div>
+      <div class="bottom_anime">ღゝ◡╹)ノ♡</div>
+    </div>
+  </div>
+</body>
+</html>

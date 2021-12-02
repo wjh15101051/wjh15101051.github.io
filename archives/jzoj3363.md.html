@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>提高A组模拟 Number</title>
+  <link rel="stylesheet" type="text/css" id="frame_style" href="../css/frame_style1.css">
+  <link rel="stylesheet" type="text/css" id="Markdown_style" href="../css/Markdown_style.css">
+  <script type="text/javascript" src="../jscode/frame.js"></script>
+  <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+  <link rel="stylesheet" href="https://ziyuan.fenxianglu.cn/js/highlight/styles/default.css">
+  <script src="https://ziyuan.fenxianglu.cn/js/highlight/highlight.pack.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+        inlineMath: [['$','$']]
+      }
+    });
+  </script>
+</head>
+<body>
+  <div class="main">
+    <div class="head">
+      <div class="title1">
+        <a href="../index.html">wjh15101051's space</a>
+      </div>
+      <div class="title2">
+        卧薪尝胆，厚积薄发。
+      </div>
+    </div>
+    <div id="middle_blogfile">
+      <div class="blog_blogfile">
+        <div class="blogfile_title">
+            提高A组模拟 Number
+        </div>
+        <div class="blogfile_stitle">
+          <img src="http://pic.yupoo.com/wjh15101051/1e0e1b3a/118165c5.jpg">
+          Date: Sun Aug 19 00:40:03 CST 2018
+          <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png">
+          In Category:
+          <a href="../categories/NoCategory.html">NoCategory</a>
+        </div>
+        <div class="blogfile_content">
+<div class = "MarkdownCommonContent">
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Description：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+给出
+$n$
+个数字串，求用以下四种方式划分区间这些串，都不在一个区间中连续出现的串的个数。
+</div>
+<div class = "MarkdownCommonContent">
+$xxx|xxx|xxxxx$
+	
+$xxx|xxxx|xxxx$
+	
+$xxxx|xxxx|xxx$
+	
+$xxxx|xxx|xxxx$
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Solution：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+建出
+$AC$
+自动机，对每个点记录一下这个点可能代表的串长度为几，在求
+$fail$
+时或上
+$fail$
+的值，因为找到这个位置其实也就找到了
+$fail$
+链上的所有状态，所以
+$fail$
+链上如果有串和他长度不同的话，应该记录下来，转移时分类讨论长度是否正好在某个整区间内即可。
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Code：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+<pre><code class="MarkdownParaCode">
+#include&lt;algorithm&gt;<br />
+#include&lt;iostream&gt;<br />
+#include&lt;cstdlib&gt;<br />
+#include&lt;cstdio&gt;<br />
+#include&lt;cmath&gt;<br />
+#include&lt;map&gt;<br />
+#include&lt;cstring&gt;<br />
+using namespace std;<br />
+int n;<br />
+#define MAXN 101<br />
+struct node<br />
+{<br />
+	int tr[10];<br />
+	int fail;<br />
+	int dep;<br />
+	node(){memset(tr,0,sizeof(tr));dep = 0;}<br />
+}t[MAXN * 5];<br />
+int ptr = 0;<br />
+inline int newnode(){return ++ptr;}<br />
+int root;<br />
+inline void insert(char c[])<br />
+{<br />
+	register int l = strlen(c + 1);<br />
+	register int cur = root;<br />
+	for(register int i = 1;i &lt;= l;++i)<br />
+	{<br />
+		if(t[cur].tr[c[i] - '0'] == 0)<br />
+			t[cur].tr[c[i] - '0'] = newnode();<br />
+		cur = t[cur].tr[c[i] - '0'];<br />
+	}<br />
+	t[cur].dep |= (1 &lt;&lt; l);<br />
+	return;<br />
+}<br />
+int q[MAXN * 5];<br />
+inline void make_fail()<br />
+{<br />
+	int head = 1,tail = 0;<br />
+	for(register int i = 0;i &lt;= 9;++i)<br />
+	{<br />
+		if(t[root].tr[i] != 0)<br />
+		{<br />
+			t[t[root].tr[i]].fail = root;<br />
+			q[++tail] = t[root].tr[i];<br />
+		}<br />
+	}<br />
+	while(head &lt;= tail)<br />
+	{<br />
+		register int k = q[head++];<br />
+		for(int i = 0;i &lt;= 9;++i)<br />
+		{<br />
+			if(t[k].tr[i] != 0)<br />
+			{<br />
+				int p = t[k].fail;<br />
+				while(p && t[p].tr[i] == 0)p = t[p].fail;<br />
+				t[t[k].tr[i]].fail = t[p].tr[i];<br />
+				t[t[k].tr[i]].dep |= t[t[p].tr[i]].dep;<br />
+				q[++tail] = t[k].tr[i];<br />
+			}<br />
+			else<br />
+			{<br />
+				t[k].tr[i] = t[t[k].fail].tr[i];<br />
+			}<br />
+		}<br />
+	}<br />
+	return;<br />
+}<br />
+typedef long long ll;<br />
+ll f[12][501];<br />
+ll dfs(int len,int pos)<br />
+{<br />
+	if(t[pos].dep)<br />
+	{<br />
+		for(int i = 1;i &lt;= 5;++i)<br />
+		{<br />
+			if(t[pos].dep & (1 &lt;&lt; i))<br />
+			{<br />
+				if(len &gt;= 7 && len + i &lt;= 11)return 0;<br />
+				if(len &gt;= 4 && len + i &lt;= 8)return 0;<br />
+				if(len &gt;= 3 && len + i &lt;= 7)return 0;<br />
+				if(len &gt;= 0 && len + i &lt;= 5)return 0;<br />
+			}<br />
+		}<br />
+	}<br />
+	if(len == 0)return 1;<br />
+	if(f[len][pos] != -1)return f[len][pos];<br />
+	register ll res = 0;<br />
+	for(int i = 0;i &lt;= 9;++i)<br />
+	{<br />
+		res += dfs(len - 1,t[pos].tr[i]);<br />
+	}<br />
+	f[len][pos] = res;<br />
+	return res;<br />
+}<br />
+int main()<br />
+{<br />
+	memset(f,-1,sizeof(f));<br />
+	scanf("%d",&n);<br />
+	char str[8];<br />
+	for(int i = 1;i &lt;= n;++i)<br />
+	{<br />
+		scanf("%s",str + 1);<br />
+		insert(str);<br />
+	}<br />
+	make_fail();<br />
+	register int cur = 0;cur = t[root].tr[1];<br />
+	printf("%lld\n",dfs(10,cur));<br />
+	return 0;<br />
+}<br />
+</pre></code>
+</div>
+<div class = "MarkdownCommonContent">
+其实这题可以分别记录四个节点的位置，如果到了区间边界就跳根，用
+$map$
+记录状态也能过。
+</div>
+<div class = "MarkdownCommonContent">
+<pre><code class="MarkdownParaCode">
+#include&lt;algorithm&gt;<br />
+#include&lt;iostream&gt;<br />
+#include&lt;cstdlib&gt;<br />
+#include&lt;cstdio&gt;<br />
+#include&lt;cmath&gt;<br />
+#include&lt;map&gt;<br />
+#include&lt;cstring&gt;<br />
+using namespace std;<br />
+int n;<br />
+#define MAXN 101<br />
+struct node<br />
+{<br />
+	int tr[10];<br />
+	bool tag;<br />
+	int fail;<br />
+	node(){memset(tr,0,sizeof(tr));tag = false;}<br />
+}t[MAXN * 5];<br />
+int ptr = 0;<br />
+inline int newnode(){return ++ptr;}<br />
+int root;<br />
+inline void insert(char c[])<br />
+{<br />
+	register int l = strlen(c + 1);<br />
+	register int cur = root;<br />
+	for(register int i = 1;i &lt;= l;++i)<br />
+	{<br />
+		if(t[cur].tag)return;<br />
+		if(t[cur].tr[c[i] - '0'] == 0)<br />
+			t[cur].tr[c[i] - '0'] = newnode();<br />
+		cur = t[cur].tr[c[i] - '0'];<br />
+	}<br />
+	t[cur].tag = true;<br />
+	return;<br />
+}<br />
+int q[MAXN * 5];<br />
+inline void make_fail()<br />
+{<br />
+	int head = 1,tail = 0;<br />
+	for(register int i = 0;i &lt;= 9;++i)<br />
+	{<br />
+		if(t[root].tr[i] != 0)<br />
+		{<br />
+			t[t[root].tr[i]].fail = root;<br />
+			q[++tail] = t[root].tr[i];<br />
+		}<br />
+	}<br />
+	while(head &lt;= tail)<br />
+	{<br />
+		register int k = q[head++];<br />
+		for(int i = 0;i &lt;= 9;++i)<br />
+		{<br />
+			if(t[k].tr[i] != 0)<br />
+			{<br />
+				int p = t[k].fail;<br />
+				while(p && t[p].tr[i] == 0)p = t[p].fail;<br />
+				t[t[k].tr[i]].fail = t[p].tr[i];<br />
+				t[t[k].tr[i]].tag |= t[t[p].tr[i]].tag;<br />
+				q[++tail] = t[k].tr[i];<br />
+			}<br />
+			else<br />
+			{<br />
+				t[k].tr[i] = t[t[k].fail].tr[i];<br />
+			}<br />
+		}<br />
+	}<br />
+	return;<br />
+}<br />
+typedef long long ll;<br />
+map&lt;ll,ll&gt; p;<br />
+inline ll encode(int len,int a,int b,int c,int d)<br />
+{<br />
+	ll res = len;<br />
+	res = res * (ptr + 1) + a;<br />
+	res = res * (ptr + 1) + b;<br />
+	res = res * (ptr + 1) + c;<br />
+	res = res * (ptr + 1) + d;//cout &lt;&lt; len &lt;&lt; " " &lt;&lt; a &lt;&lt; " " &lt;&lt; b &lt;&lt; " " &lt;&lt; c &lt;&lt; " " &lt;&lt; d &lt;&lt; "  " &lt;&lt; res &lt;&lt; endl;<br />
+	return res;<br />
+}<br />
+ll dfs(int len,int a,int b,int c,int d)<br />
+{<br />
+	if(t[a].tag || t[b].tag || t[c].tag || t[d].tag)return 0;<br />
+	if(len == 8)a = b = root;<br />
+	if(len == 7)c = d = root;<br />
+	if(len == 5)a = root;<br />
+	if(len == 4)b = d = root;<br />
+	if(len == 3)c = root;<br />
+	if(t[a].tag || t[b].tag || t[c].tag || t[d].tag)return 0;<br />
+	if(len == 0)return 1;<br />
+	register ll code = encode(len,a,b,c,d);<br />
+	if(p.find(code) != p.end())return p[code];<br />
+	register ll res = 0;<br />
+	for(int i = 0;i &lt;= 9;++i)<br />
+	{<br />
+		res += dfs(len - 1,t[a].tr[i],t[b].tr[i],t[c].tr[i],t[d].tr[i]);<br />
+	}<br />
+	p[code] = res;<br />
+	return res;<br />
+}<br />
+int main()<br />
+{<br />
+	scanf("%d",&n);<br />
+	char str[8];<br />
+	for(int i = 1;i &lt;= n;++i)<br />
+	{<br />
+		scanf("%s",str + 1);<br />
+		insert(str);<br />
+	}<br />
+	make_fail();<br />
+	register int cur = 0;cur = t[root].tr[1];<br />
+	printf("%lld\n",dfs(10,cur,cur,cur,cur));<br />
+	return 0;<br />
+}<br />
+</pre></code>
+</div>
+        </div>
+        <div class="blogfile_showtag">
+          <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png">
+          In tag:
+<a href="../tags/字符串-AC自动机.html">字符串-AC自动机</a> 
+          <!--<a href="../tags/blog.html">blog</a>-->
+        </div>
+      </div>
+    </div>
+    <div id="middle_nav">
+      <div class="blog_host">
+        <div class="nav_avator">
+          <img src="http://pic.yupoo.com/wjh15101051/72c1aeab/f51d56e0.jpg" alt="avator">
+        </div>
+        <div class="nav_ID">
+          wjh15101051
+        </div>
+      </div>
+      <div class="nav_list">
+        <li class="tags">
+          <a href="../tags.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png" class="list_icon" id="tags_image">
+            Tags
+          </a>
+        </li>
+        <li class="categories">
+          <a href="../categories.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png" class="list_icon" id="categories_image">
+            Categories
+          </a>
+        </li>
+        <li class="timeline">
+          <a href="../timeline.html">
+            <img src="http://pic.yupoo.com/wjh15101051/30365cc7/c1a3be15.png" class="list_icon" id="timeline_image">
+            Timeline
+          </a>
+        </li>
+        <li class="about">
+          <a href="../about.html">
+            <img src="http://pic.yupoo.com/wjh15101051/24f1cb41/e239086e.png" class="list_icon" id="about_image">
+            About
+          </a>
+        </li>
+        <li class="toolbox">
+          <a href="../toolbox.html">
+            <img src="http://pic.yupoo.com/wjh15101051/dee9f673/d3cf682a.png" class="list_icon" id="toolbox_image">
+            Toolbox
+          </a>
+        </li>
+        <li class="friends">
+            <div class="friends_text">
+              <img src="http://pic.yupoo.com/wjh15101051/d291ebed/29f9c807.png" id="friends_image">
+              Friends
+            </div>
+            <div id="fp_friends_list">
+              <div id="SGcolin">
+                <a href="http://blog.gyx.me/" target="_blank">SGcolin</a>
+              </div>
+              <div id="Xingcy">
+                <a href="https://www.cnblogs.com/xcysblog/" target="_blank">Xingcy</a>
+              </div>
+              <div id="ZH_comld">
+                <a href="https://www.cnblogs.com/ZH-comld/" target="_blank">ZH_comld</a>
+              </div>
+            </div>
+            <br>
+          </div>
+        </li>
+      </div>
+    <div class="music_player">
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer@1.10.0/dist/APlayer.min.css">
+      <script src="https://blog-static.cnblogs.com/files/yjlaugus/APlayer.min.js"></script>
+      <div id="aplayer" class="aplayer"  data-id="5313691453" data-server="netease" data-type="playlist" data-fixed="true" data-listfolded="true" data-order="random" data-theme="#F58EA8"></div>
+      <script src="https://unpkg.com/meting@1.2/dist/Meting.min.js"></script>
+    </div>
+    <div class="bottom">
+      <div>
+        Copyright © 2020
+        <a id="copyright_user_a" href="index.html">
+          <span id="copyright_user">wjh15101051</span>
+        </a>
+      </div>
+      <div class="bottom_anime">ღゝ◡╹)ノ♡</div>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Bandit Blues</title>
+  <link rel="stylesheet" type="text/css" id="frame_style" href="../css/frame_style1.css">
+  <link rel="stylesheet" type="text/css" id="Markdown_style" href="../css/Markdown_style.css">
+  <script type="text/javascript" src="../jscode/frame.js"></script>
+  <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+  <link rel="stylesheet" href="https://ziyuan.fenxianglu.cn/js/highlight/styles/default.css">
+  <script src="https://ziyuan.fenxianglu.cn/js/highlight/highlight.pack.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+        inlineMath: [['$','$']]
+      }
+    });
+  </script>
+</head>
+<body>
+  <div class="main">
+    <div class="head">
+      <div class="title1">
+        <a href="../index.html">wjh15101051's space</a>
+      </div>
+      <div class="title2">
+        卧薪尝胆，厚积薄发。
+      </div>
+    </div>
+    <div id="middle_blogfile">
+      <div class="blog_blogfile">
+        <div class="blogfile_title">
+            Bandit Blues
+        </div>
+        <div class="blogfile_stitle">
+          <img src="http://pic.yupoo.com/wjh15101051/1e0e1b3a/118165c5.jpg">
+          Date: Tue Jan 01 21:16:52 CST 2019
+          <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png">
+          In Category:
+          <a href="../categories/NoCategory.html">NoCategory</a>
+        </div>
+        <div class="blogfile_content">
+<div class = "MarkdownCommonContent">
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Description：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+求长为
+$n$
+的排列中是前缀最大值的位置有
+$a$
+个，是后缀最大值的位置有
+$b$
+个的排列个数模
+$998244353$
+。
+</div>
+<div class = "MarkdownCommonContent">
+$1\leqslant n\leqslant 10^5$
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Solution：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+首先先考虑
+$DP$
+，设
+$f[i][j]$
+表示
+$i$
+个数的排列是前缀最大值的位置有
+$j$
+个，不难发现前后是对称的，转移枚举最小值的位置，如果它放在开头前缀最大值的位置就会加一，否则不产生贡献。
+$$
+f[i][j]=f[i-1][j-1]+(i-1)\times f[i-1][j]
+$$
+发现这个就是第一类斯特林数，用分治
+$+NTT$
+就可以
+$O(n\log n)$
+求。
+</div>
+<div class = "MarkdownCommonContent">
+最大值所在的位置一定是前缀最大值也是后缀最大值，枚举这个位置：
+$$
+ans=\sum_{i=1}^nS[i-1][a-1]S[n-i][b-1]C[n-1][i-1]
+$$
+设
+$N=n-1,A=a-1,B=b-1$
+：
+$$
+ans=\sum_{i=0}^NS[i][A]S[N-i][B]C[N][i]
+$$
+就相当于是先用
+$i$
+个拼成
+$A$
+个环，然后再用剩下的
+$N-i$
+个拼成
+$B$
+个环，那么就相当于拼成
+$A+B$
+个环，然后从中选
+$A/B$
+个，所以：
+$$
+ans=S[N][A+B]C[A+B][A]=S[n-1][a+b-2]C[a+b-2][a-1]
+$$
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Code：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+<pre><code class="MarkdownParaCode">
+#include&lt;algorithm&gt;<br />
+#include&lt;iostream&gt;<br />
+#include&lt;cstdlib&gt;<br />
+#include&lt;cstdio&gt;<br />
+#include&lt;cmath&gt;<br />
+#include&lt;cctype&gt;<br />
+#include&lt;cstring&gt;<br />
+using namespace std;<br />
+int n,a,b;<br />
+#define MAXN 400010<br />
+int S[1000][1000];<br />
+#define P 998244353<br />
+int rev[MAXN];<br />
+typedef long long ll;<br />
+ll ww[MAXN &lt;&lt; 1],*g = ww + MAXN;<br />
+ll S1[18][MAXN];<br />
+ll power(ll a,ll b)<br />
+{<br />
+	ll res = 1;<br />
+	while(b &gt; 0)<br />
+	{<br />
+		if(b & 1)res = res * a % P;<br />
+		a = a * a % P;<br />
+		b = b &gt;&gt; 1;<br />
+	}<br />
+	return res;<br />
+}<br />
+void NTT(ll f[],int l,int type)<br />
+{<br />
+	for(int i = 0;i &lt; l;++i)<br />
+	{<br />
+		if(i &lt; rev[i])swap(f[i],f[rev[i]]);<br />
+	}<br />
+	for(int i = 2;i &lt;= l;i = i &lt;&lt; 1)<br />
+	{<br />
+		ll wn = g[type * l / i];<br />
+		for(int j = 0;j &lt; l;j += i)<br />
+		{<br />
+			ll w = 1;<br />
+			for(int k = j;k &lt; j + i / 2;++k)<br />
+			{<br />
+				ll u = f[k],t = w * f[k + i / 2] % P;<br />
+				f[k] = (u + t) % P;<br />
+				f[k + i / 2] = (u - t + P) % P;<br />
+				w = w * wn % P;<br />
+			}<br />
+		}<br />
+	}<br />
+	if(type == -1)<br />
+	{<br />
+		ll ni = power(l,P - 2);<br />
+		for(int i = 0;i &lt; l;++i)f[i] = f[i] * ni % P;<br />
+	}<br />
+	return;<br />
+}<br />
+void mul(ll a[],ll b[],ll res[],int n)<br />
+{<br />
+	int l = 0,len = 1;<br />
+	for(;len &lt;= (n &lt;&lt; 1);len = len &lt;&lt; 1)++l;<br />
+	for(int i = 0;i &lt; len;++i)rev[i] = (rev[i &gt;&gt; 1] &gt;&gt; 1) | ((i & 1) &lt;&lt; (l - 1));<br />
+	g[0] = g[-len] = 1;g[1] = g[1 - len] = power(3,(P - 1) / len);<br />
+	for(int i = 2;i &lt; len;++i)g[i] = g[i - len] = g[i - 1] * g[1] % P;<br />
+	NTT(a,len,1);NTT(b,len,1);<br />
+	for(int i = 0;i &lt; len;++i)res[i] = a[i] * b[i] % P;<br />
+	NTT(res,len,-1);<br />
+	for(int i = 0;i &lt; len;++i)a[i] = b[i] = 0;<br />
+	return;<br />
+}<br />
+ll tmp[MAXN];<br />
+void solve(int depth,int l,int r)<br />
+{<br />
+	if(l == r)<br />
+	{<br />
+		S1[depth][0] = l;S1[depth][1] = 1;<br />
+		return;<br />
+	}<br />
+	int mid = (l + r) / 2;<br />
+	int len = 1;<br />
+	while(len &lt;= ((r - l + 1) &lt;&lt; 1))len = len &lt;&lt; 1;<br />
+	solve(depth + 1,l,mid);<br />
+	for(int i = 0;i &lt;= r - l + 1;++i)S1[depth][i] = S1[depth + 1][i];<br />
+	for(int i = 0;i &lt;= r - l + 1;++i)S1[depth + 1][i] = 0;<br />
+	solve(depth + 1,mid + 1,r);<br />
+	mul(S1[depth],S1[depth + 1],tmp,r - l + 1);<br />
+	for(int i = 0;i &lt;= r - l + 1;++i)S1[depth][i] = tmp[i];<br />
+	return;<br />
+}<br />
+int main()<br />
+{<br />
+	scanf("%d%d%d",&n,&a,&b);<br />
+	if(a == 0 || b == 0){puts("0");return 0;}<br />
+	if(a + b - 1 &gt; n){puts("0");return 0;}<br />
+	if(a + b - 1 == n){puts("1");return 0;}<br />
+	if(n == 1){puts("0");return 0;}<br />
+	solve(0,0,(n - 1) - 1);<br />
+	ll ans = S1[0][a + b - 2];<br />
+	for(int i = 1;i &lt;= a + b - 2;++i)ans = ans * i % P;<br />
+	for(int i = 1;i &lt;= a - 1;++i)ans = ans * power(i,P - 2) % P;<br />
+	for(int i = 1;i &lt;= b - 1;++i)ans = ans * power(i,P - 2) % P;<br />
+	cout &lt;&lt; ans &lt;&lt; endl;<br />
+	return 0;<br />
+}<br />
+</pre></code>
+</div>
+        </div>
+        <div class="blogfile_showtag">
+          <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png">
+          In tag:
+<a href="../tags/数学-组合数学-斯特林数.html">数学-组合数学-斯特林数</a> 
+          <!--<a href="../tags/blog.html">blog</a>-->
+        </div>
+      </div>
+    </div>
+    <div id="middle_nav">
+      <div class="blog_host">
+        <div class="nav_avator">
+          <img src="http://pic.yupoo.com/wjh15101051/72c1aeab/f51d56e0.jpg" alt="avator">
+        </div>
+        <div class="nav_ID">
+          wjh15101051
+        </div>
+      </div>
+      <div class="nav_list">
+        <li class="tags">
+          <a href="../tags.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png" class="list_icon" id="tags_image">
+            Tags
+          </a>
+        </li>
+        <li class="categories">
+          <a href="../categories.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png" class="list_icon" id="categories_image">
+            Categories
+          </a>
+        </li>
+        <li class="timeline">
+          <a href="../timeline.html">
+            <img src="http://pic.yupoo.com/wjh15101051/30365cc7/c1a3be15.png" class="list_icon" id="timeline_image">
+            Timeline
+          </a>
+        </li>
+        <li class="about">
+          <a href="../about.html">
+            <img src="http://pic.yupoo.com/wjh15101051/24f1cb41/e239086e.png" class="list_icon" id="about_image">
+            About
+          </a>
+        </li>
+        <li class="toolbox">
+          <a href="../toolbox.html">
+            <img src="http://pic.yupoo.com/wjh15101051/dee9f673/d3cf682a.png" class="list_icon" id="toolbox_image">
+            Toolbox
+          </a>
+        </li>
+        <li class="friends">
+            <div class="friends_text">
+              <img src="http://pic.yupoo.com/wjh15101051/d291ebed/29f9c807.png" id="friends_image">
+              Friends
+            </div>
+            <div id="fp_friends_list">
+              <div id="SGcolin">
+                <a href="http://blog.gyx.me/" target="_blank">SGcolin</a>
+              </div>
+              <div id="Xingcy">
+                <a href="https://www.cnblogs.com/xcysblog/" target="_blank">Xingcy</a>
+              </div>
+              <div id="ZH_comld">
+                <a href="https://www.cnblogs.com/ZH-comld/" target="_blank">ZH_comld</a>
+              </div>
+            </div>
+            <br>
+          </div>
+        </li>
+      </div>
+    <div class="music_player">
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer@1.10.0/dist/APlayer.min.css">
+      <script src="https://blog-static.cnblogs.com/files/yjlaugus/APlayer.min.js"></script>
+      <div id="aplayer" class="aplayer"  data-id="5313691453" data-server="netease" data-type="playlist" data-fixed="true" data-listfolded="true" data-order="random" data-theme="#F58EA8"></div>
+      <script src="https://unpkg.com/meting@1.2/dist/Meting.min.js"></script>
+    </div>
+    <div class="bottom">
+      <div>
+        Copyright © 2020
+        <a id="copyright_user_a" href="index.html">
+          <span id="copyright_user">wjh15101051</span>
+        </a>
+      </div>
+      <div class="bottom_anime">ღゝ◡╹)ノ♡</div>
+    </div>
+  </div>
+</body>
+</html>

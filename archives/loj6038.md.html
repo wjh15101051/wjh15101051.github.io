@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>雅礼集训2017 远行</title>
+  <link rel="stylesheet" type="text/css" id="frame_style" href="../css/frame_style1.css">
+  <link rel="stylesheet" type="text/css" id="Markdown_style" href="../css/Markdown_style.css">
+  <script type="text/javascript" src="../jscode/frame.js"></script>
+  <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+  <link rel="stylesheet" href="https://ziyuan.fenxianglu.cn/js/highlight/styles/default.css">
+  <script src="https://ziyuan.fenxianglu.cn/js/highlight/highlight.pack.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+        inlineMath: [['$','$']]
+      }
+    });
+  </script>
+</head>
+<body>
+  <div class="main">
+    <div class="head">
+      <div class="title1">
+        <a href="../index.html">wjh15101051's space</a>
+      </div>
+      <div class="title2">
+        卧薪尝胆，厚积薄发。
+      </div>
+    </div>
+    <div id="middle_blogfile">
+      <div class="blog_blogfile">
+        <div class="blogfile_title">
+            雅礼集训2017 远行
+        </div>
+        <div class="blogfile_stitle">
+          <img src="http://pic.yupoo.com/wjh15101051/1e0e1b3a/118165c5.jpg">
+          Date: Wed Nov 07 10:40:26 CST 2018
+          <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png">
+          In Category:
+          <a href="../categories/NoCategory.html">NoCategory</a>
+        </div>
+        <div class="blogfile_content">
+<div class = "MarkdownCommonContent">
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Description：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+刚开始有一些点，会逐渐添加边把他们加成一棵树，随时问从某个点开始不经过重复点最远能走多远。
+</div>
+<div class = "MarkdownCommonContent">
+$1\leqslant n\leqslant 10^5$
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Solution：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+$link$
+的时候一定要
+$makeroot$
+。
+</div>
+<div class = "MarkdownCommonContent">
+首先有一个结论就是在一棵树上从某个点开始的最长链的端点一定是直径的两个端点之一，所以我们就要求添加边，动态维护直径，还有一个结论就是合并两棵树的时候新树的直径的两个端点一定是原来两个树的直径共四个端点中取两个，于是就可以用并查集同时维护这个联通块的直径的两个端点，在合并时
+$C_4^2$
+的计算一下两两之间的距离取最大值，由于强制在线所以用
+$LCT$
+维护树上距离，查询的时候和直径两个端点分别求一下距离取最大即可。
+</div>
+<div class = "MarkdownCommonContent">
+如果不强制在线的话可以先把最后整个树建出来然后链剖，就不用
+$LCT$
+了。
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Code：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+<pre><code class="MarkdownParaCode">
+#include&lt;algorithm&gt;<br />
+#include&lt;iostream&gt;<br />
+#include&lt;cstdlib&gt;<br />
+#include&lt;cstdio&gt;<br />
+#include&lt;cmath&gt;<br />
+#include&lt;stack&gt;<br />
+#include&lt;cctype&gt;<br />
+#include&lt;cstring&gt;<br />
+using namespace std;<br />
+#define MAXN 300010<br />
+int n,q;<br />
+struct node<br />
+{<br />
+	int fa,c[2],siz;<br />
+	bool rev;<br />
+	node(){fa = c[0] = c[1] = siz = 0;rev = false;}<br />
+}t[MAXN];<br />
+int id(int k){return (t[t[k].fa].c[0] == k ? 0 : 1);}<br />
+bool isroot(int k){return (t[t[k].fa].c[0] != k && t[t[k].fa].c[1] != k);}<br />
+void maintain(int k)<br />
+{<br />
+	t[k].siz = 1;<br />
+	if(t[k].c[0] != 0)t[k].siz += t[t[k].c[0]].siz;<br />
+	if(t[k].c[1] != 0)t[k].siz += t[t[k].c[1]].siz;<br />
+	return;<br />
+}<br />
+void connect(int k,int f,int p){t[k].fa = f;t[f].c[p] = k;return;}<br />
+void rotate(int x)<br />
+{<br />
+	int y = t[x].fa,z = t[y].fa,fx = id(x),fy = id(y);<br />
+	if(!isroot(y))t[z].c[fy] = x;<br />
+	t[x].fa = z;<br />
+	connect(t[x].c[fx ^ 1],y,fx);<br />
+	connect(y,x,fx ^ 1);<br />
+	maintain(y);maintain(x);<br />
+	return;<br />
+}<br />
+void pushdown(int k)<br />
+{<br />
+	if(t[k].rev)<br />
+	{<br />
+		t[t[k].c[0]].rev ^= 1;t[t[k].c[1]].rev ^= 1;<br />
+		swap(t[k].c[0],t[k].c[1]);t[k].rev = false;<br />
+	}<br />
+	return;<br />
+}<br />
+stack&lt;int&gt; s;<br />
+void splay(int x)<br />
+{<br />
+	s.push(x);<br />
+	for(int i = x;!isroot(i);i = t[i].fa)s.push(t[i].fa);<br />
+	while(!s.empty()){pushdown(s.top());s.pop();}<br />
+	while(!isroot(x))<br />
+	{<br />
+		int y = t[x].fa;<br />
+		if(isroot(y)){rotate(x);break;}<br />
+		if(id(x) == id(y)){rotate(y);rotate(x);}<br />
+		else{rotate(x);rotate(x);}<br />
+	}<br />
+	return;<br />
+}<br />
+void access(int k){for(int i = 0;k;i = k,k = t[k].fa){splay(k);t[k].c[1] = i;maintain(k);}return;}<br />
+void makeroot(int k){access(k);splay(k);t[k].rev ^= 1;return;}<br />
+void split(int x,int y){makeroot(x);access(y);splay(y);}<br />
+void link(int x,int y){makeroot(x);t[x].fa = y;return;}<br />
+void cut(int x,int y){split(x,y);t[y].c[0] = t[x].fa = 0;return;}<br />
+int query(int x,int y){split(x,y);return t[y].siz - 1;}<br />
+int f[MAXN];<br />
+int find(int x){return (x == f[x] ? x : f[x] = find(f[x]));}<br />
+int g[MAXN][2];<br />
+void merge(int a,int b)<br />
+{<br />
+	link(a,b);<br />
+	int len = -1,x,y;<br />
+	int p = find(a),q = find(b);<br />
+	if(query(g[p][0],g[p][1]) &gt; len){len = query(g[p][0],g[p][1]);x = g[p][0];y = g[p][1];}<br />
+	if(query(g[q][0],g[q][1]) &gt; len){len = query(g[q][0],g[q][1]);x = g[q][0];y = g[q][1];}<br />
+	if(query(g[p][0],g[q][0]) &gt; len){len = query(g[p][0],g[q][0]);x = g[p][0];y = g[q][0];}<br />
+	if(query(g[p][0],g[q][1]) &gt; len){len = query(g[p][0],g[q][1]);x = g[p][0];y = g[q][1];}<br />
+	if(query(g[p][1],g[q][0]) &gt; len){len = query(g[p][1],g[q][0]);x = g[p][1];y = g[q][0];}<br />
+	if(query(g[p][1],g[q][1]) &gt; len){len = query(g[p][1],g[q][1]);x = g[p][1];y = g[q][1];}<br />
+	f[p] = q;<br />
+	g[q][0] = x;g[q][1] = y;<br />
+	return;<br />
+}<br />
+int calc(int x)<br />
+{<br />
+	int p = find(x);<br />
+	return max(query(x,g[p][0]),query(x,g[p][1]));<br />
+}<br />
+int main()<br />
+{<br />
+	int type;<br />
+	scanf("%d",&type);<br />
+	scanf("%d%d",&n,&q);<br />
+	for(int i = 1;i &lt;= n;++i)<br />
+	{<br />
+		f[i] = i;<br />
+		g[i][0] = g[i][1] = i;<br />
+	}<br />
+	int opt,x,y;<br />
+	int lastans = 0;<br />
+	for(int i = 1;i &lt;= q;++i)<br />
+	{<br />
+		scanf("%d",&opt);<br />
+		if(opt == 1)<br />
+		{<br />
+			scanf("%d%d",&x,&y);<br />
+			x ^= (lastans * type);<br />
+			y ^= (lastans * type);<br />
+			merge(x,y);<br />
+		}<br />
+		else<br />
+		{<br />
+			scanf("%d",&x);<br />
+			x ^= (lastans * type);<br />
+			printf("%d\n",lastans = calc(x));<br />
+		}<br />
+	}<br />
+	return 0;<br />
+}<br />
+</pre></code>
+</div>
+        </div>
+        <div class="blogfile_showtag">
+          <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png">
+          In tag:
+<a href="../tags/数据结构-LCT.html">数据结构-LCT</a> <a href="../tags/数据结构-并查集.html">数据结构-并查集</a> <a href="../tags/树-树的直径.html">树-树的直径</a> 
+          <!--<a href="../tags/blog.html">blog</a>-->
+        </div>
+      </div>
+    </div>
+    <div id="middle_nav">
+      <div class="blog_host">
+        <div class="nav_avator">
+          <img src="http://pic.yupoo.com/wjh15101051/72c1aeab/f51d56e0.jpg" alt="avator">
+        </div>
+        <div class="nav_ID">
+          wjh15101051
+        </div>
+      </div>
+      <div class="nav_list">
+        <li class="tags">
+          <a href="../tags.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png" class="list_icon" id="tags_image">
+            Tags
+          </a>
+        </li>
+        <li class="categories">
+          <a href="../categories.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png" class="list_icon" id="categories_image">
+            Categories
+          </a>
+        </li>
+        <li class="timeline">
+          <a href="../timeline.html">
+            <img src="http://pic.yupoo.com/wjh15101051/30365cc7/c1a3be15.png" class="list_icon" id="timeline_image">
+            Timeline
+          </a>
+        </li>
+        <li class="about">
+          <a href="../about.html">
+            <img src="http://pic.yupoo.com/wjh15101051/24f1cb41/e239086e.png" class="list_icon" id="about_image">
+            About
+          </a>
+        </li>
+        <li class="toolbox">
+          <a href="../toolbox.html">
+            <img src="http://pic.yupoo.com/wjh15101051/dee9f673/d3cf682a.png" class="list_icon" id="toolbox_image">
+            Toolbox
+          </a>
+        </li>
+        <li class="friends">
+            <div class="friends_text">
+              <img src="http://pic.yupoo.com/wjh15101051/d291ebed/29f9c807.png" id="friends_image">
+              Friends
+            </div>
+            <div id="fp_friends_list">
+              <div id="SGcolin">
+                <a href="http://blog.gyx.me/" target="_blank">SGcolin</a>
+              </div>
+              <div id="Xingcy">
+                <a href="https://www.cnblogs.com/xcysblog/" target="_blank">Xingcy</a>
+              </div>
+              <div id="ZH_comld">
+                <a href="https://www.cnblogs.com/ZH-comld/" target="_blank">ZH_comld</a>
+              </div>
+            </div>
+            <br>
+          </div>
+        </li>
+      </div>
+    <div class="music_player">
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer@1.10.0/dist/APlayer.min.css">
+      <script src="https://blog-static.cnblogs.com/files/yjlaugus/APlayer.min.js"></script>
+      <div id="aplayer" class="aplayer"  data-id="5313691453" data-server="netease" data-type="playlist" data-fixed="true" data-listfolded="true" data-order="random" data-theme="#F58EA8"></div>
+      <script src="https://unpkg.com/meting@1.2/dist/Meting.min.js"></script>
+    </div>
+    <div class="bottom">
+      <div>
+        Copyright © 2020
+        <a id="copyright_user_a" href="index.html">
+          <span id="copyright_user">wjh15101051</span>
+        </a>
+      </div>
+      <div class="bottom_anime">ღゝ◡╹)ノ♡</div>
+    </div>
+  </div>
+</body>
+</html>

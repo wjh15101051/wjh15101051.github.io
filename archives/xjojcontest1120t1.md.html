@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>不可视境界线</title>
+  <link rel="stylesheet" type="text/css" id="frame_style" href="../css/frame_style1.css">
+  <link rel="stylesheet" type="text/css" id="Markdown_style" href="../css/Markdown_style.css">
+  <script type="text/javascript" src="../jscode/frame.js"></script>
+  <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+  <link rel="stylesheet" href="https://ziyuan.fenxianglu.cn/js/highlight/styles/default.css">
+  <script src="https://ziyuan.fenxianglu.cn/js/highlight/highlight.pack.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+        inlineMath: [['$','$']]
+      }
+    });
+  </script>
+</head>
+<body>
+  <div class="main">
+    <div class="head">
+      <div class="title1">
+        <a href="../index.html">wjh15101051's space</a>
+      </div>
+      <div class="title2">
+        卧薪尝胆，厚积薄发。
+      </div>
+    </div>
+    <div id="middle_blogfile">
+      <div class="blog_blogfile">
+        <div class="blogfile_title">
+            不可视境界线
+        </div>
+        <div class="blogfile_stitle">
+          <img src="http://pic.yupoo.com/wjh15101051/1e0e1b3a/118165c5.jpg">
+          Date: Thu Mar 07 14:45:44 CST 2019
+          <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png">
+          In Category:
+          <a href="../categories/NoCategory.html">NoCategory</a>
+        </div>
+        <div class="blogfile_content">
+<div class = "MarkdownCommonContent">
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Description：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+每个
+$i$
+有
+$k$
+个属性
+$A_{i,1}\sim A_{i,k}$
+，自己也有
+$k$
+个属性
+$C_1\sim C_k$
+，对一个
+$i$
+进行操作后会得到
+$\begin{align}\sum_{j=1}^k(A_{i,j}-C_j)^2\end{align}$
+的代价，然后自己的树形变成
+$i$
+的属性，对每个
+$i$
+找到一个操作序列时的代价和最少。
+</div>
+<div class = "MarkdownCommonContent">
+$n=150000,k=1$
+或
+$n=100000,k=2$
+数据随机。
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Solution：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+首先显然可以
+$DP$
+，会发现上面那个式子是欧几里得距离的平方。
+</div>
+<div class = "MarkdownCommonContent">
+当
+$k=1$
+时候的式子展开就会发现可以斜率优化，但是
+$x,y,k$
+都不单调因此要写平衡树。
+</div>
+<div class = "MarkdownCommonContent">
+当
+$k=2$
+的时候会发现没有什么办法优化，但是数据范围较小而且随机，因此可以用
+$KD-Tree$
+，具体来说就是再加一个估价
+$minv$
+表示子树里的
+$val$
+的最小值，只有子树内最近距离
+$+minv$
+比原答案更优才进入子树，时间复杂度玄学。
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Code：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+<pre><code class="MarkdownParaCode">
+#include&lt;algorithm&gt;<br />
+#include&lt;iostream&gt;<br />
+#include&lt;cstdlib&gt;<br />
+#include&lt;cstdio&gt;<br />
+#include&lt;cmath&gt;<br />
+#include&lt;cctype&gt;<br />
+#include&lt;cstring&gt;<br />
+using namespace std;<br />
+int n,k;<br />
+#define MAXN 100010<br />
+typedef long long ll;<br />
+namespace SPLAY<br />
+{<br />
+	struct node<br />
+	{<br />
+		int c[2],fa;<br />
+		ll x,y;<br />
+	}t[MAXN];<br />
+	int ptr = 0;<br />
+	int newnode(){return ++ptr;}<br />
+	int root = 0;<br />
+	int id(int k){return (t[t[k].fa].c[0] == k ? 0 : 1);}<br />
+	void connect(int k,int f,int p){t[k].fa = f;t[f].c[p] = k;return;}<br />
+	void rotate(int x)<br />
+	{<br />
+		int y = t[x].fa,z = t[y].fa,fx = id(x),fy = id(y);<br />
+		connect(t[x].c[fx ^ 1],y,fx);<br />
+		connect(y,x,fx ^ 1);<br />
+		connect(x,z,fy);<br />
+		return;<br />
+	}<br />
+	void splay(int x,int &des)<br />
+	{<br />
+		int fa = t[des].fa;<br />
+		while(t[x].fa != fa)<br />
+		{<br />
+			int y = t[x].fa;<br />
+			if(t[y].fa == fa){rotate(x);break;}<br />
+			if(id(x) == id(y)){rotate(y);rotate(x);}<br />
+			else {rotate(x);rotate(x);}<br />
+		}<br />
+		des = x;<br />
+		return;<br />
+	}<br />
+	int pre(int k)<br />
+	{<br />
+		if(t[k].c[0] == 0)return 0;<br />
+		k = t[k].c[0];<br />
+		while(t[k].c[1] != 0)k = t[k].c[1];<br />
+		return k;<br />
+	}<br />
+	int nxt(int k)<br />
+	{<br />
+		if(t[k].c[1] == 0)return 0;<br />
+		k = t[k].c[1];<br />
+		while(t[k].c[0] != 0)k = t[k].c[0];<br />
+		return k;<br />
+	}<br />
+	void remove(int k)<br />
+	{<br />
+		if(k == 0)return;<br />
+		splay(k,root);<br />
+		if(t[k].c[0] == 0 && t[k].c[1] == 0){t[t[k].fa].c[id(k)] = 0;return;}<br />
+		if(t[k].c[0] == 0 && t[k].c[1] != 0){connect(t[k].c[1],t[k].fa,id(k));return;}<br />
+		if(t[k].c[0] != 0 && t[k].c[1] == 0){connect(t[k].c[0],t[k].fa,id(k));return;}<br />
+		int nr = nxt(k);splay(nr,root);<br />
+		connect(t[k].c[0],nr,0);<br />
+		return;<br />
+	}<br />
+	double slope(node a,node b){return double(b.y - a.y) / double(b.x - a.x);}<br />
+	void maintain(int k)<br />
+	{<br />
+		splay(k,root);<br />
+		int pr = pre(k),nx = nxt(k);<br />
+		if(pr != 0 && nx != 0 && slope(t[pr],t[k]) &gt;= slope(t[nx],t[k])){remove(k);return;}<br />
+		if(pr != 0)<br />
+		{<br />
+			splay(pr,t[k].c[0]);<br />
+			int ppr = pre(pr);<br />
+			while(ppr != 0 && slope(t[ppr],t[pr]) &gt;= slope(t[pr],t[k]))<br />
+			{<br />
+				remove(pr);splay(k,root);<br />
+				splay(pr = ppr,t[k].c[0]);ppr = pre(pr);<br />
+			}<br />
+		}<br />
+		if(nx != 0)<br />
+		{<br />
+			splay(nx,t[k].c[1]);<br />
+			int nnx = nxt(nx);<br />
+			while(nnx != 0 && slope(t[nnx],t[nx]) &lt;= slope(t[nx],t[k]))<br />
+			{<br />
+				remove(nx);splay(k,root);<br />
+				splay(nx = nnx,t[k].c[1]);nnx = nxt(nx);<br />
+			}<br />
+		}<br />
+		return;<br />
+	}<br />
+	void insert(ll x,ll y)<br />
+	{<br />
+		int k = newnode();t[k].x = x;t[k].y = y;<br />
+		if(root == 0){root = k;return;}<br />
+		int cur = root,fa = 0;<br />
+		while(true)<br />
+		{<br />
+			if(x == t[cur].x){t[cur].y = min(t[cur].y,y);maintain(cur);return;}<br />
+			int id = (x &lt; t[cur].x ? 0 : 1);<br />
+			if(t[cur].c[id] == 0){connect(k,cur,id);maintain(k);return;}<br />
+			fa = cur;cur = t[cur].c[id];<br />
+		}<br />
+	}<br />
+	ll query(ll k)<br />
+	{<br />
+		ll ans = 0x3f3f3f3f3f3f3f3f;<br />
+		int cur = root;<br />
+		while(true)<br />
+		{<br />
+			if(cur == 0)break;<br />
+			ans = min(ans,t[cur].y - k * t[cur].x);<br />
+			if(t[cur].c[0] == 0 && t[cur].c[1] == 0){splay(cur,root);break;}<br />
+			int nx = nxt(cur),pr = pre(cur);<br />
+			if(pr == 0)<br />
+			{<br />
+				if(slope(t[cur],t[nx]) &gt;= k)break;<br />
+				else{cur = t[cur].c[1];continue;}<br />
+			}<br />
+			if(nx == 0)<br />
+			{<br />
+				if(slope(t[cur],t[pr]) &lt;= k)break;<br />
+				else{cur = t[cur].c[0];continue;}<br />
+			}<br />
+			if(slope(t[cur],t[pr]) &gt;= k)cur = t[cur].c[0];<br />
+			else cur = t[cur].c[1];<br />
+		}<br />
+		return ans;<br />
+	}<br />
+}<br />
+namespace SOLVE1<br />
+{<br />
+	ll A[MAXN];<br />
+	ll f[MAXN];<br />
+	void solve()<br />
+	{<br />
+		for(int i = 1;i &lt;= n;++i)scanf("%lld",&A[i]);<br />
+		memset(f,0x3f,sizeof(f));<br />
+		f[0] = 0;<br />
+		SPLAY::insert(0,0);<br />
+		for(int i = 1;i &lt;= n;++i)<br />
+		{<br />
+			f[i] = SPLAY::query(2 * A[i]) + A[i] * A[i];<br />
+			SPLAY::insert(A[i],A[i] * A[i] + f[i]);<br />
+			printf("%.4lf\n",sqrt(f[i]));<br />
+		}<br />
+		return;<br />
+	}<br />
+}<br />
+namespace KDT<br />
+{<br />
+	struct node<br />
+	{<br />
+		int lc,rc;<br />
+		ll val,minv;<br />
+		int d[2],mx[2],mn[2];<br />
+	}t[MAXN];<br />
+	int ptr = 0;<br />
+	int newnode(){return ++ptr;}<br />
+	struct point<br />
+	{<br />
+		int d[2];<br />
+	}p_[MAXN],p[MAXN];<br />
+	bool operator == (point a,point b){return (a.d[0] == b.d[0] && a.d[1] == b.d[1]);}<br />
+	int tot = 0;<br />
+	void maintain(int rt)<br />
+	{<br />
+		t[rt].mn[0] = t[rt].mx[0] = t[rt].d[0];t[rt].mn[1] = t[rt].mx[1] = t[rt].d[1];<br />
+		t[rt].minv = t[rt].val;<br />
+		if(t[rt].lc != 0)<br />
+		{<br />
+			t[rt].mn[0] = min(t[rt].mn[0],t[t[rt].lc].mn[0]);t[rt].mx[0] = max(t[rt].mx[0],t[t[rt].lc].mx[0]);<br />
+			t[rt].mn[1] = min(t[rt].mn[1],t[t[rt].lc].mn[1]);t[rt].mx[1] = max(t[rt].mx[1],t[t[rt].lc].mx[1]);<br />
+			t[rt].minv = min(t[rt].minv,t[t[rt].lc].minv);<br />
+		}<br />
+		if(t[rt].rc != 0)<br />
+		{<br />
+			t[rt].mn[0] = min(t[rt].mn[0],t[t[rt].rc].mn[0]);t[rt].mx[0] = max(t[rt].mx[0],t[t[rt].rc].mx[0]);<br />
+			t[rt].mn[1] = min(t[rt].mn[1],t[t[rt].rc].mn[1]);t[rt].mx[1] = max(t[rt].mx[1],t[t[rt].rc].mx[1]);<br />
+			t[rt].minv = min(t[rt].minv,t[t[rt].rc].minv);<br />
+		}<br />
+		return;<br />
+	}<br />
+	int tp;<br />
+	bool cmp_d(point a,point b)<br />
+	{<br />
+		if(a.d[tp] == b.d[tp])return a.d[tp ^ 1] &lt; b.d[tp ^ 1];<br />
+		else return a.d[tp] &lt; b.d[tp];<br />
+	}<br />
+	int root;<br />
+	void build(int &rt,int l,int r,int type)<br />
+	{<br />
+		if(l &gt; r)return;<br />
+		tp = type;<br />
+		sort(p + l,p + r + 1,cmp_d);<br />
+		int mid = ((l + r) &gt;&gt; 1);<br />
+		rt = newnode();<br />
+		t[rt].d[0] = p[mid].d[0];t[rt].d[1] = p[mid].d[1];<br />
+		t[rt].val = 0x3f3f3f3f3f3f3f3f;<br />
+		build(t[rt].lc,l,mid - 1,type ^ 1);<br />
+		build(t[rt].rc,mid + 1,r,type ^ 1);<br />
+		maintain(rt);<br />
+		return;<br />
+	}<br />
+	bool in(int rt,ll x,ll y)<br />
+	{<br />
+		return (t[rt].mn[0] &lt;= x && x &lt;= t[rt].mx[0] && t[rt].mn[1] &lt;= y && y &lt;= t[rt].mx[1]);<br />
+	}<br />
+	void insert(int rt,int x,int y,ll val)<br />
+	{<br />
+		if(t[rt].d[0] == x && t[rt].d[1] == y)<br />
+		{<br />
+			t[rt].val = min(t[rt].val,val);<br />
+			maintain(rt);<br />
+			return;<br />
+		}<br />
+		if(in(t[rt].lc,x,y))insert(t[rt].lc,x,y,val);<br />
+		if(in(t[rt].rc,x,y))insert(t[rt].rc,x,y,val);<br />
+		maintain(rt);<br />
+		return;<br />
+	}<br />
+	ll ans;<br />
+	ll sqr(int a){return 1ll * a * a;}<br />
+	ll calc(int rt,ll x,ll y)<br />
+	{<br />
+		ll xx,yy;<br />
+		if(t[rt].mn[0] &lt;= x && x &lt;= t[rt].mx[0])xx = x;<br />
+		else if(x &lt; t[rt].mn[0])xx = t[rt].mn[0];<br />
+		else xx = t[rt].mx[0];<br />
+		if(t[rt].mn[1] &lt;= y && y &lt;= t[rt].mx[1])yy = y;<br />
+		else if(y &lt; t[rt].mn[1])yy = t[rt].mn[1];<br />
+		else yy = t[rt].mx[1];<br />
+		return sqr(xx - x) + sqr(yy - y) + t[rt].minv;<br />
+	}<br />
+	void query(int rt,int x,int y)<br />
+	{<br />
+		if(rt == 0)return;<br />
+		ans = min(ans,sqr(t[rt].d[0] - x) + sqr(t[rt].d[1] - y) + t[rt].val);<br />
+		ll vall = calc(t[rt].lc,x,y),valr = calc(t[rt].rc,x,y);<br />
+		if(vall &lt; valr)<br />
+		{<br />
+			if(vall &lt; ans)query(t[rt].lc,x,y);<br />
+			if(valr &lt; ans)query(t[rt].rc,x,y);<br />
+		}<br />
+		else<br />
+		{<br />
+			if(valr &lt; ans)query(t[rt].rc,x,y);<br />
+			if(vall &lt; ans)query(t[rt].lc,x,y);<br />
+		}<br />
+		return;<br />
+	}<br />
+}<br />
+namespace SOLVE2<br />
+{<br />
+	ll A[MAXN][2];<br />
+	ll f[MAXN];<br />
+	void solve()<br />
+	{<br />
+		for(int i = 1;i &lt;= n;++i)scanf("%d%d",&A[i][0],&A[i][1]);<br />
+		for(int i = 1;i &lt;= n;++i)KDT::p_[i].d[0] = A[i][0],KDT::p_[i].d[1] = A[i][1];<br />
+		KDT::tp = 0;<br />
+		sort(KDT::p_ + 1,KDT::p_ + 1 + n,KDT::cmp_d);<br />
+		for(int i = 1;i &lt;= n;++i)<br />
+		{<br />
+			if(i == 1 || !(KDT::p_[i] == KDT::p_[i - 1]))KDT::p[++KDT::tot] = KDT::p_[i];<br />
+		}<br />
+		++KDT::tot;<br />
+		KDT::p[KDT::tot].d[0] = 0;KDT::p[KDT::tot].d[1] = 0;<br />
+		KDT::build(KDT::root,1,KDT::tot,0);<br />
+		memset(f,0x3f,sizeof(f));<br />
+		f[0] = 0;KDT::insert(KDT::root,0,0,0);<br />
+		for(int i = 1;i &lt;= n;++i)<br />
+		{<br />
+			KDT::ans = 0x3f3f3f3f3f3f3f3f;<br />
+			KDT::query(KDT::root,A[i][0],A[i][1]);<br />
+			f[i] = KDT::ans;<br />
+			KDT::insert(KDT::root,A[i][0],A[i][1],f[i]);<br />
+			printf("%.4lf\n",sqrt(f[i]));<br />
+		}<br />
+		return;<br />
+	}<br />
+}<br />
+int main()<br />
+{<br />
+	scanf("%d%d",&n,&k);<br />
+	if(k == 1)SOLVE1::solve();<br />
+	else SOLVE2::solve();<br />
+	return 0;<br />
+}<br />
+</pre></code>
+</div>
+        </div>
+        <div class="blogfile_showtag">
+          <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png">
+          In tag:
+<a href="../tags/DP-斜率优化DP.html">DP-斜率优化DP</a> <a href="../tags/数据结构-splay.html">数据结构-splay</a> <a href="../tags/数据结构-KDTree.html">数据结构-KDTree</a> 
+          <!--<a href="../tags/blog.html">blog</a>-->
+        </div>
+      </div>
+    </div>
+    <div id="middle_nav">
+      <div class="blog_host">
+        <div class="nav_avator">
+          <img src="http://pic.yupoo.com/wjh15101051/72c1aeab/f51d56e0.jpg" alt="avator">
+        </div>
+        <div class="nav_ID">
+          wjh15101051
+        </div>
+      </div>
+      <div class="nav_list">
+        <li class="tags">
+          <a href="../tags.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png" class="list_icon" id="tags_image">
+            Tags
+          </a>
+        </li>
+        <li class="categories">
+          <a href="../categories.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png" class="list_icon" id="categories_image">
+            Categories
+          </a>
+        </li>
+        <li class="timeline">
+          <a href="../timeline.html">
+            <img src="http://pic.yupoo.com/wjh15101051/30365cc7/c1a3be15.png" class="list_icon" id="timeline_image">
+            Timeline
+          </a>
+        </li>
+        <li class="about">
+          <a href="../about.html">
+            <img src="http://pic.yupoo.com/wjh15101051/24f1cb41/e239086e.png" class="list_icon" id="about_image">
+            About
+          </a>
+        </li>
+        <li class="toolbox">
+          <a href="../toolbox.html">
+            <img src="http://pic.yupoo.com/wjh15101051/dee9f673/d3cf682a.png" class="list_icon" id="toolbox_image">
+            Toolbox
+          </a>
+        </li>
+        <li class="friends">
+            <div class="friends_text">
+              <img src="http://pic.yupoo.com/wjh15101051/d291ebed/29f9c807.png" id="friends_image">
+              Friends
+            </div>
+            <div id="fp_friends_list">
+              <div id="SGcolin">
+                <a href="http://blog.gyx.me/" target="_blank">SGcolin</a>
+              </div>
+              <div id="Xingcy">
+                <a href="https://www.cnblogs.com/xcysblog/" target="_blank">Xingcy</a>
+              </div>
+              <div id="ZH_comld">
+                <a href="https://www.cnblogs.com/ZH-comld/" target="_blank">ZH_comld</a>
+              </div>
+            </div>
+            <br>
+          </div>
+        </li>
+      </div>
+    <div class="music_player">
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer@1.10.0/dist/APlayer.min.css">
+      <script src="https://blog-static.cnblogs.com/files/yjlaugus/APlayer.min.js"></script>
+      <div id="aplayer" class="aplayer"  data-id="5313691453" data-server="netease" data-type="playlist" data-fixed="true" data-listfolded="true" data-order="random" data-theme="#F58EA8"></div>
+      <script src="https://unpkg.com/meting@1.2/dist/Meting.min.js"></script>
+    </div>
+    <div class="bottom">
+      <div>
+        Copyright © 2020
+        <a id="copyright_user_a" href="index.html">
+          <span id="copyright_user">wjh15101051</span>
+        </a>
+      </div>
+      <div class="bottom_anime">ღゝ◡╹)ノ♡</div>
+    </div>
+  </div>
+</body>
+</html>

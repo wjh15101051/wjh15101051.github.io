@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>string</title>
+  <link rel="stylesheet" type="text/css" id="frame_style" href="../css/frame_style1.css">
+  <link rel="stylesheet" type="text/css" id="Markdown_style" href="../css/Markdown_style.css">
+  <script type="text/javascript" src="../jscode/frame.js"></script>
+  <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+  <link rel="stylesheet" href="https://ziyuan.fenxianglu.cn/js/highlight/styles/default.css">
+  <script src="https://ziyuan.fenxianglu.cn/js/highlight/highlight.pack.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+        inlineMath: [['$','$']]
+      }
+    });
+  </script>
+</head>
+<body>
+  <div class="main">
+    <div class="head">
+      <div class="title1">
+        <a href="../index.html">wjh15101051's space</a>
+      </div>
+      <div class="title2">
+        卧薪尝胆，厚积薄发。
+      </div>
+    </div>
+    <div id="middle_blogfile">
+      <div class="blog_blogfile">
+        <div class="blogfile_title">
+            string
+        </div>
+        <div class="blogfile_stitle">
+          <img src="http://pic.yupoo.com/wjh15101051/1e0e1b3a/118165c5.jpg">
+          Date: Fri Mar 29 10:13:03 CST 2019
+          <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png">
+          In Category:
+          <a href="../categories/NoCategory.html">NoCategory</a>
+        </div>
+        <div class="blogfile_content">
+<div class = "MarkdownCommonContent">
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Description：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+给
+$n$
+个字符串，支持在某个串后面插入字符，询问第
+$x$
+个字符串在第
+$y$
+次操作后在当前的
+$z$
+中的出现次数，
+$n$
+个串本质不同的子串个数，给字符串
+$T$
+求在
+$n$
+个字符串中出现次数最多是多少。
+</div>
+<div class = "MarkdownCommonContent">
+$1\leqslant n\leqslant 20，1\leqslant q,\sum |S|\leqslant2\times 10^5$
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Solution：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+建出广义后缀自动机并用
+$LCT$
+维护
+$Right$
+集合，对于每个串记一下第
+$i$
+次操作后在什么位置，然后就都可以求了。
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Code：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+<pre><code class="MarkdownParaCode">
+#include&lt;algorithm&gt;<br />
+#include&lt;iostream&gt;<br />
+#include&lt;cstdlib&gt;<br />
+#include&lt;cstdio&gt;<br />
+#include&lt;cmath&gt;<br />
+#include&lt;cctype&gt;<br />
+#include&lt;cstring&gt;<br />
+using namespace std;<br />
+inline int rd()<br />
+{<br />
+	register int res = 0,f = 1;register char c = getchar();<br />
+	while(!isdigit(c)){if(c == '-')f = -1;c = getchar();}<br />
+	while(isdigit(c))res = (res &lt;&lt; 1) + (res &lt;&lt; 3) + c - '0',c = getchar();<br />
+	return res * f;<br />
+}<br />
+int n,t,m;<br />
+#define MAXN 21 <br />
+#define MAXL 400010<br />
+char c[MAXL],ct[20000010];<br />
+#define I inline<br />
+#define R register<br />
+namespace LCT<br />
+{<br />
+	struct node<br />
+	{<br />
+		int c[2],fa;<br />
+		int tag[MAXN],val[MAXN];<br />
+		bool rev;<br />
+		node()<br />
+		{<br />
+			memset(tag,0,sizeof(tag));<br />
+			memset(val,0,sizeof(val));<br />
+		}<br />
+	}t[MAXL &lt;&lt; 1];<br />
+	I int id(int k){return (t[t[k].fa].c[0] == k ? 0 : 1);}<br />
+	I bool isroot(int k){return (t[t[k].fa].c[0] != k && t[t[k].fa].c[1] != k);}<br />
+	I void connect(int k,int f,int p){t[k].fa = f;t[f].c[p] = k;return;}<br />
+	I void pushdown(int rt)<br />
+	{<br />
+		for(R int i = 1;i &lt;= n;++i)<br />
+		{<br />
+			if(t[rt].tag[i] != 0)<br />
+			{<br />
+				t[t[rt].c[0]].tag[i] += t[rt].tag[i];t[t[rt].c[0]].val[i] += t[rt].tag[i];<br />
+				t[t[rt].c[1]].tag[i] += t[rt].tag[i];t[t[rt].c[1]].val[i] += t[rt].tag[i];<br />
+				t[rt].tag[i] = 0;<br />
+			}<br />
+		}<br />
+		if(t[rt].rev)<br />
+		{<br />
+			t[t[rt].c[0]].rev ^= 1;t[t[rt].c[1]].rev ^= 1;<br />
+			swap(t[rt].c[0],t[rt].c[1]);t[rt].rev = false;<br />
+		}<br />
+		return;<br />
+	}<br />
+	I void rotate(int x)<br />
+	{<br />
+		R int y = t[x].fa,z = t[y].fa,fx = id(x),fy = id(y);<br />
+		if(!isroot(y))t[z].c[fy] = x;<br />
+		t[x].fa = z;<br />
+		connect(t[x].c[fx ^ 1],y,fx);<br />
+		connect(y,x,fx ^ 1);<br />
+		return;<br />
+	}<br />
+	int stack[MAXL &lt;&lt; 1],top = 0;<br />
+	I void splay(int x)<br />
+	{<br />
+		stack[++top] = x;<br />
+		for(R int i = x;!isroot(i);i = t[i].fa)stack[++top] = t[i].fa;<br />
+		while(top &gt; 0)pushdown(stack[top--]);<br />
+		while(!isroot(x))<br />
+		{<br />
+			R int y = t[x].fa;<br />
+			if(isroot(y)){rotate(x);break;}<br />
+			if(id(x) == id(y)){rotate(y);rotate(x);}<br />
+			else{rotate(x);rotate(x);}<br />
+		}<br />
+		return;<br />
+	}<br />
+	I void access(int k){for(R int i = 0;k;i = k,k = t[k].fa){splay(k);t[k].c[1] = i;}return;}<br />
+	I void makeroot(int k){access(k);splay(k);t[k].rev ^= 1;return;}<br />
+	I void link(int a,int b){makeroot(a);t[a].fa = b;return;}<br />
+	I void split(int a,int b){makeroot(a);access(b);splay(b);return;}<br />
+	I void cut(int a,int b){split(a,b);t[a].fa = t[b].c[0] = 0;return;}<br />
+	I void addtag(int rt,int id,int v){t[rt].val[id] += v;t[rt].tag[id] += v;return;}<br />
+	I void add(int a,int b,int id,int v){split(a,b);addtag(b,id,v);return;}<br />
+}<br />
+namespace SAM<br />
+{<br />
+	struct node<br />
+	{<br />
+		int tr[10],par,maxl;<br />
+	}s[MAXL &lt;&lt; 1];<br />
+	int ptr = 1,root = 1;<br />
+	I int newnode(int l){R int k = ++ptr;s[k].maxl = l;return k;}<br />
+	int pos[MAXN][MAXL];<br />
+	int l[MAXN];<br />
+	long long sum = 0;<br />
+	int v[MAXN];<br />
+	I void scut(int k,int f)<br />
+	{<br />
+		LCT::splay(k);<br />
+		for(R int i = 1;i &lt;= n;++i)v[i] = LCT::t[k].val[i];<br />
+		LCT::split(1,f);<br />
+		for(R int i = 1;i &lt;= n;++i)LCT::addtag(f,i,-v[i]);<br />
+		LCT::cut(k,f);<br />
+		return;<br />
+	}<br />
+	I void slink(int k,int f)<br />
+	{<br />
+		LCT::splay(k);<br />
+		for(R int i = 1;i &lt;= n;++i)v[i] = LCT::t[k].val[i];<br />
+		LCT::split(1,f);<br />
+		for(R int i = 1;i &lt;= n;++i)LCT::addtag(f,i,v[i]);<br />
+		LCT::link(k,f);<br />
+		return;<br />
+	}<br />
+	I int extend(int k,int last,int id)<br />
+	{<br />
+		R int p = last;<br />
+		if(s[p].tr[k] != 0)<br />
+		{<br />
+			R int q = s[p].tr[k];<br />
+			if(s[p].maxl + 1 == s[q].maxl)<br />
+			{<br />
+				LCT::add(1,q,id,1);<br />
+				return q;<br />
+			}<br />
+			else<br />
+			{<br />
+				R int nq = newnode(s[p].maxl + 1);<br />
+				memcpy(s[nq].tr,s[q].tr,sizeof(s[q].tr));<br />
+				scut(q,s[q].par);<br />
+				s[nq].par = s[q].par;<br />
+				slink(nq,s[q].par);<br />
+				s[q].par = nq;slink(q,nq);<br />
+				LCT::add(1,nq,id,1);<br />
+				for(;p && s[p].tr[k] == q;p = s[p].par)s[p].tr[k] = nq;<br />
+				return nq;<br />
+			}<br />
+		}<br />
+		else<br />
+		{<br />
+			R int np = newnode(s[p].maxl + 1);<br />
+			for(;p && s[p].tr[k] == 0;p = s[p].par)s[p].tr[k] = np;<br />
+			if(p == 0)<br />
+			{<br />
+				s[np].par = root;<br />
+				slink(np,root);<br />
+			}<br />
+			else<br />
+			{<br />
+				R int q = s[p].tr[k];<br />
+				if(s[p].maxl + 1 == s[q].maxl)<br />
+				{<br />
+					s[np].par = q;<br />
+					slink(np,q);<br />
+				}<br />
+				else<br />
+				{<br />
+					R int nq = newnode(s[p].maxl + 1);<br />
+					memcpy(s[nq].tr,s[q].tr,sizeof(s[q].tr));<br />
+					scut(q,s[q].par);<br />
+					s[nq].par = s[q].par;slink(nq,s[q].par);<br />
+					s[q].par = s[np].par = nq;<br />
+					slink(q,nq);slink(np,nq);<br />
+					for(;p && s[p].tr[k] == q;p = s[p].par)s[p].tr[k] = nq;<br />
+				}<br />
+			}<br />
+			LCT::add(1,np,id,1);<br />
+			sum += s[np].maxl - s[s[np].par].maxl;<br />
+			return np;<br />
+		}<br />
+	}<br />
+	I int getright(int k,int id)<br />
+	{<br />
+		LCT::splay(k);<br />
+		return LCT::t[k].val[id]; <br />
+	}<br />
+}<br />
+int main()<br />
+{<br />
+	n = rd();t = rd();<br />
+	for(R int i = 1;i &lt;= n;++i)<br />
+	{<br />
+		SAM::pos[i][0] = 1;<br />
+		scanf("%s",c + 1);<br />
+		SAM::l[i] = strlen(c + 1);<br />
+		for(R int k = 1;k &lt;= SAM::l[i];++k)SAM::pos[i][0] = SAM::extend(c[k] - '0',SAM::pos[i][0],i);<br />
+	}<br />
+	scanf("%d",&m);<br />
+	R int op,x,y,z;<br />
+	R int lastans = 0;<br />
+	for(R int i = 1;i &lt;= m;++i)<br />
+	{<br />
+		op = rd();<br />
+		for(R int p = 1;p &lt;= n;++p)SAM::pos[p][i] = SAM::pos[p][i - 1];<br />
+		if(op == 1)<br />
+		{<br />
+			x = rd();y = rd();<br />
+			y = (y ^ (lastans * t)) % 10;<br />
+			++SAM::l[x];<br />
+			SAM::pos[x][i] = SAM::extend(y,SAM::pos[x][i],x);<br />
+		}<br />
+		if(op == 2)<br />
+		{<br />
+			x = rd();y = rd();z = rd();<br />
+			lastans = SAM::getright(SAM::pos[x][y],z);<br />
+			printf("%d\n",lastans);<br />
+		}<br />
+		if(op == 3)<br />
+		{<br />
+			printf("%lld\n",SAM::sum);<br />
+		}<br />
+		if(op == 4)<br />
+		{<br />
+			scanf("%s",ct + 1);<br />
+			R int len = strlen(ct + 1);<br />
+			R int cur = SAM::root;<br />
+			R bool tag = true;<br />
+			for(R int i = 1;i &lt;= len;++i)<br />
+			{<br />
+				if(SAM::s[cur].tr[ct[i] - '0'] == 0){tag = false;break;}<br />
+				else cur = SAM::s[cur].tr[ct[i] - '0'];<br />
+			}<br />
+			R int res = 0;<br />
+			LCT::splay(cur); <br />
+			if(tag)for(R int i = 1;i &lt;= n;++i)res = max(res,LCT::t[cur].val[i]);<br />
+			lastans = res;<br />
+			printf("%d\n",res);<br />
+		}<br />
+	}<br />
+	return 0;<br />
+}<br />
+</pre></code>
+</div>
+        </div>
+        <div class="blogfile_showtag">
+          <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png">
+          In tag:
+<a href="../tags/字符串-广义后缀自动机.html">字符串-广义后缀自动机</a> <a href="../tags/数据结构-LCT.html">数据结构-LCT</a> 
+          <!--<a href="../tags/blog.html">blog</a>-->
+        </div>
+      </div>
+    </div>
+    <div id="middle_nav">
+      <div class="blog_host">
+        <div class="nav_avator">
+          <img src="http://pic.yupoo.com/wjh15101051/72c1aeab/f51d56e0.jpg" alt="avator">
+        </div>
+        <div class="nav_ID">
+          wjh15101051
+        </div>
+      </div>
+      <div class="nav_list">
+        <li class="tags">
+          <a href="../tags.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png" class="list_icon" id="tags_image">
+            Tags
+          </a>
+        </li>
+        <li class="categories">
+          <a href="../categories.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png" class="list_icon" id="categories_image">
+            Categories
+          </a>
+        </li>
+        <li class="timeline">
+          <a href="../timeline.html">
+            <img src="http://pic.yupoo.com/wjh15101051/30365cc7/c1a3be15.png" class="list_icon" id="timeline_image">
+            Timeline
+          </a>
+        </li>
+        <li class="about">
+          <a href="../about.html">
+            <img src="http://pic.yupoo.com/wjh15101051/24f1cb41/e239086e.png" class="list_icon" id="about_image">
+            About
+          </a>
+        </li>
+        <li class="toolbox">
+          <a href="../toolbox.html">
+            <img src="http://pic.yupoo.com/wjh15101051/dee9f673/d3cf682a.png" class="list_icon" id="toolbox_image">
+            Toolbox
+          </a>
+        </li>
+        <li class="friends">
+            <div class="friends_text">
+              <img src="http://pic.yupoo.com/wjh15101051/d291ebed/29f9c807.png" id="friends_image">
+              Friends
+            </div>
+            <div id="fp_friends_list">
+              <div id="SGcolin">
+                <a href="http://blog.gyx.me/" target="_blank">SGcolin</a>
+              </div>
+              <div id="Xingcy">
+                <a href="https://www.cnblogs.com/xcysblog/" target="_blank">Xingcy</a>
+              </div>
+              <div id="ZH_comld">
+                <a href="https://www.cnblogs.com/ZH-comld/" target="_blank">ZH_comld</a>
+              </div>
+            </div>
+            <br>
+          </div>
+        </li>
+      </div>
+    <div class="music_player">
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer@1.10.0/dist/APlayer.min.css">
+      <script src="https://blog-static.cnblogs.com/files/yjlaugus/APlayer.min.js"></script>
+      <div id="aplayer" class="aplayer"  data-id="5313691453" data-server="netease" data-type="playlist" data-fixed="true" data-listfolded="true" data-order="random" data-theme="#F58EA8"></div>
+      <script src="https://unpkg.com/meting@1.2/dist/Meting.min.js"></script>
+    </div>
+    <div class="bottom">
+      <div>
+        Copyright © 2020
+        <a id="copyright_user_a" href="index.html">
+          <span id="copyright_user">wjh15101051</span>
+        </a>
+      </div>
+      <div class="bottom_anime">ღゝ◡╹)ノ♡</div>
+    </div>
+  </div>
+</body>
+</html>

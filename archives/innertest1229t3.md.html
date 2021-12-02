@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>无向图</title>
+  <link rel="stylesheet" type="text/css" id="frame_style" href="../css/frame_style1.css">
+  <link rel="stylesheet" type="text/css" id="Markdown_style" href="../css/Markdown_style.css">
+  <script type="text/javascript" src="../jscode/frame.js"></script>
+  <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+  <link rel="stylesheet" href="https://ziyuan.fenxianglu.cn/js/highlight/styles/default.css">
+  <script src="https://ziyuan.fenxianglu.cn/js/highlight/highlight.pack.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+        inlineMath: [['$','$']]
+      }
+    });
+  </script>
+</head>
+<body>
+  <div class="main">
+    <div class="head">
+      <div class="title1">
+        <a href="../index.html">wjh15101051's space</a>
+      </div>
+      <div class="title2">
+        卧薪尝胆，厚积薄发。
+      </div>
+    </div>
+    <div id="middle_blogfile">
+      <div class="blog_blogfile">
+        <div class="blogfile_title">
+            无向图
+        </div>
+        <div class="blogfile_stitle">
+          <img src="http://pic.yupoo.com/wjh15101051/1e0e1b3a/118165c5.jpg">
+          Date: Sat Dec 29 20:41:31 CST 2018
+          <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png">
+          In Category:
+          <a href="../categories/NoCategory.html">NoCategory</a>
+        </div>
+        <div class="blogfile_content">
+<div class = "MarkdownCommonContent">
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Description：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+定义一个无向图的权值为所有结点度数的
+$k$
+次方之和。求所有
+$n$
+个点的简单无向图(共有
+$2^{C^n_2}$
+个)的权值之和。
+</div>
+<div class = "MarkdownCommonContent">
+答案对
+$998244353$
+取模。
+</div>
+<div class = "MarkdownCommonContent">
+$1\leqslant n\leqslant 10^9,1\leqslant k\leqslant5\times 10^5$
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Solution：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+$$
+\begin{align}
+ans&=\sum_G\sum_{i=1}^ndeg_G[i]^k\\
+&=n\times\sum_Gdeg[1]^k\\
+&=n\sum_{d=0}^{n-1}d^k\times C^{n-1}_d2^{C^{n-1}_2}
+\end{align}
+$$
+</div>
+<div class = "MarkdownCommonContent">
+$C^{n-1}_d$
+这一行组合数可以逐个递推出来，所以我们其实就是要求：
+$$
+\sum_{d=0}^nd^kC^n_d
+$$
+</div>
+<div class = "MarkdownCommonContent">
+然后根据公式：
+$$
+x^k=\sum_{i=0}^k\left\{\begin{aligned}k\\i\end{aligned}\right\}x^{\underline i}=\sum_{i=0}^k\left\{\begin{aligned}k\\i\end{aligned}\right\}C^x_ii!
+$$
+把原式展开可得：
+$$
+\sum_{d=0}^n\sum_{i=0}^k\left\{\begin{aligned}k\\i\end{aligned}\right\}C^d_ii!C^n_d
+$$
+交换求和号，会发现最后是一个：
+$$
+\sum_{d=0}^nC^d_iC^n_d
+$$
+的形式，然后会发现：
+$$
+\sum_{d=0}^nC^d_iC^n_d=C^n_i\sum_{d=0}^nC^{n-i}_{d-i}=C^n_i\sum_{d=0}^{n-i}C^{n-i}_d=C^n_i2^{n-i}
+$$
+所以只要能快速求出第二类斯特林数，就可以
+$O(k\log n)$
+求解答案了，预处理第二类斯特林数可以用公式：
+$$
+\left\{\begin{aligned}n\ \\m\end{aligned}\right\}=\frac{1}{m!}\sum_{i=0}^mC_m^i(-1)^i(m-i)^n
+$$
+把组合数拆开后会发现是一个卷积的形式，于是用
+$NTT$
+即可。
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Code：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+<pre><code class="MarkdownParaCode">
+#include&lt;algorithm&gt;<br />
+#include&lt;iostream&gt;<br />
+#include&lt;cstdlib&gt;<br />
+#include&lt;cstdio&gt;<br />
+#include&lt;cmath&gt;<br />
+#include&lt;cctype&gt;<br />
+#include&lt;cstring&gt;<br />
+using namespace std;<br />
+typedef long long ll;<br />
+ll n,k;<br />
+#define MAXN 2000010<br />
+ll s[MAXN];<br />
+ll ww[MAXN &lt;&lt; 1],*g = ww + MAXN;<br />
+int rev[MAXN];<br />
+#define P 998244353<br />
+ll a[MAXN],b[MAXN];<br />
+ll fac[MAXN],inv[MAXN];<br />
+ll power(ll a,ll b)<br />
+{<br />
+	ll res = 1;<br />
+	while(b &gt; 0)<br />
+	{<br />
+		if(b & 1)res = res * a % P;<br />
+		a = a * a % P;<br />
+		b = b &gt;&gt; 1;<br />
+	}<br />
+	return res;<br />
+}<br />
+ll C(ll n,ll m)<br />
+{<br />
+	return fac[n] * inv[m] % P * inv[n - m] % P;<br />
+}<br />
+void NTT(ll f[],int l,int type)<br />
+{<br />
+	for(int i = 0;i &lt; l;++i)<br />
+	{<br />
+		if(i &lt; rev[i])swap(f[i],f[rev[i]]);<br />
+	}<br />
+	for(int i = 2;i &lt;= l;i = i &lt;&lt; 1)<br />
+	{<br />
+		ll wn = g[type * l / i];<br />
+		for(int j = 0;j &lt; l;j += i)<br />
+		{<br />
+			ll w = 1;<br />
+			for(int k = j;k &lt; j + i / 2;++k)<br />
+			{<br />
+				ll u = f[k],t = w * f[k + i / 2] % P;<br />
+				f[k] = (u + t) % P;<br />
+				f[k + i / 2] = (u - t + P) % P;<br />
+				w = w * wn % P;<br />
+			}<br />
+		}<br />
+	}<br />
+	if(type == -1)<br />
+	{<br />
+		ll ni = power(l,P - 2);<br />
+		for(int i = 0;i &lt; l;++i)f[i] = f[i] * ni % P;<br />
+	}<br />
+	return;<br />
+}<br />
+void init()<br />
+{<br />
+	fac[0] = 1;<br />
+	for(int i = 1;i &lt;= k;++i)fac[i] = fac[i - 1] * i % P;<br />
+	inv[k] = power(fac[k],P - 2);<br />
+	for(int i = k - 1;i &gt;= 0;--i)inv[i] = (i + 1) * inv[i + 1] % P;<br />
+	for(int i = 0;i &lt;= k;++i)a[i] = power(P - 1,i) * inv[i] % P;<br />
+	for(int i = 0;i &lt;= k;++i)b[i] = power(i,k) * inv[i] % P;<br />
+	int l = 0,len = 1;<br />
+	for(;len &lt;= (k &lt;&lt; 1);len = len &lt;&lt; 1)++l;<br />
+	for(int i = 0;i &lt; len;++i)rev[i] = (rev[i &gt;&gt; 1] &gt;&gt; 1) | ((i & 1) &lt;&lt; (l - 1));<br />
+	g[0] = g[-len] = 1;g[1] = g[1 - len] = power(3,(P - 1) / len);<br />
+	for(int i = 2;i &lt; len;++i)g[i] = g[i - len] = g[i - 1] * g[1] % P;<br />
+	NTT(a,len,1);NTT(b,len,1);<br />
+	for(int i = 0;i &lt; len;++i)s[i] = a[i] * b[i] % P;<br />
+	NTT(s,len,-1);NTT(a,len,-1);NTT(b,len,-1);<br />
+	return;<br />
+}<br />
+ll c[MAXN];<br />
+int main()<br />
+{<br />
+	freopen("graph.in","r",stdin);<br />
+	freopen("graph.out","w",stdout);<br />
+	scanf("%lld%lld",&n,&k);<br />
+	init();<br />
+	ll sum = 0;<br />
+	c[0] = 1;<br />
+	for(int i = 1;i &lt;= min(n - 1,k);++i)c[i] = c[i - 1] * (n - i) % P * power(i,P - 2) % P;<br />
+	for(int i = 0;i &lt;= k;++i)<br />
+	{<br />
+		sum = (sum + s[i] * fac[i] % P * c[i] % P * power(2,n - 1 - i) % P) % P;<br />
+	}<br />
+	sum = sum * power(2,(n - 1) * (n - 2) / 2) % P * n % P;<br />
+	cout &lt;&lt; sum &lt;&lt; endl;<br />
+	fclose(stdin);<br />
+	fclose(stdout);<br />
+	return 0;<br />
+}<br />
+</pre></code>
+</div>
+        </div>
+        <div class="blogfile_showtag">
+          <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png">
+          In tag:
+<a href="../tags/数学-多项式-快速数论变换.html">数学-多项式-快速数论变换</a> <a href="../tags/数学-组合数学-斯特林数.html">数学-组合数学-斯特林数</a> 
+          <!--<a href="../tags/blog.html">blog</a>-->
+        </div>
+      </div>
+    </div>
+    <div id="middle_nav">
+      <div class="blog_host">
+        <div class="nav_avator">
+          <img src="http://pic.yupoo.com/wjh15101051/72c1aeab/f51d56e0.jpg" alt="avator">
+        </div>
+        <div class="nav_ID">
+          wjh15101051
+        </div>
+      </div>
+      <div class="nav_list">
+        <li class="tags">
+          <a href="../tags.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png" class="list_icon" id="tags_image">
+            Tags
+          </a>
+        </li>
+        <li class="categories">
+          <a href="../categories.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png" class="list_icon" id="categories_image">
+            Categories
+          </a>
+        </li>
+        <li class="timeline">
+          <a href="../timeline.html">
+            <img src="http://pic.yupoo.com/wjh15101051/30365cc7/c1a3be15.png" class="list_icon" id="timeline_image">
+            Timeline
+          </a>
+        </li>
+        <li class="about">
+          <a href="../about.html">
+            <img src="http://pic.yupoo.com/wjh15101051/24f1cb41/e239086e.png" class="list_icon" id="about_image">
+            About
+          </a>
+        </li>
+        <li class="toolbox">
+          <a href="../toolbox.html">
+            <img src="http://pic.yupoo.com/wjh15101051/dee9f673/d3cf682a.png" class="list_icon" id="toolbox_image">
+            Toolbox
+          </a>
+        </li>
+        <li class="friends">
+            <div class="friends_text">
+              <img src="http://pic.yupoo.com/wjh15101051/d291ebed/29f9c807.png" id="friends_image">
+              Friends
+            </div>
+            <div id="fp_friends_list">
+              <div id="SGcolin">
+                <a href="http://blog.gyx.me/" target="_blank">SGcolin</a>
+              </div>
+              <div id="Xingcy">
+                <a href="https://www.cnblogs.com/xcysblog/" target="_blank">Xingcy</a>
+              </div>
+              <div id="ZH_comld">
+                <a href="https://www.cnblogs.com/ZH-comld/" target="_blank">ZH_comld</a>
+              </div>
+            </div>
+            <br>
+          </div>
+        </li>
+      </div>
+    <div class="music_player">
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer@1.10.0/dist/APlayer.min.css">
+      <script src="https://blog-static.cnblogs.com/files/yjlaugus/APlayer.min.js"></script>
+      <div id="aplayer" class="aplayer"  data-id="5313691453" data-server="netease" data-type="playlist" data-fixed="true" data-listfolded="true" data-order="random" data-theme="#F58EA8"></div>
+      <script src="https://unpkg.com/meting@1.2/dist/Meting.min.js"></script>
+    </div>
+    <div class="bottom">
+      <div>
+        Copyright © 2020
+        <a id="copyright_user_a" href="index.html">
+          <span id="copyright_user">wjh15101051</span>
+        </a>
+      </div>
+      <div class="bottom_anime">ღゝ◡╹)ノ♡</div>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>LYDSY1704月赛 二元运算</title>
+  <link rel="stylesheet" type="text/css" id="frame_style" href="../css/frame_style1.css">
+  <link rel="stylesheet" type="text/css" id="Markdown_style" href="../css/Markdown_style.css">
+  <script type="text/javascript" src="../jscode/frame.js"></script>
+  <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+  <link rel="stylesheet" href="https://ziyuan.fenxianglu.cn/js/highlight/styles/default.css">
+  <script src="https://ziyuan.fenxianglu.cn/js/highlight/highlight.pack.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+        inlineMath: [['$','$']]
+      }
+    });
+  </script>
+</head>
+<body>
+  <div class="main">
+    <div class="head">
+      <div class="title1">
+        <a href="../index.html">wjh15101051's space</a>
+      </div>
+      <div class="title2">
+        卧薪尝胆，厚积薄发。
+      </div>
+    </div>
+    <div id="middle_blogfile">
+      <div class="blog_blogfile">
+        <div class="blogfile_title">
+            LYDSY1704月赛 二元运算
+        </div>
+        <div class="blogfile_stitle">
+          <img src="http://pic.yupoo.com/wjh15101051/1e0e1b3a/118165c5.jpg">
+          Date: Mon Dec 10 11:18:59 CST 2018
+          <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png">
+          In Category:
+          <a href="../categories/NoCategory.html">NoCategory</a>
+        </div>
+        <div class="blogfile_content">
+<div class = "MarkdownCommonContent">
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Description：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+定义二元运算
+$opt$
+：
+$$
+x\text{ opt }y=
+\begin{cases}
+x+y,&\text{if $x&lt;y$} \\
+x-y,&\text{if $x\geqslant y$}
+\end{cases}
+$$
+给定
+$n$
+个数
+$a_i$
+和
+$m$
+个数
+$b_i$
+，
+$q$
+次询问有多少对
+$(i,j)$
+满足
+$\text{$
+a
+<em class = "MarkdownEm">
+i
+$ opt $
+b
+</em>
+j
+$}=k$
+。
+</div>
+<div class = "MarkdownCommonContent">
+$1\leqslant n,m,q,a_i,b_i\leqslant50000$
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Solution：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+分治
+$+FFT$
+，对于当前区间
+$[L,R]$
+，把
+$A$
+的
+$[L,mid]$
+和
+$B$
+的
+$[mid+1,R]$
+卷积起来，然后累加答案，另一个同理，最后
+$O(1)$
+回答询问即可，不要忘了
+$0$
+。
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Code：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+<pre><code class="MarkdownParaCode">
+#include&lt;algorithm&gt;<br />
+#include&lt;iostream&gt;<br />
+#include&lt;cstdlib&gt;<br />
+#include&lt;cstdio&gt;<br />
+#include&lt;cmath&gt;<br />
+#include&lt;cctype&gt;<br />
+#include&lt;cstring&gt;<br />
+using namespace std;<br />
+inline int rd()<br />
+{<br />
+	register int res = 0,f = 1;<br />
+	register char c = getchar();<br />
+	while(!isdigit(c))<br />
+	{<br />
+		if(c == '-')f = -1;<br />
+		c = getchar();<br />
+	}<br />
+	while(isdigit(c))<br />
+	{<br />
+		res = (res &lt;&lt; 1) + (res &lt;&lt; 3) + c - '0';<br />
+		c = getchar();<br />
+	}<br />
+	return res * f;<br />
+}<br />
+int n,m,q;<br />
+#define MAXN 200010<br />
+int ca[MAXN],cb[MAXN];<br />
+long long ans[MAXN];<br />
+struct comp<br />
+{<br />
+	double r,i;<br />
+	comp(double r_ = 0.0,double i_ = 0.0){r = r_;i = i_;}<br />
+}a[MAXN],b[MAXN];<br />
+inline comp operator + (comp a,comp b){return (comp){a.r + b.r,a.i + b.i};}<br />
+inline comp operator - (comp a,comp b){return (comp){a.r - b.r,a.i - b.i};}<br />
+inline comp operator * (comp a,comp b){return (comp){a.r * b.r - a.i * b.i,a.r * b.i + a.i * b.r};}<br />
+int rev[MAXN];<br />
+const double PI = acos(-1);<br />
+inline void FFT(comp f[],int l,int type)<br />
+{<br />
+	for(register int i = 0;i &lt; l;++i)<br />
+	{<br />
+		if(i &lt; rev[i])swap(f[i],f[rev[i]]);<br />
+	}<br />
+	for(register int i = 2;i &lt;= l;i = i &lt;&lt; 1)<br />
+	{<br />
+		register comp wn = comp(cos(-type * 2 * PI / i),sin(-type * 2 * PI / i));<br />
+		for(register int j = 0;j &lt; l;j += i)<br />
+		{<br />
+			register comp w = comp(1,0);<br />
+			for(register int k = j;k &lt; j + i / 2;++k)<br />
+			{<br />
+				register comp u = f[k],t = w * f[k + i / 2];<br />
+				f[k] = u + t;<br />
+				f[k + i / 2] = u - t;<br />
+				w = w * wn;<br />
+			}<br />
+		}<br />
+	}<br />
+	if(type == -1)<br />
+	{<br />
+		for(register int i = 0;i &lt; l;++i)f[i].r = f[i].r / l;<br />
+	}<br />
+	return;<br />
+}<br />
+void solve(int L,int R)<br />
+{<br />
+	if(L == R)<br />
+	{<br />
+		ans[0] += 1ll * ca[L] * cb[L];<br />
+		return;<br />
+	}<br />
+	register int mid = ((L + R) &gt;&gt; 1);<br />
+	solve(L,mid);solve(mid + 1,R);<br />
+	register int l = 0,len = 1;<br />
+	for(;len &lt;= (R - L + 1);len = len &lt;&lt; 1)++l;<br />
+	for(register int i = 0;i &lt; len;++i)rev[i] = (rev[i &gt;&gt; 1] &gt;&gt; 1) | ((i & 1) &lt;&lt; (l - 1));<br />
+	for(register int i = 0;i &lt; len;++i)a[i].r = a[i].i = b[i].r = b[i].i = 0.0;<br />
+	for(register int i = L;i &lt;= mid;++i)a[i - L].r = ca[i];<br />
+	for(register int i = mid + 1;i &lt;= R;++i)b[i - mid - 1].r = cb[i];<br />
+	FFT(a,len,1);FFT(b,len,1);<br />
+	for(register int i = 0;i &lt; len;++i)a[i] = a[i] * b[i];<br />
+	FFT(a,len,-1);<br />
+	for(register int i = 0;i &lt; len;++i)ans[i + L + mid + 1] += (long long)(a[i].r + 0.5);<br />
+	for(register int i = 0;i &lt; len;++i)a[i].r = a[i].i = b[i].r = b[i].i = 0.0;<br />
+	for(register int i = mid + 1;i &lt;= R;++i)a[i - mid - 1].r = ca[i];<br />
+	for(register int i = L;i &lt;= mid;++i)b[mid - i].r = cb[i];<br />
+	FFT(a,len,1);FFT(b,len,1);<br />
+	for(register int i = 0;i &lt; len;++i)a[i] = a[i] * b[i];<br />
+	FFT(a,len,-1);<br />
+	for(register int i = 0;i &lt; len;++i)ans[i + 1] += (long long)(a[i].r + 0.5);<br />
+	return;<br />
+}<br />
+void work()<br />
+{<br />
+	scanf("%d%d%d",&n,&m,&q);<br />
+	register int x;<br />
+	memset(ca,0,sizeof(ca));<br />
+	memset(cb,0,sizeof(cb));<br />
+	memset(ans,0,sizeof(ans));<br />
+	for(register int i = 1;i &lt;= n;++i)<br />
+	{<br />
+		x = rd();<br />
+		++ca[x];<br />
+	}<br />
+	for(register int i = 1;i &lt;= m;++i)<br />
+	{<br />
+		x = rd();<br />
+		++cb[x];<br />
+	}<br />
+	solve(0,50000);<br />
+	for(register int i = 1;i &lt;= q;++i)<br />
+	{<br />
+		x = rd();<br />
+		printf("%lld\n",ans[x]);<br />
+	}<br />
+	return;<br />
+}<br />
+int main()<br />
+{<br />
+	register int testcases;<br />
+	scanf("%d",&testcases);<br />
+	while(testcases--)work();<br />
+	return 0;<br />
+}<br />
+</pre></code>
+</div>
+        </div>
+        <div class="blogfile_showtag">
+          <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png">
+          In tag:
+<a href="../tags/数学-多项式-快速傅里叶变换.html">数学-多项式-快速傅里叶变换</a> <a href="../tags/算法-分治.html">算法-分治</a> 
+          <!--<a href="../tags/blog.html">blog</a>-->
+        </div>
+      </div>
+    </div>
+    <div id="middle_nav">
+      <div class="blog_host">
+        <div class="nav_avator">
+          <img src="http://pic.yupoo.com/wjh15101051/72c1aeab/f51d56e0.jpg" alt="avator">
+        </div>
+        <div class="nav_ID">
+          wjh15101051
+        </div>
+      </div>
+      <div class="nav_list">
+        <li class="tags">
+          <a href="../tags.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png" class="list_icon" id="tags_image">
+            Tags
+          </a>
+        </li>
+        <li class="categories">
+          <a href="../categories.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png" class="list_icon" id="categories_image">
+            Categories
+          </a>
+        </li>
+        <li class="timeline">
+          <a href="../timeline.html">
+            <img src="http://pic.yupoo.com/wjh15101051/30365cc7/c1a3be15.png" class="list_icon" id="timeline_image">
+            Timeline
+          </a>
+        </li>
+        <li class="about">
+          <a href="../about.html">
+            <img src="http://pic.yupoo.com/wjh15101051/24f1cb41/e239086e.png" class="list_icon" id="about_image">
+            About
+          </a>
+        </li>
+        <li class="toolbox">
+          <a href="../toolbox.html">
+            <img src="http://pic.yupoo.com/wjh15101051/dee9f673/d3cf682a.png" class="list_icon" id="toolbox_image">
+            Toolbox
+          </a>
+        </li>
+        <li class="friends">
+            <div class="friends_text">
+              <img src="http://pic.yupoo.com/wjh15101051/d291ebed/29f9c807.png" id="friends_image">
+              Friends
+            </div>
+            <div id="fp_friends_list">
+              <div id="SGcolin">
+                <a href="http://blog.gyx.me/" target="_blank">SGcolin</a>
+              </div>
+              <div id="Xingcy">
+                <a href="https://www.cnblogs.com/xcysblog/" target="_blank">Xingcy</a>
+              </div>
+              <div id="ZH_comld">
+                <a href="https://www.cnblogs.com/ZH-comld/" target="_blank">ZH_comld</a>
+              </div>
+            </div>
+            <br>
+          </div>
+        </li>
+      </div>
+    <div class="music_player">
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer@1.10.0/dist/APlayer.min.css">
+      <script src="https://blog-static.cnblogs.com/files/yjlaugus/APlayer.min.js"></script>
+      <div id="aplayer" class="aplayer"  data-id="5313691453" data-server="netease" data-type="playlist" data-fixed="true" data-listfolded="true" data-order="random" data-theme="#F58EA8"></div>
+      <script src="https://unpkg.com/meting@1.2/dist/Meting.min.js"></script>
+    </div>
+    <div class="bottom">
+      <div>
+        Copyright © 2020
+        <a id="copyright_user_a" href="index.html">
+          <span id="copyright_user">wjh15101051</span>
+        </a>
+      </div>
+      <div class="bottom_anime">ღゝ◡╹)ノ♡</div>
+    </div>
+  </div>
+</body>
+</html>

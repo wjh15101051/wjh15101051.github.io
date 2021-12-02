@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>SDOI2017 切树游戏</title>
+  <link rel="stylesheet" type="text/css" id="frame_style" href="../css/frame_style1.css">
+  <link rel="stylesheet" type="text/css" id="Markdown_style" href="../css/Markdown_style.css">
+  <script type="text/javascript" src="../jscode/frame.js"></script>
+  <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+  <link rel="stylesheet" href="https://ziyuan.fenxianglu.cn/js/highlight/styles/default.css">
+  <script src="https://ziyuan.fenxianglu.cn/js/highlight/highlight.pack.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+        inlineMath: [['$','$']]
+      }
+    });
+  </script>
+</head>
+<body>
+  <div class="main">
+    <div class="head">
+      <div class="title1">
+        <a href="../index.html">wjh15101051's space</a>
+      </div>
+      <div class="title2">
+        卧薪尝胆，厚积薄发。
+      </div>
+    </div>
+    <div id="middle_blogfile">
+      <div class="blog_blogfile">
+        <div class="blogfile_title">
+            SDOI2017 切树游戏
+        </div>
+        <div class="blogfile_stitle">
+          <img src="http://pic.yupoo.com/wjh15101051/1e0e1b3a/118165c5.jpg">
+          Date: Thu Nov 29 17:27:36 CST 2018
+          <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png">
+          In Category:
+          <a href="../categories/NoCategory.html">NoCategory</a>
+        </div>
+        <div class="blogfile_content">
+<div class = "MarkdownCommonContent">
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Description：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+给一棵树，每个点有点权（小于
+$m$
+），支持修改点权，和查询异或和为
+$k$
+的联通块个数。
+</div>
+<div class = "MarkdownCommonContent">
+$1\leqslant n\leqslant 30000,1\leqslant m\leqslant 128$
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Solution：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+动态
+$DP+FWT$
+还是比较显然的。
+</div>
+<div class = "MarkdownCommonContent">
+考虑用一个多项式作为
+$DP$
+数组，
+$f[i][1]$
+表示必须选子树根的联通块个数，
+$f[i][0]$
+无要求，
+$k$
+位置的值就是异或和为
+$k$
+的联通块个数，那么转移为：
+$$
+\begin{align}
+f[k][1]&=f[k][1]+f[k][1]\oplus f[e[i].to][1]=f[k][1]\times(f[e[i].to][1]+1)\\
+f[k][0]&=\sum f[e[i].to][0]+f[k][1]\\
+\end{align}
+$$
+$'+'$
+代表对应相加，
+$'\oplus'$
+代表异或卷积。
+</div>
+<div class = "MarkdownCommonContent">
+按照动态
+$DP$
+的套路维护一个只与虚儿子有关的量，
+$g[k][1]$
+表示所有虚儿子异或卷积起来的值，
+$g[k][0]$
+表示所有虚儿子的
+$f[k][0]$
+的和还有这个点的
+$f[k][1]$
+。那么考虑一个重链，发现要求的就是所有区间的异或值为某个数的个数，类似最大联通块和那道题的做法，那么就维护一个前缀
+$FWT$
+数组和后缀
+$FWT$
+数组，然后两边卷积起来，并把这个还有两边的值累加到答案里即可。
+</div>
+<div class = "MarkdownCommonContent">
+但是这样做会被卡常，所以干脆只在进入和退出的时候
+$FWT$
+，中间
+$DP$
+一直使用
+$FWT$
+之后的数组能卡掉不少常数，但是有有一个问题，就是怎么单点加，分析一下
+$FWT$
+那个
+$tf$
+函数的性质会发现其实变成了所有位置都
+$+1$
+。
+</div>
+<div class = "MarkdownCommonContent">
+这样做还有一个问题，动态
+$DP$
+要求我们必须能去除子树的贡献，然而这道题如果方案数是
+$10007$
+的倍数，就会没有逆元，这样答案就不是可减的了，一种做法是利用线段树分治，容易理解但代码量大，另一种做法是另开一种结构体叫做
+$data$
+，专门维护所有虚儿子的信息，并且不包括他自己，然后每个位置维护一个
+$cnt$
+表示这个位置
+$\times0$
+有多少次，
+$f$
+表示这个位置除去
+$0$
+的乘积，然后乘和除加一加减一减就行了，对于这个点的值，我们可以在用一个结构体维护，每次从
+$data$
+里把他除掉，然后对他进行操作，然后再把他乘回去。
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Code：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+<pre><code class="MarkdownParaCode">
+#include&lt;algorithm&gt;<br />
+#include&lt;iostream&gt;<br />
+#include&lt;cstdlib&gt;<br />
+#include&lt;cstdio&gt;<br />
+#include&lt;cmath&gt;<br />
+#include&lt;cctype&gt;<br />
+#include&lt;cstring&gt;<br />
+using namespace std;<br />
+inline int rd()<br />
+{<br />
+	register int res = 0;<br />
+	register char c = getchar();<br />
+	while(!isdigit(c))c = getchar();<br />
+	while(isdigit(c))<br />
+	{<br />
+		res = (res &lt;&lt; 1) + (res &lt;&lt; 3) + c - '0';<br />
+		c = getchar();<br />
+	}<br />
+	return res;<br />
+}<br />
+int n,m,q;<br />
+#define MAXN 30010<br />
+#define MAXM 130<br />
+#define MOD 10007<br />
+#define INV2 5004<br />
+int inv[MOD];<br />
+struct edge<br />
+{<br />
+	int to,nxt;<br />
+}e[MAXN &lt;&lt; 1];<br />
+int edgenum = 0;<br />
+int lin[MAXN] = {0};<br />
+inline void add(int a,int b)<br />
+{<br />
+	e[++edgenum] = (edge){b,lin[a]};lin[a] = edgenum;<br />
+	e[++edgenum] = (edge){a,lin[b]};lin[b] = edgenum;<br />
+	return;<br />
+}<br />
+int val[MAXN];<br />
+int fa[MAXN],dep[MAXN],son[MAXN],siz[MAXN],top[MAXN],bot[MAXN];<br />
+int rnk[MAXN],th[MAXN],tot = 0;<br />
+void dfs1(int k,int depth)<br />
+{<br />
+	dep[k] = depth;siz[k] = 1;<br />
+	for(register int i = lin[k];i != 0;i = e[i].nxt)<br />
+	{<br />
+		if(e[i].to != fa[k])<br />
+		{<br />
+			fa[e[i].to] = k;<br />
+			dfs1(e[i].to,depth + 1);<br />
+			siz[k] += siz[e[i].to];<br />
+			if(son[k] == 0 || siz[e[i].to] &gt; siz[son[k]])<br />
+			{<br />
+				son[k] = e[i].to;<br />
+			}<br />
+		}<br />
+	}<br />
+	return;<br />
+}<br />
+void dfs2(int k,int tp)<br />
+{<br />
+	top[k] = tp;<br />
+	rnk[k] = ++tot;th[tot] = k;<br />
+	if(son[k] == 0){bot[k] = k;return;}<br />
+	dfs2(son[k],tp);bot[k] = bot[son[k]];<br />
+	for(register int i = lin[k];i != 0;i = e[i].nxt)<br />
+	{<br />
+		if(e[i].to != fa[k] && e[i].to != son[k])<br />
+		{<br />
+			dfs2(e[i].to,e[i].to);<br />
+		}<br />
+	}	<br />
+	return;<br />
+}<br />
+inline int power(int a,int b)<br />
+{<br />
+	register int res = 1;<br />
+	while(b &gt; 0)<br />
+	{<br />
+		if(b & 1)res = res * a % MOD;<br />
+		a = a * a % MOD;<br />
+		b = b &gt;&gt; 1;<br />
+	}<br />
+	return res;<br />
+}<br />
+struct poly<br />
+{<br />
+	int f[MAXM];<br />
+	int& operator [](int x){return f[x];}<br />
+	inline void FWT(int type)<br />
+	{<br />
+		for(register int i = 2;i &lt;= m;i = i &lt;&lt; 1)<br />
+		{<br />
+			for(register int j = 0;j &lt; m;j += i)<br />
+			{<br />
+				for(int k = j;k &lt; j + i / 2;++k)<br />
+				{<br />
+					register int u = f[k],t = f[k + i / 2];<br />
+					f[k] = (u + t) % MOD;<br />
+					f[k + i / 2] = (u - t + MOD) % MOD;<br />
+					if(type == -1)<br />
+					{<br />
+						f[k] = f[k] * INV2 % MOD;<br />
+						f[k + i / 2] = f[k + i / 2] * INV2 % MOD;<br />
+					}<br />
+				}<br />
+			}<br />
+		}<br />
+		return;<br />
+	}<br />
+	inline friend poly operator * (poly a,poly b)<br />
+	{<br />
+		for(register int i = 0;i &lt; m;++i)<br />
+		{<br />
+			a[i] = a[i] * b[i] % MOD;<br />
+		}<br />
+		return a;<br />
+	}<br />
+	inline friend poly operator / (poly a,poly b)<br />
+	{<br />
+		for(register int i = 0;i &lt; m;++i)<br />
+		{<br />
+			a[i] = a[i] * inv[b[i]] % MOD;<br />
+		}<br />
+		return a;<br />
+	}<br />
+	inline friend poly operator + (poly a,poly b)<br />
+	{<br />
+		for(register int i = 0;i &lt; m;++i)a[i] = (a[i] + b[i]) % MOD;<br />
+		return a;<br />
+	}<br />
+	inline friend poly operator - (poly a,poly b)<br />
+	{<br />
+		for(register int i = 0;i &lt; m;++i)a[i] = (a[i] - b[i] + MOD) % MOD;<br />
+		return a;<br />
+	}<br />
+	inline void inc()<br />
+	{<br />
+		for(register int i = 0;i &lt; m;++i)f[i] = (f[i] + 1) % MOD;<br />
+		return;<br />
+	}<br />
+}f[MAXN][2],g0[MAXN],w[MAXN];<br />
+struct data<br />
+{<br />
+	poly f;<br />
+	int cnt[MAXM];<br />
+	data(){memset(cnt,0,sizeof(cnt));}<br />
+	friend data operator * (data a,poly b)<br />
+	{<br />
+		for(int i = 0;i &lt; m;++i)<br />
+		{<br />
+			if(b[i] == 0)++a.cnt[i];<br />
+			else a.f[i] = a.f[i] * b[i] % MOD;<br />
+		}<br />
+		return a;<br />
+	}<br />
+	friend data operator / (data a,poly b)<br />
+	{<br />
+		for(int i = 0;i &lt; m;++i)<br />
+		{<br />
+			if(b[i] == 0)--a.cnt[i];<br />
+			else a.f[i] = a.f[i] * inv[b[i]] % MOD;<br />
+		}<br />
+		return a;<br />
+	}<br />
+	poly get()<br />
+	{<br />
+		poly res;<br />
+		for(int i = 0;i &lt; m;++i)<br />
+		{<br />
+			if(cnt[i] == 0)res[i] = f[i];<br />
+			else res[i] = 0;<br />
+		}<br />
+		return res;<br />
+	}<br />
+}g1[MAXN];<br />
+bool vis[MAXN];<br />
+void dp(int k)<br />
+{<br />
+	vis[k] = true;<br />
+	for(register int i = lin[k];i != 0;i = e[i].nxt)<br />
+	{<br />
+		if(vis[e[i].to])continue;<br />
+		dp(e[i].to);<br />
+		f[e[i].to][1].inc();<br />
+		f[k][1] = f[k][1] * f[e[i].to][1];<br />
+		f[k][0] = f[k][0] + f[e[i].to][0];<br />
+		if(e[i].to != son[k])<br />
+		{<br />
+			g1[k] = g1[k] * f[e[i].to][1];<br />
+			g0[k] = g0[k] + f[e[i].to][0];<br />
+		}<br />
+	}<br />
+	f[k][0] = f[k][0] + f[k][1];<br />
+	return;<br />
+}<br />
+struct state<br />
+{<br />
+	poly ls,rs,s,ms;<br />
+	inline friend state operator + (state a,state b)<br />
+	{<br />
+		register state res;<br />
+		res.s = a.s * b.s;<br />
+		res.ls = a.ls + a.s * b.ls;<br />
+		res.rs = b.rs + b.s * a.rs;<br />
+		res.ms = a.ms + b.ms + a.rs * b.ls;<br />
+		return res;<br />
+	}<br />
+};<br />
+struct node<br />
+{<br />
+	int lc,rc;<br />
+	state s;<br />
+}t[MAXN &lt;&lt; 1];<br />
+int ptr = 0;<br />
+inline int newnode(){return ++ptr;}<br />
+int root;<br />
+#define mid ((l + r) &gt;&gt; 1)<br />
+void build(int &rt,int l,int r)<br />
+{<br />
+	rt = newnode();<br />
+	if(l == r)<br />
+	{<br />
+		g1[th[l]] = g1[th[l]] * w[th[l]];<br />
+		t[rt].s.ls = t[rt].s.rs = t[rt].s.s = g1[th[l]].get();<br />
+		t[rt].s.ms = g1[th[l]].get() + g0[th[l]];<br />
+		return;<br />
+	}<br />
+	build(t[rt].lc,l,mid);<br />
+	build(t[rt].rc,mid + 1,r);<br />
+	t[rt].s = t[t[rt].lc].s + t[t[rt].rc].s;<br />
+	return;<br />
+}<br />
+void maintain(int rt,int p,int l,int r)<br />
+{<br />
+	if(l == r)<br />
+	{<br />
+		t[rt].s.ls = t[rt].s.rs = t[rt].s.s = g1[th[l]].get();<br />
+		t[rt].s.ms = g1[th[l]].get() + g0[th[l]];<br />
+		return;<br />
+	}<br />
+	if(p &lt;= mid)maintain(t[rt].lc,p,l,mid);<br />
+	else maintain(t[rt].rc,p,mid + 1,r);<br />
+	t[rt].s = t[t[rt].lc].s + t[t[rt].rc].s;<br />
+	return;<br />
+}<br />
+state query(int rt,int L,int R,int l,int r)<br />
+{<br />
+	if(L &lt;= l && r &lt;= R)return t[rt].s;<br />
+	if(R &lt;= mid)return query(t[rt].lc,L,R,l,mid);<br />
+	if(L &gt; mid)return query(t[rt].rc,L,R,mid + 1,r);<br />
+	return query(t[rt].lc,L,R,l,mid) + query(t[rt].rc,L,R,mid + 1,r);<br />
+}<br />
+inline void modify(int k,int v)<br />
+{<br />
+	g1[k] = g1[k] / w[k];<br />
+	w[k].FWT(-1);<br />
+	w[k][val[k]] = (w[k][val[k]] - 1 + MOD) % MOD;<br />
+	val[k] = v;<br />
+	w[k][val[k]] = (w[k][val[k]] + 1) % MOD;<br />
+	w[k].FWT(1);<br />
+	g1[k] = g1[k] * w[k];<br />
+	while(k != 0)<br />
+	{<br />
+		register state a = query(root,rnk[top[k]],rnk[bot[k]],1,n);<br />
+		maintain(root,rnk[k],1,n);<br />
+		register state b = query(root,rnk[top[k]],rnk[bot[k]],1,n);<br />
+		register int anc = fa[top[k]];<br />
+		a.ls.inc();b.ls.inc();<br />
+		g0[anc] = g0[anc] - a.ms + b.ms;<br />
+		g1[anc] = g1[anc] / a.ls * b.ls;<br />
+		k = anc;<br />
+	}<br />
+	return;<br />
+}<br />
+int main()<br />
+{<br />
+	scanf("%d%d",&n,&m);<br />
+	inv[0] = 0;for(int i = 1;i &lt; MOD;++i)inv[i] = power(i,MOD - 2);<br />
+	for(register int i = 1;i &lt;= n;++i)val[i] = rd();<br />
+	for(register int i = 1;i &lt; n;++i)add(rd(),rd());<br />
+	dfs1(1,1);dfs2(1,1);<br />
+	for(register int i = 1;i &lt;= n;++i)<br />
+	{<br />
+		f[i][1][val[i]] = g1[i].f[0] = 1;w[i].f[val[i]] = 1;<br />
+		f[i][1].FWT(1);g1[i].f.FWT(1);w[i].FWT(1);<br />
+	}<br />
+	dp(1);<br />
+	build(root,1,n);<br />
+	scanf("%d",&q);<br />
+	register char c[10];<br />
+	register int k,v;<br />
+	register poly res;<br />
+	for(register int i = 1;i &lt;= q;++i)<br />
+	{<br />
+		scanf("%s",c);<br />
+		if(c[0] == 'Q')<br />
+		{<br />
+			k = rd();<br />
+			res = query(root,rnk[top[1]],rnk[bot[1]],1,n).ms;<br />
+			res.FWT(-1);<br />
+			printf("%d\n",res[k]);<br />
+		}<br />
+		else<br />
+		{<br />
+			k = rd();v = rd();<br />
+			modify(k,v);<br />
+		}<br />
+	}<br />
+	return 0;<br />
+}<br />
+</pre></code>
+</div>
+        </div>
+        <div class="blogfile_showtag">
+          <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png">
+          In tag:
+<a href="../tags/数学-多项式-快速沃尔什变换.html">数学-多项式-快速沃尔什变换</a> <a href="../tags/DP-动态DP.html">DP-动态DP</a> 
+          <!--<a href="../tags/blog.html">blog</a>-->
+        </div>
+      </div>
+    </div>
+    <div id="middle_nav">
+      <div class="blog_host">
+        <div class="nav_avator">
+          <img src="http://pic.yupoo.com/wjh15101051/72c1aeab/f51d56e0.jpg" alt="avator">
+        </div>
+        <div class="nav_ID">
+          wjh15101051
+        </div>
+      </div>
+      <div class="nav_list">
+        <li class="tags">
+          <a href="../tags.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png" class="list_icon" id="tags_image">
+            Tags
+          </a>
+        </li>
+        <li class="categories">
+          <a href="../categories.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png" class="list_icon" id="categories_image">
+            Categories
+          </a>
+        </li>
+        <li class="timeline">
+          <a href="../timeline.html">
+            <img src="http://pic.yupoo.com/wjh15101051/30365cc7/c1a3be15.png" class="list_icon" id="timeline_image">
+            Timeline
+          </a>
+        </li>
+        <li class="about">
+          <a href="../about.html">
+            <img src="http://pic.yupoo.com/wjh15101051/24f1cb41/e239086e.png" class="list_icon" id="about_image">
+            About
+          </a>
+        </li>
+        <li class="toolbox">
+          <a href="../toolbox.html">
+            <img src="http://pic.yupoo.com/wjh15101051/dee9f673/d3cf682a.png" class="list_icon" id="toolbox_image">
+            Toolbox
+          </a>
+        </li>
+        <li class="friends">
+            <div class="friends_text">
+              <img src="http://pic.yupoo.com/wjh15101051/d291ebed/29f9c807.png" id="friends_image">
+              Friends
+            </div>
+            <div id="fp_friends_list">
+              <div id="SGcolin">
+                <a href="http://blog.gyx.me/" target="_blank">SGcolin</a>
+              </div>
+              <div id="Xingcy">
+                <a href="https://www.cnblogs.com/xcysblog/" target="_blank">Xingcy</a>
+              </div>
+              <div id="ZH_comld">
+                <a href="https://www.cnblogs.com/ZH-comld/" target="_blank">ZH_comld</a>
+              </div>
+            </div>
+            <br>
+          </div>
+        </li>
+      </div>
+    <div class="music_player">
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer@1.10.0/dist/APlayer.min.css">
+      <script src="https://blog-static.cnblogs.com/files/yjlaugus/APlayer.min.js"></script>
+      <div id="aplayer" class="aplayer"  data-id="5313691453" data-server="netease" data-type="playlist" data-fixed="true" data-listfolded="true" data-order="random" data-theme="#F58EA8"></div>
+      <script src="https://unpkg.com/meting@1.2/dist/Meting.min.js"></script>
+    </div>
+    <div class="bottom">
+      <div>
+        Copyright © 2020
+        <a id="copyright_user_a" href="index.html">
+          <span id="copyright_user">wjh15101051</span>
+        </a>
+      </div>
+      <div class="bottom_anime">ღゝ◡╹)ノ♡</div>
+    </div>
+  </div>
+</body>
+</html>

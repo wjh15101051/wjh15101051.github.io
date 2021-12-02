@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>HNOI2001 软件开发</title>
+  <link rel="stylesheet" type="text/css" id="frame_style" href="../css/frame_style1.css">
+  <link rel="stylesheet" type="text/css" id="Markdown_style" href="../css/Markdown_style.css">
+  <script type="text/javascript" src="../jscode/frame.js"></script>
+  <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+  <link rel="stylesheet" href="https://ziyuan.fenxianglu.cn/js/highlight/styles/default.css">
+  <script src="https://ziyuan.fenxianglu.cn/js/highlight/highlight.pack.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+        inlineMath: [['$','$']]
+      }
+    });
+  </script>
+</head>
+<body>
+  <div class="main">
+    <div class="head">
+      <div class="title1">
+        <a href="../index.html">wjh15101051's space</a>
+      </div>
+      <div class="title2">
+        卧薪尝胆，厚积薄发。
+      </div>
+    </div>
+    <div id="middle_blogfile">
+      <div class="blog_blogfile">
+        <div class="blogfile_title">
+            HNOI2001 软件开发
+        </div>
+        <div class="blogfile_stitle">
+          <img src="http://pic.yupoo.com/wjh15101051/1e0e1b3a/118165c5.jpg">
+          Date: Mon Sep 24 06:56:19 CST 2018
+          <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png">
+          In Category:
+          <a href="../categories/NoCategory.html">NoCategory</a>
+        </div>
+        <div class="blogfile_content">
+<div class = "MarkdownCommonContent">
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Description：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+第
+$i$
+天需要
+$n_i$
+块毛巾，每天可以花费
+$f$
+买毛巾，可以花
+$fa$
+元
+$a$
+天或
+$fb$
+元
+$b$
+天洗毛巾，干净毛巾可以留给后一天，问满足每天需求的最小花费。
+</div>
+<div class = "MarkdownCommonContent">
+$1\leqslant n \leqslant 1000$
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Solution：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+首先肯定是把源点看成买毛巾的场所，毛巾就是流量，买毛巾就是从源点流入流量，洗毛巾就是把脏的毛巾流到之后的某一天成为干净的毛巾，这些都很好理解，问题是怎么满足每天
+$n_i$
+块毛巾，可以把每天拆点，代表上午的点向汇点连容量为
+$n_i$
+，费用为零的边，代表这天上午必须获得
+$n_i$
+的流，从源点向代表下午的点连容量为
+$n_i$
+，费用为零的边，代表收到这么多脏毛巾，然后再建其他的边就好了。
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Code：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+<pre><code class="MarkdownParaCode">
+#include&lt;algorithm&gt;<br />
+#include&lt;iostream&gt;<br />
+#include&lt;cstdlib&gt;<br />
+#include&lt;cstdio&gt;<br />
+#include&lt;cmath&gt;<br />
+#include&lt;queue&gt;<br />
+#include&lt;cstring&gt;<br />
+using namespace std;<br />
+int n,a,b,f,fa,fb;<br />
+#define MAXN 1010<br />
+#define INF 0x3f3f3f3f<br />
+int m[MAXN];<br />
+struct edge<br />
+{<br />
+	int to,nxt,f,c;<br />
+}e[MAXN * 6 * 2];<br />
+int edgenum = 0;<br />
+int lin[MAXN &lt;&lt; 1] = {0};<br />
+inline void add(int a,int b,int f,int c)<br />
+{<br />
+	e[edgenum].to = b;e[edgenum].f = f;e[edgenum].c =  c;e[edgenum].nxt = lin[a];lin[a] = edgenum;++edgenum;<br />
+	e[edgenum].to = a;e[edgenum].f = 0;e[edgenum].c = -c;e[edgenum].nxt = lin[b];lin[b] = edgenum;++edgenum;<br />
+	return;<br />
+}<br />
+int s,t;<br />
+int d[MAXN &lt;&lt; 1],rate[MAXN &lt;&lt; 1],pre[MAXN &lt;&lt; 1];<br />
+bool vis[MAXN &lt;&lt; 1];<br />
+inline bool SPFA()<br />
+{<br />
+	memset(d,0x3f,sizeof(d));<br />
+	memset(rate,0x3f,sizeof(rate));<br />
+	memset(pre,0,sizeof(pre));<br />
+	memset(vis,false,sizeof(vis));<br />
+	queue&lt;int&gt; q;q.push(s);<br />
+	d[s] = 0;vis[s] = true;<br />
+	while(!q.empty())<br />
+	{<br />
+		int k = q.front();q.pop();<br />
+		vis[k] = false;<br />
+		for(int i = lin[k];i != -1;i = e[i].nxt)<br />
+		{<br />
+			if(d[e[i].to] &gt; d[k] + e[i].c && e[i].f)<br />
+			{<br />
+				d[e[i].to] = d[k] + e[i].c;<br />
+				pre[e[i].to] = i;rate[e[i].to] = min(rate[k],e[i].f);<br />
+				if(!vis[e[i].to])<br />
+				{<br />
+					vis[e[i].to] = true;<br />
+					q.push(e[i].to);<br />
+				}<br />
+			}<br />
+		}<br />
+	}<br />
+	return (d[t] != 0x3f3f3f3f);<br />
+}<br />
+inline int flow()<br />
+{<br />
+	for(int i = t;i != s;i = e[pre[i] ^ 1].to)<br />
+	{<br />
+		e[pre[i]].f -= rate[t];<br />
+		e[pre[i] ^ 1].f += rate[t];<br />
+	}<br />
+	return d[t] * rate[t];<br />
+}<br />
+inline int EK()<br />
+{<br />
+	int ans = 0;<br />
+	while(SPFA())ans += flow();<br />
+	return ans;<br />
+}<br />
+int main()<br />
+{<br />
+	memset(lin,-1,sizeof(lin));<br />
+	scanf("%d%d%d%d%d%d",&n,&a,&b,&f,&fa,&fb);<br />
+	for(int i = 1;i &lt;= n;++i)scanf("%d",&m[i]);<br />
+	s = 0;t = 1;<br />
+	for(int i = 1;i &lt;= n;++i)<br />
+	{<br />
+		add(i * 2 + 0,t,m[i],0);<br />
+		add(s,i * 2 + 1,m[i],0);<br />
+		if(i + a + 1 &lt;= n)add(i * 2 + 1,(i + a + 1) * 2 + 0,INF,fa);<br />
+		if(i + b + 1 &lt;= n)add(i * 2 + 1,(i + b + 1) * 2 + 0,INF,fb);<br />
+		add(s,i * 2 + 0,INF,f);<br />
+		add(i * 2 + 0,(i + 1) * 2 + 0,INF,0); <br />
+	}<br />
+	cout &lt;&lt; EK() &lt;&lt; endl;<br />
+	return 0;<br />
+}<br />
+</pre></code>
+</div>
+        </div>
+        <div class="blogfile_showtag">
+          <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png">
+          In tag:
+<a href="../tags/图论-最小费用最大流.html">图论-最小费用最大流</a> 
+          <!--<a href="../tags/blog.html">blog</a>-->
+        </div>
+      </div>
+    </div>
+    <div id="middle_nav">
+      <div class="blog_host">
+        <div class="nav_avator">
+          <img src="http://pic.yupoo.com/wjh15101051/72c1aeab/f51d56e0.jpg" alt="avator">
+        </div>
+        <div class="nav_ID">
+          wjh15101051
+        </div>
+      </div>
+      <div class="nav_list">
+        <li class="tags">
+          <a href="../tags.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png" class="list_icon" id="tags_image">
+            Tags
+          </a>
+        </li>
+        <li class="categories">
+          <a href="../categories.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png" class="list_icon" id="categories_image">
+            Categories
+          </a>
+        </li>
+        <li class="timeline">
+          <a href="../timeline.html">
+            <img src="http://pic.yupoo.com/wjh15101051/30365cc7/c1a3be15.png" class="list_icon" id="timeline_image">
+            Timeline
+          </a>
+        </li>
+        <li class="about">
+          <a href="../about.html">
+            <img src="http://pic.yupoo.com/wjh15101051/24f1cb41/e239086e.png" class="list_icon" id="about_image">
+            About
+          </a>
+        </li>
+        <li class="toolbox">
+          <a href="../toolbox.html">
+            <img src="http://pic.yupoo.com/wjh15101051/dee9f673/d3cf682a.png" class="list_icon" id="toolbox_image">
+            Toolbox
+          </a>
+        </li>
+        <li class="friends">
+            <div class="friends_text">
+              <img src="http://pic.yupoo.com/wjh15101051/d291ebed/29f9c807.png" id="friends_image">
+              Friends
+            </div>
+            <div id="fp_friends_list">
+              <div id="SGcolin">
+                <a href="http://blog.gyx.me/" target="_blank">SGcolin</a>
+              </div>
+              <div id="Xingcy">
+                <a href="https://www.cnblogs.com/xcysblog/" target="_blank">Xingcy</a>
+              </div>
+              <div id="ZH_comld">
+                <a href="https://www.cnblogs.com/ZH-comld/" target="_blank">ZH_comld</a>
+              </div>
+            </div>
+            <br>
+          </div>
+        </li>
+      </div>
+    <div class="music_player">
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer@1.10.0/dist/APlayer.min.css">
+      <script src="https://blog-static.cnblogs.com/files/yjlaugus/APlayer.min.js"></script>
+      <div id="aplayer" class="aplayer"  data-id="5313691453" data-server="netease" data-type="playlist" data-fixed="true" data-listfolded="true" data-order="random" data-theme="#F58EA8"></div>
+      <script src="https://unpkg.com/meting@1.2/dist/Meting.min.js"></script>
+    </div>
+    <div class="bottom">
+      <div>
+        Copyright © 2020
+        <a id="copyright_user_a" href="index.html">
+          <span id="copyright_user">wjh15101051</span>
+        </a>
+      </div>
+      <div class="bottom_anime">ღゝ◡╹)ノ♡</div>
+    </div>
+  </div>
+</body>
+</html>

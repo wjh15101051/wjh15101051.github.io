@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>ZJOI2007 捉迷藏</title>
+  <link rel="stylesheet" type="text/css" id="frame_style" href="../css/frame_style1.css">
+  <link rel="stylesheet" type="text/css" id="Markdown_style" href="../css/Markdown_style.css">
+  <script type="text/javascript" src="../jscode/frame.js"></script>
+  <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+  <link rel="stylesheet" href="https://ziyuan.fenxianglu.cn/js/highlight/styles/default.css">
+  <script src="https://ziyuan.fenxianglu.cn/js/highlight/highlight.pack.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+        inlineMath: [['$','$']]
+      }
+    });
+  </script>
+</head>
+<body>
+  <div class="main">
+    <div class="head">
+      <div class="title1">
+        <a href="../index.html">wjh15101051's space</a>
+      </div>
+      <div class="title2">
+        卧薪尝胆，厚积薄发。
+      </div>
+    </div>
+    <div id="middle_blogfile">
+      <div class="blog_blogfile">
+        <div class="blogfile_title">
+            ZJOI2007 捉迷藏
+        </div>
+        <div class="blogfile_stitle">
+          <img src="http://pic.yupoo.com/wjh15101051/1e0e1b3a/118165c5.jpg">
+          Date: Sat Aug 04 19:40:41 CST 2018
+          <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png">
+          In Category:
+          <a href="../categories/NoCategory.html">NoCategory</a>
+        </div>
+        <div class="blogfile_content">
+<div class = "MarkdownCommonContent">
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Description：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+一棵树上有黑点和白点，支持反转某个点的颜色和询问最长的两个白点的距离。
+</div>
+<div class = "MarkdownCommonContent">
+$1\le n \le 200000$
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Solution：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+动态点分治，先把点分树建出来，然后每个节点维护两个堆，第一个堆维护这个点在点分树上的子节点到点分树上的父亲的值，第二个堆维护这个点的子树中的节点到他的值，第一个堆就是儿子节点的第二个堆的堆顶组成的，每次反转某个染色时不断在点分树上跳父亲并修改这两个堆，还要维护一个全局的堆记录最长距离，就是各个点的第二个堆最大和次大之和组成的，查询时直接返回堆顶。
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Code：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+<pre><code class="MarkdownParaCode">
+#include&lt;algorithm&gt;<br />
+#include&lt;iostream&gt;<br />
+#include&lt;cstdlib&gt;<br />
+#include&lt;cstdio&gt;<br />
+#include&lt;cmath&gt;<br />
+#include&lt;queue&gt;<br />
+#include&lt;cstring&gt;<br />
+using namespace std;<br />
+#define INF 0x3f3f3f3f<br />
+#define MAXN 100010<br />
+int n,m;<br />
+struct edge<br />
+{<br />
+	int to,nxt;<br />
+}e[MAXN &lt;&lt; 1];<br />
+int edgenum = 0;<br />
+int lin[MAXN] = {0};<br />
+void add(int a,int b)<br />
+{<br />
+	++edgenum;e[edgenum].to = b;e[edgenum].nxt = lin[a];lin[a] = edgenum;<br />
+	++edgenum;e[edgenum].to = a;e[edgenum].nxt = lin[b];lin[b] = edgenum;<br />
+	return;<br />
+}<br />
+struct heap<br />
+{<br />
+	priority_queue&lt;int&gt; add,del;<br />
+	void push(int x){add.push(x);}<br />
+	void erase(int x){del.push(x);}<br />
+	void pop()<br />
+	{<br />
+		while(!del.empty() && add.top() == del.top())<br />
+			add.pop(),del.pop();<br />
+		add.pop();<br />
+		return;<br />
+	}<br />
+	int fi()<br />
+	{<br />
+		while(!del.empty() && add.top() == del.top())<br />
+			add.pop(),del.pop();<br />
+		if(add.empty())return 0;<br />
+		return add.top();<br />
+	}<br />
+	int siz(){return add.size() - del.size();}<br />
+	int se()<br />
+	{<br />
+		if(siz() &lt; 2)return 0;<br />
+		int x = fi();pop();<br />
+		int y = fi();push(x);<br />
+		return y;<br />
+	}<br />
+}qa,qb[MAXN],qc[MAXN];<br />
+int top[MAXN],dep[MAXN],fu[MAXN],siz[MAXN],son[MAXN];<br />
+void dfs1(int k,int depth)<br />
+{<br />
+	dep[k] = depth;<br />
+	siz[k] = 1;<br />
+	for(int i = lin[k];i != 0;i = e[i].nxt)<br />
+	{<br />
+		if(e[i].to != fu[k])<br />
+		{<br />
+			fu[e[i].to] = k;<br />
+			dfs1(e[i].to,depth + 1);<br />
+			siz[k] += siz[e[i].to];<br />
+			if(son[k] == 0 || siz[e[i].to] &gt; siz[son[k]])<br />
+			{<br />
+				son[k] = e[i].to;<br />
+			}<br />
+		}<br />
+	}<br />
+	return;<br />
+}<br />
+void dfs2(int k,int tp)<br />
+{<br />
+	top[k] = tp;<br />
+	if(son[k] == 0)return;<br />
+	dfs2(son[k],tp);<br />
+	for(int i = lin[k];i != 0;i = e[i].nxt)<br />
+	{<br />
+		if(e[i].to != son[k] && e[i].to != fu[k])<br />
+		{<br />
+			dfs2(e[i].to,e[i].to);<br />
+		}<br />
+	}<br />
+	return;<br />
+}<br />
+int LCA(int a,int b)<br />
+{<br />
+	while(top[a] != top[b])<br />
+	{<br />
+		if(dep[top[a]] &lt; dep[top[b]])swap(a,b);<br />
+		a = fu[top[a]];<br />
+	}<br />
+	return dep[a] &lt; dep[b] ? a : b;<br />
+}<br />
+int dis(int x,int y){return dep[x] + dep[y] - 2 * dep[LCA(x,y)];}<br />
+int size[MAXN],d[MAXN],s,root;<br />
+bool v[MAXN];<br />
+void getroot(int k,int fa)<br />
+{<br />
+	size[k] = 1;d[k] = 0;<br />
+	for(int i = lin[k];i != 0;i = e[i].nxt)<br />
+	{<br />
+		if(e[i].to != fa && !v[e[i].to])<br />
+		{<br />
+			getroot(e[i].to,k);<br />
+			size[k] += size[e[i].to];<br />
+			d[k] = max(d[k],size[e[i].to]);<br />
+		}<br />
+	}<br />
+	d[k] = max(d[k],s - size[k]);<br />
+	if(d[k] &lt; d[root])root = k;<br />
+	return;<br />
+}<br />
+int fa[MAXN];<br />
+void divide(int k,int f)<br />
+{<br />
+	fa[k] = f;v[k] = true;<br />
+	for(int i = lin[k];i != 0;i = e[i].nxt)<br />
+	{<br />
+		if(!v[e[i].to])<br />
+		{<br />
+			s = size[e[i].to];root = 0;<br />
+			getroot(e[i].to,k);<br />
+			divide(root,k);<br />
+		}<br />
+	}<br />
+	return;<br />
+}<br />
+void turn_off(int u,int v)<br />
+{<br />
+	if(u == v)<br />
+	{<br />
+		qb[u].push(0);<br />
+		if(qb[u].siz() == 2)qa.push(qb[u].fi());<br />
+	}<br />
+	if(!fa[u])return;<br />
+	int f = fa[u],d = dis(f,v),tmp = qc[u].fi();<br />
+	qc[u].push(d);<br />
+	if(d &gt; tmp)<br />
+	{<br />
+		int mx = qb[f].fi() + qb[f].se(),size = qb[f].siz();<br />
+		if(tmp)qb[f].erase(tmp);<br />
+		qb[f].push(d);<br />
+		int now = qb[f].fi() + qb[f].se();<br />
+		if(now &gt; mx)<br />
+		{<br />
+			if(size &gt;= 2)qa.erase(mx);<br />
+			if(qb[f].siz() &gt;= 2)qa.push(now);<br />
+		}<br />
+	}<br />
+	turn_off(f,v);<br />
+	return;<br />
+}<br />
+void turn_on(int u,int v)<br />
+{<br />
+	if(u == v)<br />
+	{<br />
+		if(qb[u].siz() == 2)qa.erase(qb[u].fi());<br />
+		qb[u].erase(0);<br />
+	}<br />
+	if(!fa[u])return;<br />
+	int f = fa[u],d = dis(f,v),tmp = qc[u].fi();<br />
+	qc[u].erase(d);<br />
+	if(d == tmp)<br />
+	{<br />
+		int mx = qb[f].fi() + qb[f].se(),size = qb[f].siz();<br />
+		qb[f].erase(d);<br />
+		if(qc[u].fi())qb[f].push(qc[u].fi());<br />
+		int now = qb[f].fi() + qb[f].se();<br />
+		if(now &lt; mx)<br />
+		{<br />
+			if(size &gt;= 2)qa.erase(mx);<br />
+			if(qb[f].siz() &gt;= 2)qa.push(now);<br />
+		}<br />
+	}<br />
+	turn_on(f,v);<br />
+	return;<br />
+}<br />
+inline char getc()<br />
+{<br />
+	register char c = getchar();<br />
+	while(c != 'G' && c != 'C')c = getchar();<br />
+	return c;<br />
+}<br />
+int state[MAXN];<br />
+int main()<br />
+{<br />
+	scanf("%d",&n);<br />
+	int a,b;<br />
+	for(int i = 1;i &lt; n;++i)<br />
+	{<br />
+		scanf("%d%d",&a,&b);<br />
+		add(a,b);<br />
+	}<br />
+	dfs1(1,1);dfs2(1,1);<br />
+	root = 0;d[0] = INF;s = n;<br />
+	getroot(1,0);<br />
+	divide(root,0);<br />
+	for(int i = 1;i &lt;= n;++i)qc[i].push(0);<br />
+	int tot = 0;<br />
+	for(int i = 1;i &lt;= n;++i)<br />
+	{<br />
+		state[i] = 1;<br />
+		turn_off(i,i);<br />
+		++tot;<br />
+	}<br />
+	scanf("%d",&m);<br />
+	char c;int k;<br />
+	for(int i = 1;i &lt;= m;++i)<br />
+	{<br />
+		c = getc();<br />
+		if(c == 'G')<br />
+		{<br />
+			if(tot &lt;= 1)printf("%d\n",tot - 1);<br />
+			else printf("%d\n",qa.fi());<br />
+		}<br />
+		else<br />
+		{<br />
+			scanf("%d",&k);<br />
+			if(state[k]){turn_on(k,k);--tot;}<br />
+			else{turn_off(k,k);++tot;}<br />
+			state[k] ^= 1;<br />
+			<br />
+		}<br />
+	}<br />
+	return 0;<br />
+}<br />
+</pre></code>
+</div>
+        </div>
+        <div class="blogfile_showtag">
+          <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png">
+          In tag:
+<a href="../tags/树-动态点分治.html">树-动态点分治</a> 
+          <!--<a href="../tags/blog.html">blog</a>-->
+        </div>
+      </div>
+    </div>
+    <div id="middle_nav">
+      <div class="blog_host">
+        <div class="nav_avator">
+          <img src="http://pic.yupoo.com/wjh15101051/72c1aeab/f51d56e0.jpg" alt="avator">
+        </div>
+        <div class="nav_ID">
+          wjh15101051
+        </div>
+      </div>
+      <div class="nav_list">
+        <li class="tags">
+          <a href="../tags.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png" class="list_icon" id="tags_image">
+            Tags
+          </a>
+        </li>
+        <li class="categories">
+          <a href="../categories.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png" class="list_icon" id="categories_image">
+            Categories
+          </a>
+        </li>
+        <li class="timeline">
+          <a href="../timeline.html">
+            <img src="http://pic.yupoo.com/wjh15101051/30365cc7/c1a3be15.png" class="list_icon" id="timeline_image">
+            Timeline
+          </a>
+        </li>
+        <li class="about">
+          <a href="../about.html">
+            <img src="http://pic.yupoo.com/wjh15101051/24f1cb41/e239086e.png" class="list_icon" id="about_image">
+            About
+          </a>
+        </li>
+        <li class="toolbox">
+          <a href="../toolbox.html">
+            <img src="http://pic.yupoo.com/wjh15101051/dee9f673/d3cf682a.png" class="list_icon" id="toolbox_image">
+            Toolbox
+          </a>
+        </li>
+        <li class="friends">
+            <div class="friends_text">
+              <img src="http://pic.yupoo.com/wjh15101051/d291ebed/29f9c807.png" id="friends_image">
+              Friends
+            </div>
+            <div id="fp_friends_list">
+              <div id="SGcolin">
+                <a href="http://blog.gyx.me/" target="_blank">SGcolin</a>
+              </div>
+              <div id="Xingcy">
+                <a href="https://www.cnblogs.com/xcysblog/" target="_blank">Xingcy</a>
+              </div>
+              <div id="ZH_comld">
+                <a href="https://www.cnblogs.com/ZH-comld/" target="_blank">ZH_comld</a>
+              </div>
+            </div>
+            <br>
+          </div>
+        </li>
+      </div>
+    <div class="music_player">
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer@1.10.0/dist/APlayer.min.css">
+      <script src="https://blog-static.cnblogs.com/files/yjlaugus/APlayer.min.js"></script>
+      <div id="aplayer" class="aplayer"  data-id="5313691453" data-server="netease" data-type="playlist" data-fixed="true" data-listfolded="true" data-order="random" data-theme="#F58EA8"></div>
+      <script src="https://unpkg.com/meting@1.2/dist/Meting.min.js"></script>
+    </div>
+    <div class="bottom">
+      <div>
+        Copyright © 2020
+        <a id="copyright_user_a" href="index.html">
+          <span id="copyright_user">wjh15101051</span>
+        </a>
+      </div>
+      <div class="bottom_anime">ღゝ◡╹)ノ♡</div>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>SCOI2014 方伯伯的商场之旅</title>
+  <link rel="stylesheet" type="text/css" id="frame_style" href="../css/frame_style1.css">
+  <link rel="stylesheet" type="text/css" id="Markdown_style" href="../css/Markdown_style.css">
+  <script type="text/javascript" src="../jscode/frame.js"></script>
+  <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+  <link rel="stylesheet" href="https://ziyuan.fenxianglu.cn/js/highlight/styles/default.css">
+  <script src="https://ziyuan.fenxianglu.cn/js/highlight/highlight.pack.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+        inlineMath: [['$','$']]
+      }
+    });
+  </script>
+</head>
+<body>
+  <div class="main">
+    <div class="head">
+      <div class="title1">
+        <a href="../index.html">wjh15101051's space</a>
+      </div>
+      <div class="title2">
+        卧薪尝胆，厚积薄发。
+      </div>
+    </div>
+    <div id="middle_blogfile">
+      <div class="blog_blogfile">
+        <div class="blogfile_title">
+            SCOI2014 方伯伯的商场之旅
+        </div>
+        <div class="blogfile_stitle">
+          <img src="http://pic.yupoo.com/wjh15101051/1e0e1b3a/118165c5.jpg">
+          Date: Sun May 27 01:42:52 CST 2018
+          <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png">
+          In Category:
+          <a href="../categories/NoCategory.html">NoCategory</a>
+        </div>
+        <div class="blogfile_content">
+<div class = "MarkdownCommonContent">
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Description:
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+第
+$i$
+个人的第
+$j$
+堆石子个数是
+$i$
+的
+$K$
+进制下的第
+$j$
+位，把第
+$[L,R]$
+个人的石子全部合成一堆，代价是石子数量
+$\times$
+移动距离，求最小代价。
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Solution:
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+对于每个人是相互独立的，对于每个石子一定直接移到目的地，采取这样一种合并石子的方案：先把所有石子合并到第一堆，再依次把所有石子往后移看是否更优，采用记搜
+$+$
+数位
+$DP$
+的方式处理。
+</div>
+<div class = "MarkdownCommonContent">
+首先是把所有石子合并到第一堆，倒序处理
+$pos$
+，记
+$sum$
+表示当前移动距离和了，发现对于
+$sum$
+相同的状态之后的转移也相同，于是可以以
+$(pos,sum)$
+为状态记忆化，注意转移过程中
+$bord$
+的处理，转移时枚举下一位是什么，其实也就是把所有状态合在一起处理提高效率。
+</div>
+<div class = "MarkdownCommonContent">
+接下来处理把所有状态往后推，枚举最终汇合点，因为要求的是更改汇合点与原答案的差，所以汇合点位置变化
+$1$
+每个石子会对答案产生一单位的影响，汇合点之前的往后退一格，对于当前枚举的
+$i$
+，有
+$i$
+个石子需要往后推，所以
+$sum+=i$
+，因为
+$pos$
+倒序循环，所以
+$pos\ge gather$
+的要往后推，汇合点之后的距离变少了，所以
+$sum -= i$
+，如果某个状态上
+$sum$
+已经小于
+$0$
+了，那么之后再减一定会小于零，那么可以直接
+$return$
+  
+$0$
+，由于最优点一定在中位数，所以价值单调先升后降，这次
+$return$
+  
+$0$
+的之后也一定不更优，所以不用管。
+</div>
+<div class = "MarkdownCommonContent">
+注意每次像普通数位
+$DP$
+一样状态只保存整块，所以对于
+$bord$
+特殊处理，且不更新
+$f$
+数组。
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Code:
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+<pre><code class="MarkdownParaCode">
+#include&lt;algorithm&gt;<br />
+#include&lt;iostream&gt;<br />
+#include&lt;cstdlib&gt;<br />
+#include&lt;cstdio&gt;<br />
+#include&lt;cmath&gt;<br />
+#include&lt;cstring&gt;<br />
+using namespace std;<br />
+typedef long long ll;<br />
+ll l,r;<br />
+ll k;<br />
+ll f[60][3000];<br />
+int bit[60];<br />
+ll dfs(int pos,int sum,bool bord)<br />
+{<br />
+	if(pos == 0)return sum;<br />
+	if(!bord && f[pos][sum] != -1)return f[pos][sum];<br />
+	ll res = 0;<br />
+	for(int i = 0;i &lt;= (bord ? bit[pos] : k - 1);++i)<br />
+	{<br />
+		res += dfs(pos - 1,sum + i * (pos - 1),bord && (i == (bord ? bit[pos] : k - 1)));<br />
+	}<br />
+	if(!bord)f[pos][sum] = res;<br />
+	return res;<br />
+}<br />
+ll dfs(int pos,int sum,int gather,bool bord)<br />
+{<br />
+	if(sum &lt; 0)return 0;<br />
+	if(pos == 0)return sum;<br />
+	if(!bord && f[pos][sum] != -1)return f[pos][sum];<br />
+	ll res = 0;<br />
+	for(int i = 0;i &lt;= (bord ? bit[pos] : k - 1);++i)<br />
+	{<br />
+		if(pos &gt;= gather)res += dfs(pos - 1,sum + i,gather,bord && (i == (bord ? bit[pos] : k - 1)));<br />
+		else res += dfs(pos - 1,sum - i,gather,bord && (i == (bord ? bit[pos] : k - 1)));<br />
+	}<br />
+	if(!bord)f[pos][sum] = res;<br />
+	return res;<br />
+}<br />
+ll solve(ll n)<br />
+{<br />
+	int len = 0;<br />
+	while(n &gt; 0)<br />
+	{<br />
+		bit[++len] = n % k;<br />
+		n /= k;<br />
+	}<br />
+	memset(f,-1,sizeof(f));<br />
+	ll res = dfs(len,0,true);<br />
+	for(int i = 2;i &lt;= len;++i)<br />
+	{<br />
+		memset(f,-1,sizeof(f));<br />
+		res -= dfs(len,0,i,true);<br />
+	} <br />
+	return res;<br />
+}<br />
+int main()<br />
+{<br />
+	cin &gt;&gt; l &gt;&gt; r &gt;&gt; k;<br />
+	cout &lt;&lt; solve(r) - solve(l - 1) &lt;&lt; endl;<br />
+	return 0;<br />
+}<br />
+</pre></code>
+</div>
+        </div>
+        <div class="blogfile_showtag">
+          <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png">
+          In tag:
+<a href="../tags/DP-数位DP.html">DP-数位DP</a> 
+          <!--<a href="../tags/blog.html">blog</a>-->
+        </div>
+      </div>
+    </div>
+    <div id="middle_nav">
+      <div class="blog_host">
+        <div class="nav_avator">
+          <img src="http://pic.yupoo.com/wjh15101051/72c1aeab/f51d56e0.jpg" alt="avator">
+        </div>
+        <div class="nav_ID">
+          wjh15101051
+        </div>
+      </div>
+      <div class="nav_list">
+        <li class="tags">
+          <a href="../tags.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png" class="list_icon" id="tags_image">
+            Tags
+          </a>
+        </li>
+        <li class="categories">
+          <a href="../categories.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png" class="list_icon" id="categories_image">
+            Categories
+          </a>
+        </li>
+        <li class="timeline">
+          <a href="../timeline.html">
+            <img src="http://pic.yupoo.com/wjh15101051/30365cc7/c1a3be15.png" class="list_icon" id="timeline_image">
+            Timeline
+          </a>
+        </li>
+        <li class="about">
+          <a href="../about.html">
+            <img src="http://pic.yupoo.com/wjh15101051/24f1cb41/e239086e.png" class="list_icon" id="about_image">
+            About
+          </a>
+        </li>
+        <li class="toolbox">
+          <a href="../toolbox.html">
+            <img src="http://pic.yupoo.com/wjh15101051/dee9f673/d3cf682a.png" class="list_icon" id="toolbox_image">
+            Toolbox
+          </a>
+        </li>
+        <li class="friends">
+            <div class="friends_text">
+              <img src="http://pic.yupoo.com/wjh15101051/d291ebed/29f9c807.png" id="friends_image">
+              Friends
+            </div>
+            <div id="fp_friends_list">
+              <div id="SGcolin">
+                <a href="http://blog.gyx.me/" target="_blank">SGcolin</a>
+              </div>
+              <div id="Xingcy">
+                <a href="https://www.cnblogs.com/xcysblog/" target="_blank">Xingcy</a>
+              </div>
+              <div id="ZH_comld">
+                <a href="https://www.cnblogs.com/ZH-comld/" target="_blank">ZH_comld</a>
+              </div>
+            </div>
+            <br>
+          </div>
+        </li>
+      </div>
+    <div class="music_player">
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer@1.10.0/dist/APlayer.min.css">
+      <script src="https://blog-static.cnblogs.com/files/yjlaugus/APlayer.min.js"></script>
+      <div id="aplayer" class="aplayer"  data-id="5313691453" data-server="netease" data-type="playlist" data-fixed="true" data-listfolded="true" data-order="random" data-theme="#F58EA8"></div>
+      <script src="https://unpkg.com/meting@1.2/dist/Meting.min.js"></script>
+    </div>
+    <div class="bottom">
+      <div>
+        Copyright © 2020
+        <a id="copyright_user_a" href="index.html">
+          <span id="copyright_user">wjh15101051</span>
+        </a>
+      </div>
+      <div class="bottom_anime">ღゝ◡╹)ノ♡</div>
+    </div>
+  </div>
+</body>
+</html>

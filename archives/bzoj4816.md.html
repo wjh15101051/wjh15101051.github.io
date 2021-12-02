@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>SDOI2017 数字表格</title>
+  <link rel="stylesheet" type="text/css" id="frame_style" href="../css/frame_style1.css">
+  <link rel="stylesheet" type="text/css" id="Markdown_style" href="../css/Markdown_style.css">
+  <script type="text/javascript" src="../jscode/frame.js"></script>
+  <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+  <link rel="stylesheet" href="https://ziyuan.fenxianglu.cn/js/highlight/styles/default.css">
+  <script src="https://ziyuan.fenxianglu.cn/js/highlight/highlight.pack.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+        inlineMath: [['$','$']]
+      }
+    });
+  </script>
+</head>
+<body>
+  <div class="main">
+    <div class="head">
+      <div class="title1">
+        <a href="../index.html">wjh15101051's space</a>
+      </div>
+      <div class="title2">
+        卧薪尝胆，厚积薄发。
+      </div>
+    </div>
+    <div id="middle_blogfile">
+      <div class="blog_blogfile">
+        <div class="blogfile_title">
+            SDOI2017 数字表格
+        </div>
+        <div class="blogfile_stitle">
+          <img src="http://pic.yupoo.com/wjh15101051/1e0e1b3a/118165c5.jpg">
+          Date: Mon Dec 10 18:54:36 CST 2018
+          <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png">
+          In Category:
+          <a href="../categories/NoCategory.html">NoCategory</a>
+        </div>
+        <div class="blogfile_content">
+<div class = "MarkdownCommonContent">
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Description：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+设
+$f(x)$
+为斐波那契数，求：
+$$
+\prod_{i=1}^n\prod_{j=1}^mf(\gcd(i,j))
+$$
+$1\leqslant testcases\leqslant 10^3,1\leqslant n\leqslant 10^6$
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Solution：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+假设
+$n\geqslant m$
+。
+</div>
+<div class = "MarkdownCommonContent">
+首先推一下就会发现，化成
+$\varphi$
+是没有什么前途的，只能化成
+$\mu$
+然后反演，枚举一下
+$\gcd$
+然后再反演就会得到：
+$$
+\prod_{d=1}^nf(d)^{\begin{align}\sum_{d'=1}^{\lfloor\frac n d\rfloor}\mu(d')\lfloor\frac n{dd'}\rfloor\lfloor\frac m{dd'}\rfloor\end{align}}
+$$
+这个时候根据套路要设
+$T=dd'$
+，然后就会有：
+$$
+\prod_{T=1}^n\prod_{d|T}f(d)^{\mu(\frac T d)\lfloor\frac n T\rfloor\lfloor\frac m T\rfloor}
+$$
+看数据范围怎么也得是一个
+$O(t\sqrt n)$
+或者差不多的，这时有一个非常巧妙的我没想到的转化：后面
+$\lfloor\frac n T\rfloor\lfloor\frac m T\rfloor$
+都和
+$d$
+没关系，于是设：
+$$
+val(T)=\prod_{d|T}f(d)^{\mu(\frac T d)}
+$$
+这个是可以
+$O(n\ln n)$
+预处理的。
+</div>
+<div class = "MarkdownCommonContent">
+然后：
+$$
+\prod_{T=1}^nval(T)^{\lfloor\frac n T\rfloor\lfloor\frac m T\rfloor}
+$$
+除法分块就可以了。
+</div>
+<div class = "MarkdownCommonContent">
+反演题：牢记套路，适时收手，观察式子的性质，多方面考虑。
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Code：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+<pre><code class="MarkdownParaCode">
+#include&lt;algorithm&gt;<br />
+#include&lt;iostream&gt;<br />
+#include&lt;cstdlib&gt;<br />
+#include&lt;cstdio&gt;<br />
+#include&lt;cmath&gt;<br />
+#include&lt;cctype&gt;<br />
+#include&lt;cstring&gt;<br />
+using namespace std;<br />
+int n,m;<br />
+#define MAXN 1000010<br />
+#define MOD 1000000007<br />
+int fib[MAXN],val[MAXN],sumv[MAXN];<br />
+int power(int a,int b)<br />
+{<br />
+	b = (b + MOD - 1) % (MOD - 1);<br />
+	int res = 1;<br />
+	while(b &gt; 0)<br />
+	{<br />
+		if(b & 1)res = 1ll * res * a % MOD;<br />
+		a = 1ll * a * a % MOD;<br />
+		b = b &gt;&gt; 1;<br />
+	}<br />
+	return res;<br />
+}<br />
+int prime[MAXN],tot = 0;<br />
+bool isprime[MAXN];<br />
+int mu[MAXN];<br />
+void init()<br />
+{<br />
+	for(int i = 2;i &lt; MAXN;++i)isprime[i] = true;<br />
+	mu[1] = 1;<br />
+	for(int i = 2;i &lt; MAXN;++i)<br />
+	{<br />
+		if(isprime[i])mu[i] = -1,prime[++tot] = i;<br />
+		for(int j = 1;j &lt;= tot && i * prime[j] &lt; MAXN;++j)<br />
+		{<br />
+			isprime[i * prime[j]] = false;<br />
+			if(i % prime[j] == 0){mu[i * prime[j]] = 0;break;}<br />
+			else mu[i * prime[j]] = -1 * mu[i];<br />
+		}<br />
+	}<br />
+	fib[0] = 0;fib[1] = 1;<br />
+	for(int i = 2;i &lt; MAXN;++i)fib[i] = (fib[i - 1] + fib[i - 2]) % MOD;<br />
+	for(int t = 1;t &lt; MAXN;++t)val[t] = 1;<br />
+	for(int d = 1;d &lt; MAXN;++d)<br />
+		for(int t = d;t &lt; MAXN;t += d)<br />
+			val[t] = 1ll * val[t] * power(fib[d],mu[t / d]) % MOD;<br />
+	sumv[0] = 1;<br />
+	for(int i = 1;i &lt; MAXN;++i)sumv[i] = 1ll * sumv[i - 1] * val[i] % MOD;<br />
+	return;<br />
+}<br />
+void work()<br />
+{<br />
+	scanf("%d%d",&n,&m);<br />
+	if(n &lt; m)swap(n,m);<br />
+	int ans = 1;<br />
+	for(int l = 1,r;l &lt;= m;l = r + 1)<br />
+	{<br />
+		r = min(n / (n / l),m / (m / l));<br />
+		ans = 1ll * ans * power(1ll * sumv[r] * power(sumv[l - 1] % MOD,MOD - 2) % MOD,1ll * (n / l) * (m / l) % (MOD - 1)) % MOD;<br />
+	}<br />
+	cout &lt;&lt; ans &lt;&lt; endl;<br />
+	return;<br />
+}<br />
+int main()<br />
+{<br />
+	init();<br />
+	int testcases;<br />
+	scanf("%d",&testcases);<br />
+	while(testcases--)work();<br />
+	return 0;<br />
+}<br />
+</pre></code>
+</div>
+        </div>
+        <div class="blogfile_showtag">
+          <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png">
+          In tag:
+<a href="../tags/数学-莫比乌斯反演.html">数学-莫比乌斯反演</a> 
+          <!--<a href="../tags/blog.html">blog</a>-->
+        </div>
+      </div>
+    </div>
+    <div id="middle_nav">
+      <div class="blog_host">
+        <div class="nav_avator">
+          <img src="http://pic.yupoo.com/wjh15101051/72c1aeab/f51d56e0.jpg" alt="avator">
+        </div>
+        <div class="nav_ID">
+          wjh15101051
+        </div>
+      </div>
+      <div class="nav_list">
+        <li class="tags">
+          <a href="../tags.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png" class="list_icon" id="tags_image">
+            Tags
+          </a>
+        </li>
+        <li class="categories">
+          <a href="../categories.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png" class="list_icon" id="categories_image">
+            Categories
+          </a>
+        </li>
+        <li class="timeline">
+          <a href="../timeline.html">
+            <img src="http://pic.yupoo.com/wjh15101051/30365cc7/c1a3be15.png" class="list_icon" id="timeline_image">
+            Timeline
+          </a>
+        </li>
+        <li class="about">
+          <a href="../about.html">
+            <img src="http://pic.yupoo.com/wjh15101051/24f1cb41/e239086e.png" class="list_icon" id="about_image">
+            About
+          </a>
+        </li>
+        <li class="toolbox">
+          <a href="../toolbox.html">
+            <img src="http://pic.yupoo.com/wjh15101051/dee9f673/d3cf682a.png" class="list_icon" id="toolbox_image">
+            Toolbox
+          </a>
+        </li>
+        <li class="friends">
+            <div class="friends_text">
+              <img src="http://pic.yupoo.com/wjh15101051/d291ebed/29f9c807.png" id="friends_image">
+              Friends
+            </div>
+            <div id="fp_friends_list">
+              <div id="SGcolin">
+                <a href="http://blog.gyx.me/" target="_blank">SGcolin</a>
+              </div>
+              <div id="Xingcy">
+                <a href="https://www.cnblogs.com/xcysblog/" target="_blank">Xingcy</a>
+              </div>
+              <div id="ZH_comld">
+                <a href="https://www.cnblogs.com/ZH-comld/" target="_blank">ZH_comld</a>
+              </div>
+            </div>
+            <br>
+          </div>
+        </li>
+      </div>
+    <div class="music_player">
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer@1.10.0/dist/APlayer.min.css">
+      <script src="https://blog-static.cnblogs.com/files/yjlaugus/APlayer.min.js"></script>
+      <div id="aplayer" class="aplayer"  data-id="5313691453" data-server="netease" data-type="playlist" data-fixed="true" data-listfolded="true" data-order="random" data-theme="#F58EA8"></div>
+      <script src="https://unpkg.com/meting@1.2/dist/Meting.min.js"></script>
+    </div>
+    <div class="bottom">
+      <div>
+        Copyright © 2020
+        <a id="copyright_user_a" href="index.html">
+          <span id="copyright_user">wjh15101051</span>
+        </a>
+      </div>
+      <div class="bottom_anime">ღゝ◡╹)ノ♡</div>
+    </div>
+  </div>
+</body>
+</html>

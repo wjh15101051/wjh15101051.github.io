@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>HNOI2015 实验比较</title>
+  <link rel="stylesheet" type="text/css" id="frame_style" href="../css/frame_style1.css">
+  <link rel="stylesheet" type="text/css" id="Markdown_style" href="../css/Markdown_style.css">
+  <script type="text/javascript" src="../jscode/frame.js"></script>
+  <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+  <link rel="stylesheet" href="https://ziyuan.fenxianglu.cn/js/highlight/styles/default.css">
+  <script src="https://ziyuan.fenxianglu.cn/js/highlight/highlight.pack.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+        inlineMath: [['$','$']]
+      }
+    });
+  </script>
+</head>
+<body>
+  <div class="main">
+    <div class="head">
+      <div class="title1">
+        <a href="../index.html">wjh15101051's space</a>
+      </div>
+      <div class="title2">
+        卧薪尝胆，厚积薄发。
+      </div>
+    </div>
+    <div id="middle_blogfile">
+      <div class="blog_blogfile">
+        <div class="blogfile_title">
+            HNOI2015 实验比较
+        </div>
+        <div class="blogfile_stitle">
+          <img src="http://pic.yupoo.com/wjh15101051/1e0e1b3a/118165c5.jpg">
+          Date: Mon Apr 01 16:10:51 CST 2019
+          <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png">
+          In Category:
+          <a href="../categories/NoCategory.html">NoCategory</a>
+        </div>
+        <div class="blogfile_content">
+<div class = "MarkdownCommonContent">
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Description：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+给一些等于或者小于关系，求有几种拓扑序，相等的交换位置算一种。
+</div>
+<div class = "MarkdownCommonContent">
+$1\leqslant n\leqslant 100$
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Solution：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+首先把等于的点缩起来，最后一定是一棵树，于是我们可以使用树形
+$DP$
+来解决：
+</div>
+<div class = "MarkdownCommonContent">
+<h3 class = "MarkdownH3">
+Solution1：
+</h3>
+</div>
+<div class = "MarkdownCommonContent">
+我们考虑把点
+$k$
+和他的子树
+$v$
+合并，如果不考虑相等的算一种的话那就直接用一个组合数分配就行了，但是相等的交换顺序算一种，因此我们设
+$f[i][j]$
+表示到了点
+$i$
+，子树内有
+$j$
+种不同的值的方案数，设现在在根的位置有
+$j$
+个值，子树内有
+$j'$
+个值，最后和出了
+$i$
+个值，那么显然有
+$\max(j,j'+1)\leqslant i\leqslant j+j'$
+，首先
+$k$
+那个点肯定是最小的，也就是说还剩
+$i-1$
+个位置，然后把
+$k$
+原来的点放进去，有
+$\binom{i-1}{j-1}$
+种方案，再考虑子树中的权值，他们必须把那
+$i-j$
+个还空着的位置填满，然后还有
+$j'-(i-j)$
+个，他们应该和那
+$j-1$
+个合并，也就是
+$\binom{j-1}{j'-(i-j)}$
+。
+</div>
+<div class = "MarkdownCommonContent">
+<h3 class = "MarkdownH3">
+Code1：
+</h3>
+</div>
+<div class = "MarkdownCommonContent">
+<pre><code class="MarkdownParaCode">
+#include&lt;algorithm&gt;<br />
+#include&lt;iostream&gt;<br />
+#include&lt;cstdlib&gt;<br />
+#include&lt;cstdio&gt;<br />
+#include&lt;cmath&gt;<br />
+#include&lt;cctype&gt;<br />
+#include&lt;cstring&gt;<br />
+using namespace std;<br />
+inline int rd()<br />
+{<br />
+	register int res = 0,f = 1;register char c = getchar();<br />
+	while(!isdigit(c)){if(c == '-')f = -1;c = getchar();}<br />
+	while(isdigit(c))res = (res &lt;&lt; 1) + (res &lt;&lt; 3) + c - '0',c = getchar();<br />
+	return res * f;<br />
+}<br />
+inline char getc()<br />
+{<br />
+	register char c = getchar();<br />
+	while(c != '&lt;' && c != '=')c = getchar();<br />
+	return c;<br />
+}<br />
+int n,m;<br />
+#define MAXN 110<br />
+int f[MAXN];<br />
+int find(int x){return (f[x] == 0 ? x : f[x] = find(f[x]));}<br />
+int ind[MAXN];<br />
+struct edges<br />
+{<br />
+	int a,b;<br />
+}es[MAXN];<br />
+struct edge<br />
+{<br />
+	int to,nxt;<br />
+}e[MAXN];<br />
+int edgenum = 0;<br />
+int lin[MAXN] = {0};<br />
+void add(int a,int b)<br />
+{//cout &lt;&lt; a &lt;&lt; " -&gt; " &lt;&lt; b &lt;&lt; endl;<br />
+	++ind[b];<br />
+	e[++edgenum] = (edge){b,lin[a]};lin[a] = edgenum;<br />
+	return;<br />
+}<br />
+int C[MAXN][MAXN];<br />
+#define MOD 1000000007<br />
+int g[MAXN][MAXN];<br />
+int tmp[MAXN];<br />
+int siz[MAXN];<br />
+void dp(int k)<br />
+{<br />
+	g[k][1] = 1;<br />
+	siz[k] = 1;<br />
+	for(int i = lin[k];i != 0;i = e[i].nxt)<br />
+	{<br />
+		dp(e[i].to);<br />
+		memcpy(tmp,g[k],sizeof(tmp));<br />
+		memset(g[k],0,sizeof(g[k]));<br />
+		for(int j = 1;j &lt;= siz[k];++j)<br />
+		{<br />
+			for(int j_ = 1;j_ &lt;= siz[e[i].to];++j_)<br />
+			{<br />
+				for(int x = max(j,j_ + 1);x &lt;= j + j_;++x)<br />
+				{//cout &lt;&lt; x &lt;&lt; " " &lt;&lt; j &lt;&lt; " " &lt;&lt; j_ &lt;&lt; " : " &lt;&lt; tmp[j] &lt;&lt; " " &lt;&lt; g[e[i].to][j_] &lt;&lt; " " &lt;&lt; C[x - 1][j - 1] &lt;&lt; " " &lt;&lt; C[j - 1][j_ - (x - j)] &lt;&lt; endl;<br />
+					g[k][x] = (g[k][x] + 1ll * tmp[j] * g[e[i].to][j_] % MOD * C[x - 1][j - 1] % MOD * C[j - 1][j_ - (x - j)] % MOD) % MOD;<br />
+				}<br />
+			}<br />
+		}<br />
+		siz[k] += siz[e[i].to];<br />
+	}<br />
+	//cout &lt;&lt; k &lt;&lt; " : ";for(int i = 1;i &lt;= siz[k];++i)cout &lt;&lt; g[k][i] &lt;&lt; " ";cout &lt;&lt; endl;<br />
+	return;<br />
+}<br />
+int main()<br />
+{<br />
+	scanf("%d%d",&n,&m);<br />
+	C[0][0] = 1;<br />
+	for(int i = 1;i &lt;= n;++i)<br />
+	{<br />
+		C[i][0] = 1;<br />
+		for(int j = 1;j &lt;= i;++j)C[i][j] = (C[i - 1][j - 1] + C[i - 1][j]) % MOD;<br />
+	}<br />
+	for(int i = 1;i &lt;= m;++i)<br />
+	{<br />
+		es[i].a = rd();<br />
+		char ch = getc();<br />
+		es[i].b = rd();<br />
+		if(ch == '=')<br />
+		{<br />
+			int p = find(es[i].a),q = find(es[i].b);<br />
+			if(p == q)continue;<br />
+			else f[p] = q;<br />
+			es[i].a = es[i].b = 0;<br />
+		}<br />
+	}<br />
+	for(int i = 1;i &lt;= m;++i)<br />
+	{<br />
+		if(es[i].a != 0)add(find(es[i].a),find(es[i].b));<br />
+	}<br />
+	for(int i = 1;i &lt;= n;++i)<br />
+	{<br />
+		if(find(i) == i && ind[i] == 0)add(0,i);<br />
+	}<br />
+	dp(0);<br />
+	for(int i = 1;i &lt;= n;++i)<br />
+	{<br />
+		if(find(i) == i && siz[i] == 0)<br />
+		{<br />
+			puts("0");<br />
+			return 0;<br />
+		}<br />
+	}<br />
+	int ans = 0;<br />
+	for(int i = 0;i &lt;= n + 1;++i)ans = (ans + g[0][i]) % MOD;<br />
+	cout &lt;&lt; ans &lt;&lt; endl;<br />
+	return 0;<br />
+}<br />
+</pre></code>
+</div>
+<div class = "MarkdownCommonContent">
+<h3 class = "MarkdownH3">
+Solution2：
+</h3>
+</div>
+<div class = "MarkdownCommonContent">
+还是设
+$h[i]$
+表示用
+$1\sim i$
+给
+$n$
+个人随意分配标号的方案数，
+$g[i]$
+表示用
+$1\sim i$
+给
+$n$
+个人分配合法的标号，也就是说每个标号都至少分给一个人的方案数，那么有：
+$$
+h[i]=\sum_{j=0}^i\binom ij g[j]
+$$
+二项式反演得：
+$$
+g[i]=\sum_{j=0}^i\binom ij(-1)^{i-j}h[j]
+$$
+那么如果我们能求
+$h$
+，就能反过来求
+$g$
+，
+$h$
+比较好求，转移为：
+$$
+h[k][i]=\prod h[v][i-1]
+$$
+也就是说只要根节点与子树不同就行了，不一定非得要所有编号都用上，
+$DP$
+和反演都是
+$O(n^2)$
+得。
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Code2：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+<pre><code class="MarkdownParaCode">
+#include&lt;algorithm&gt;<br />
+#include&lt;iostream&gt;<br />
+#include&lt;cstdlib&gt;<br />
+#include&lt;cstdio&gt;<br />
+#include&lt;cmath&gt;<br />
+#include&lt;cctype&gt;<br />
+#include&lt;cstring&gt;<br />
+using namespace std;<br />
+inline int rd()<br />
+{<br />
+    register int res = 0,f = 1;register char c = getchar();<br />
+    while(!isdigit(c)){if(c == '-')f = -1;c = getchar();}<br />
+    while(isdigit(c))res = (res &lt;&lt; 1) + (res &lt;&lt; 3) + c - '0',c = getchar();<br />
+    return res * f;<br />
+}<br />
+inline char getc()<br />
+{<br />
+    register char c = getchar();<br />
+    while(c != '&lt;' && c != '=')c = getchar();<br />
+    return c;<br />
+}<br />
+int n,m;<br />
+#define MAXN 110<br />
+int f[MAXN];<br />
+int find(int x){return (f[x] == 0 ? x : f[x] = find(f[x]));}<br />
+int ind[MAXN];<br />
+struct edges<br />
+{<br />
+    int a,b;<br />
+}es[MAXN];<br />
+struct edge<br />
+{<br />
+    int to,nxt;<br />
+}e[MAXN];<br />
+int edgenum = 0;<br />
+int lin[MAXN] = {0};<br />
+void add(int a,int b)<br />
+{//cout &lt;&lt; a &lt;&lt; " -&gt; " &lt;&lt; b &lt;&lt; endl;<br />
+    ++ind[b];<br />
+    e[++edgenum] = (edge){b,lin[a]};lin[a] = edgenum;<br />
+    return;<br />
+}<br />
+int C[MAXN][MAXN];<br />
+#define MOD 1000000007<br />
+int g[MAXN][MAXN];<br />
+bool vis[MAXN];<br />
+void dp(int k)<br />
+{<br />
+    vis[k] = true;<br />
+    for(int i = 1;i &lt;= n + 1;++i)g[k][i] = 1;<br />
+    for(int i = lin[k];i != 0;i = e[i].nxt)<br />
+    {<br />
+        dp(e[i].to);<br />
+        for(int x = 1;x &lt;= n + 1;++x)g[k][x] = 1ll * g[k][x] * g[e[i].to][x - 1] % MOD;<br />
+    }<br />
+    for(int i = 1;i &lt;= n + 1;++i)g[k][i] = (g[k][i] + g[k][i - 1]) % MOD;<br />
+    return;<br />
+}<br />
+int main()<br />
+{<br />
+    scanf("%d%d",&n,&m);<br />
+    C[0][0] = 1;<br />
+    for(int i = 1;i &lt;= n + 1;++i)<br />
+    {<br />
+        C[i][0] = 1;<br />
+        for(int j = 1;j &lt;= i;++j)C[i][j] = (C[i - 1][j - 1] + C[i - 1][j]) % MOD;<br />
+    }<br />
+    for(int i = 1;i &lt;= m;++i)<br />
+    {<br />
+        es[i].a = rd();<br />
+        char ch = getc();<br />
+        es[i].b = rd();<br />
+        if(ch == '=')<br />
+        {<br />
+            int p = find(es[i].a),q = find(es[i].b);<br />
+            if(p == q)continue;<br />
+            else f[p] = q;<br />
+            es[i].a = es[i].b = 0;<br />
+        }<br />
+    }<br />
+    for(int i = 1;i &lt;= m;++i)<br />
+    {<br />
+        if(es[i].a != 0)add(find(es[i].a),find(es[i].b));<br />
+    }<br />
+    for(int i = 1;i &lt;= n;++i)<br />
+    {<br />
+        if(find(i) == i && ind[i] == 0)add(0,i);<br />
+    }<br />
+    dp(0);<br />
+    for(int i = 1;i &lt;= n;++i)<br />
+    {<br />
+        if(find(i) == i && !vis[i])<br />
+        {<br />
+            puts("0");<br />
+            return 0;<br />
+        }<br />
+    }<br />
+    int ans = 0;<br />
+    for(int i = 1;i &lt;= n + 1;++i)<br />
+    {<br />
+        for(int j = 1;j &lt;= i;++j)<br />
+        {<br />
+            if((i - j) & 1)ans = (ans - 1ll * g[0][j] * C[i][j] % MOD + MOD) % MOD;<br />
+            else ans = (ans + 1ll * g[0][j] * C[i][j] % MOD) % MOD;<br />
+        }<br />
+    }<br />
+    cout &lt;&lt; ans &lt;&lt; endl;<br />
+    return 0;<br />
+}<br />
+</pre></code>
+</div>
+        </div>
+        <div class="blogfile_showtag">
+          <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png">
+          In tag:
+<a href="../tags/DP-树形DP.html">DP-树形DP</a> <a href="../tags/数学-组合数学-二项式反演.html">数学-组合数学-二项式反演</a> 
+          <!--<a href="../tags/blog.html">blog</a>-->
+        </div>
+      </div>
+    </div>
+    <div id="middle_nav">
+      <div class="blog_host">
+        <div class="nav_avator">
+          <img src="http://pic.yupoo.com/wjh15101051/72c1aeab/f51d56e0.jpg" alt="avator">
+        </div>
+        <div class="nav_ID">
+          wjh15101051
+        </div>
+      </div>
+      <div class="nav_list">
+        <li class="tags">
+          <a href="../tags.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png" class="list_icon" id="tags_image">
+            Tags
+          </a>
+        </li>
+        <li class="categories">
+          <a href="../categories.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png" class="list_icon" id="categories_image">
+            Categories
+          </a>
+        </li>
+        <li class="timeline">
+          <a href="../timeline.html">
+            <img src="http://pic.yupoo.com/wjh15101051/30365cc7/c1a3be15.png" class="list_icon" id="timeline_image">
+            Timeline
+          </a>
+        </li>
+        <li class="about">
+          <a href="../about.html">
+            <img src="http://pic.yupoo.com/wjh15101051/24f1cb41/e239086e.png" class="list_icon" id="about_image">
+            About
+          </a>
+        </li>
+        <li class="toolbox">
+          <a href="../toolbox.html">
+            <img src="http://pic.yupoo.com/wjh15101051/dee9f673/d3cf682a.png" class="list_icon" id="toolbox_image">
+            Toolbox
+          </a>
+        </li>
+        <li class="friends">
+            <div class="friends_text">
+              <img src="http://pic.yupoo.com/wjh15101051/d291ebed/29f9c807.png" id="friends_image">
+              Friends
+            </div>
+            <div id="fp_friends_list">
+              <div id="SGcolin">
+                <a href="http://blog.gyx.me/" target="_blank">SGcolin</a>
+              </div>
+              <div id="Xingcy">
+                <a href="https://www.cnblogs.com/xcysblog/" target="_blank">Xingcy</a>
+              </div>
+              <div id="ZH_comld">
+                <a href="https://www.cnblogs.com/ZH-comld/" target="_blank">ZH_comld</a>
+              </div>
+            </div>
+            <br>
+          </div>
+        </li>
+      </div>
+    <div class="music_player">
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer@1.10.0/dist/APlayer.min.css">
+      <script src="https://blog-static.cnblogs.com/files/yjlaugus/APlayer.min.js"></script>
+      <div id="aplayer" class="aplayer"  data-id="5313691453" data-server="netease" data-type="playlist" data-fixed="true" data-listfolded="true" data-order="random" data-theme="#F58EA8"></div>
+      <script src="https://unpkg.com/meting@1.2/dist/Meting.min.js"></script>
+    </div>
+    <div class="bottom">
+      <div>
+        Copyright © 2020
+        <a id="copyright_user_a" href="index.html">
+          <span id="copyright_user">wjh15101051</span>
+        </a>
+      </div>
+      <div class="bottom_anime">ღゝ◡╹)ノ♡</div>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>WC2016 挑战NPC</title>
+  <link rel="stylesheet" type="text/css" id="frame_style" href="../css/frame_style1.css">
+  <link rel="stylesheet" type="text/css" id="Markdown_style" href="../css/Markdown_style.css">
+  <script type="text/javascript" src="../jscode/frame.js"></script>
+  <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+  <link rel="stylesheet" href="https://ziyuan.fenxianglu.cn/js/highlight/styles/default.css">
+  <script src="https://ziyuan.fenxianglu.cn/js/highlight/highlight.pack.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+        inlineMath: [['$','$']]
+      }
+    });
+  </script>
+</head>
+<body>
+  <div class="main">
+    <div class="head">
+      <div class="title1">
+        <a href="../index.html">wjh15101051's space</a>
+      </div>
+      <div class="title2">
+        卧薪尝胆，厚积薄发。
+      </div>
+    </div>
+    <div id="middle_blogfile">
+      <div class="blog_blogfile">
+        <div class="blogfile_title">
+            WC2016 挑战NPC
+        </div>
+        <div class="blogfile_stitle">
+          <img src="http://pic.yupoo.com/wjh15101051/1e0e1b3a/118165c5.jpg">
+          Date: Mon Mar 18 15:09:17 CST 2019
+          <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png">
+          In Category:
+          <a href="../categories/NoCategory.html">NoCategory</a>
+        </div>
+        <div class="blogfile_content">
+<div class = "MarkdownCommonContent">
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Description：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+$n$
+个球和
+$m$
+个筐，每个筐最多能装
+$3$
+个球，每个球都必须放进一个筐中，求最多有几个筐子有不超过
+$1$
+个球，以及最终每个球分别在哪个筐子中。
+</div>
+<div class = "MarkdownCommonContent">
+$1\leqslant n\leqslant 100$
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Solution：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+考虑为什么每个筐只能装
+$3$
+个球，要求最多有几个筐有不超过
+$1$
+个球，我们可以这样考虑，一个三个点的完全图(三角形)内部最多有一个匹配，而这样一个图最多向外连三个匹配，因此我们可以把每个筐拆三个点，内部连成完全图，然后球和对应的筐的三个点都连边，反正最后也只会连一个，然后求最大匹配，最大匹配
+$-$
+球数就是筐内部连的个数，也就是只有不超过一个球的筐的个数。
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Code：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+<pre><code class="MarkdownParaCode">
+#include&lt;algorithm&gt;<br />
+#include&lt;iostream&gt;<br />
+#include&lt;cstdlib&gt;<br />
+#include&lt;cstdio&gt;<br />
+#include&lt;cmath&gt;<br />
+#include&lt;queue&gt;<br />
+#include&lt;cctype&gt;<br />
+#include&lt;cstring&gt;<br />
+using namespace std;<br />
+inline int rd()<br />
+{<br />
+	register int res = 0,f = 1;register char c = getchar();<br />
+	while(!isdigit(c)){if(c == '-')f = -1;c = getchar();}<br />
+	while(isdigit(c))res = (res &lt;&lt; 1) + (res &lt;&lt; 3) + c - '0',c = getchar();<br />
+	return res;<br />
+}<br />
+int n,m,p;<br />
+#define MAXM 110<br />
+#define MAXN 310<br />
+#define MAXE (MAXM * 3 + MAXN * MAXN * 3)<br />
+#define MAXP (MAXM * 3 + MAXN)<br />
+struct edge<br />
+{<br />
+	int to,nxt;<br />
+}e[MAXE &lt;&lt; 1];<br />
+int edgenum = 0;<br />
+int lin[MAXP] = {0};<br />
+void add(int a,int b)<br />
+{<br />
+	e[++edgenum] = (edge){b,lin[a]};lin[a] = edgenum;<br />
+	e[++edgenum] = (edge){a,lin[b]};lin[b] = edgenum;<br />
+	return;<br />
+}<br />
+int f[MAXP],pre[MAXP],col[MAXP],match[MAXP];<br />
+int tag[MAXP],tim = 0;<br />
+int find(int x){return (f[x] == 0 ? x : f[x] = find(f[x]));}<br />
+int LCA(int u,int v)<br />
+{<br />
+	++tim;<br />
+	u = find(u);v = find(v);<br />
+	while(tag[u] != tim)<br />
+	{<br />
+		tag[u] = tim;<br />
+		u = find(pre[match[u]]);<br />
+		if(v)swap(u,v);<br />
+	}<br />
+	return u;<br />
+}<br />
+queue&lt;int&gt; q;<br />
+void blossom(int u,int v,int lca)<br />
+{<br />
+	while(find(u) != lca)<br />
+	{<br />
+		pre[u] = v;v = match[u];<br />
+		if(col[v] == 2)col[v] = 1,q.push(v);<br />
+		if(find(u) == u)f[u] = lca;<br />
+		if(find(v) == v)f[v] = lca;<br />
+		u = pre[v];<br />
+	}<br />
+	return;<br />
+}<br />
+int work(int s)<br />
+{<br />
+	memset(f,0,sizeof(f));<br />
+	memset(pre,0,sizeof(pre));<br />
+	memset(col,0,sizeof(col));<br />
+	while(!q.empty())q.pop();<br />
+	q.push(s);col[s] = 1;<br />
+	while(!q.empty())<br />
+	{<br />
+		int k = q.front();q.pop();<br />
+		for(int i = lin[k];i != 0;i = e[i].nxt)<br />
+		{<br />
+			int v = e[i].to;<br />
+			if(find(k) == find(v))continue;<br />
+			if(col[v] == 2)continue;<br />
+			if(!col[v])<br />
+			{<br />
+				col[v] = 2;pre[v] = k;<br />
+				if(!match[v])<br />
+				{<br />
+					for(int i = v,pr;i;i = pr)<br />
+					{<br />
+						pr = match[pre[i]];<br />
+						match[i] = pre[i];match[pre[i]] = i;<br />
+					}<br />
+					return 1;<br />
+				}<br />
+				col[match[v]] = 1;<br />
+				q.push(match[v]);<br />
+			}<br />
+			else<br />
+			{<br />
+				int lca = LCA(k,v);<br />
+				blossom(k,v,lca);<br />
+				blossom(v,k,lca);<br />
+			}<br />
+		}<br />
+	}<br />
+	return 0;<br />
+}<br />
+void work()<br />
+{<br />
+	edgenum = 0;<br />
+	memset(lin,0,sizeof(lin));<br />
+	memset(match,0,sizeof(match));<br />
+	scanf("%d%d%d",&n,&m,&p);<br />
+	for(int i = 1;i &lt;= m;++i)<br />
+	{<br />
+		add((i - 1) * 3 + 1 + n,(i - 1) * 3 + 2 + n);<br />
+		add((i - 1) * 3 + 2 + n,(i - 1) * 3 + 3 + n);<br />
+		add((i - 1) * 3 + 3 + n,(i - 1) * 3 + 1 + n);<br />
+	}<br />
+	int a,b;<br />
+	for(int i = 1;i &lt;= p;++i)<br />
+	{<br />
+		scanf("%d%d",&a,&b);<br />
+		add(a,(b - 1) * 3 + 1 + n);<br />
+		add(a,(b - 1) * 3 + 2 + n);<br />
+		add(a,(b - 1) * 3 + 3 + n);<br />
+	}<br />
+	int ans = 0;<br />
+	for(int i = 1;i &lt;= n + 3 * m;++i)if(!match[i])ans += work(i);<br />
+	cout &lt;&lt; ans - n &lt;&lt; endl;<br />
+	for(int i = 1;i &lt;= n;++i)printf("%d ",(match[i] - n - 1) / 3 + 1);<br />
+	return;<br />
+}<br />
+int main()<br />
+{<br />
+	int testcases = rd();<br />
+	while(testcases--)work();<br />
+	return 0;<br />
+}<br />
+</pre></code>
+</div>
+        </div>
+        <div class="blogfile_showtag">
+          <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png">
+          In tag:
+<a href="../tags/图论-带花树.html">图论-带花树</a> 
+          <!--<a href="../tags/blog.html">blog</a>-->
+        </div>
+      </div>
+    </div>
+    <div id="middle_nav">
+      <div class="blog_host">
+        <div class="nav_avator">
+          <img src="http://pic.yupoo.com/wjh15101051/72c1aeab/f51d56e0.jpg" alt="avator">
+        </div>
+        <div class="nav_ID">
+          wjh15101051
+        </div>
+      </div>
+      <div class="nav_list">
+        <li class="tags">
+          <a href="../tags.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png" class="list_icon" id="tags_image">
+            Tags
+          </a>
+        </li>
+        <li class="categories">
+          <a href="../categories.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png" class="list_icon" id="categories_image">
+            Categories
+          </a>
+        </li>
+        <li class="timeline">
+          <a href="../timeline.html">
+            <img src="http://pic.yupoo.com/wjh15101051/30365cc7/c1a3be15.png" class="list_icon" id="timeline_image">
+            Timeline
+          </a>
+        </li>
+        <li class="about">
+          <a href="../about.html">
+            <img src="http://pic.yupoo.com/wjh15101051/24f1cb41/e239086e.png" class="list_icon" id="about_image">
+            About
+          </a>
+        </li>
+        <li class="toolbox">
+          <a href="../toolbox.html">
+            <img src="http://pic.yupoo.com/wjh15101051/dee9f673/d3cf682a.png" class="list_icon" id="toolbox_image">
+            Toolbox
+          </a>
+        </li>
+        <li class="friends">
+            <div class="friends_text">
+              <img src="http://pic.yupoo.com/wjh15101051/d291ebed/29f9c807.png" id="friends_image">
+              Friends
+            </div>
+            <div id="fp_friends_list">
+              <div id="SGcolin">
+                <a href="http://blog.gyx.me/" target="_blank">SGcolin</a>
+              </div>
+              <div id="Xingcy">
+                <a href="https://www.cnblogs.com/xcysblog/" target="_blank">Xingcy</a>
+              </div>
+              <div id="ZH_comld">
+                <a href="https://www.cnblogs.com/ZH-comld/" target="_blank">ZH_comld</a>
+              </div>
+            </div>
+            <br>
+          </div>
+        </li>
+      </div>
+    <div class="music_player">
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer@1.10.0/dist/APlayer.min.css">
+      <script src="https://blog-static.cnblogs.com/files/yjlaugus/APlayer.min.js"></script>
+      <div id="aplayer" class="aplayer"  data-id="5313691453" data-server="netease" data-type="playlist" data-fixed="true" data-listfolded="true" data-order="random" data-theme="#F58EA8"></div>
+      <script src="https://unpkg.com/meting@1.2/dist/Meting.min.js"></script>
+    </div>
+    <div class="bottom">
+      <div>
+        Copyright © 2020
+        <a id="copyright_user_a" href="index.html">
+          <span id="copyright_user">wjh15101051</span>
+        </a>
+      </div>
+      <div class="bottom_anime">ღゝ◡╹)ノ♡</div>
+    </div>
+  </div>
+</body>
+</html>

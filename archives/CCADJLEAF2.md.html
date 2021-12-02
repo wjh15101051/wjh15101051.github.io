@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Adjacent Leaves</title>
+  <link rel="stylesheet" type="text/css" id="frame_style" href="../css/frame_style1.css">
+  <link rel="stylesheet" type="text/css" id="Markdown_style" href="../css/Markdown_style.css">
+  <script type="text/javascript" src="../jscode/frame.js"></script>
+  <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+  <link rel="stylesheet" href="https://ziyuan.fenxianglu.cn/js/highlight/styles/default.css">
+  <script src="https://ziyuan.fenxianglu.cn/js/highlight/highlight.pack.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+        inlineMath: [['$','$']]
+      }
+    });
+  </script>
+</head>
+<body>
+  <div class="main">
+    <div class="head">
+      <div class="title1">
+        <a href="../index.html">wjh15101051's space</a>
+      </div>
+      <div class="title2">
+        卧薪尝胆，厚积薄发。
+      </div>
+    </div>
+    <div id="middle_blogfile">
+      <div class="blog_blogfile">
+        <div class="blogfile_title">
+            Adjacent Leaves
+        </div>
+        <div class="blogfile_stitle">
+          <img src="http://pic.yupoo.com/wjh15101051/1e0e1b3a/118165c5.jpg">
+          Date: Sun Feb 24 18:58:42 CST 2019
+          <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png">
+          In Category:
+          <a href="../categories/NoCategory.html">NoCategory</a>
+        </div>
+        <div class="blogfile_content">
+<div class = "MarkdownCommonContent">
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Description：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+给出一棵树，每次问：如果以
+$r$
+为根，能否通过合理安排每个点访问每个儿子的顺序，使得输入的集合
+$S$
+里的叶子在 DFS 序中连续。
+</div>
+<div class = "MarkdownCommonContent">
+$1\leqslant n,\sum|S|\leqslant 5\times 10^5$
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Solution：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+首先肯定是建虚树，然后在虚树上
+$dfs$
+，我们可以给每个点标一个状态：
+</div>
+<div class = "MarkdownCommonContent">
+0：所有叶子都被标记，记录子树内的标记点数和叶子个数。
+</div>
+<div class = "MarkdownCommonContent">
+1：叶子可以排成前后缀，子树内只能有0/1，并且1的个数小于等于1。
+</div>
+<div class = "MarkdownCommonContent">
+2：叶子可以排成连续区间，子树内只有0/1并且1的个数小于等于2或者子树内只有一个2。
+</div>
+<div class = "MarkdownCommonContent">
+3：不合法。
+</div>
+<div class = "MarkdownCommonContent">
+一个换根求
+$LCA$
+的方法：
+$root=r,lca=lca(a,b)\text{ xor }lca(a,r)\text{ xor }lca(b,r)$
+。
+</div>
+<div class = "MarkdownCommonContent">
+然后还可以发现建虚树的时候
+$dfn$
+可以换成
+$dep$
+，也就可以用
+$dis(a,b)$
+来求。
+</div>
+<div class = "MarkdownCommonContent">
+注意一个小细节，就是两个点在虚树上直接相连但是在原树上不直接相连，这条链伸出去的子树上可能还有叶子。
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Code：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+<pre><code class="MarkdownParaCode">
+#include&lt;algorithm&gt;<br />
+#include&lt;iostream&gt;<br />
+#include&lt;cstdlib&gt;<br />
+#include&lt;cstdio&gt;<br />
+#include&lt;cmath&gt;<br />
+#include&lt;vector&gt;<br />
+#include&lt;cctype&gt;<br />
+#include&lt;cstring&gt;<br />
+using namespace std;<br />
+int n,q;<br />
+#define MAXN 500010<br />
+inline int rd()<br />
+{<br />
+	register int res = 0,f = 1;register char c = getchar();<br />
+	while(!isdigit(c)){if(c == '-')f = -1;c = getchar();}<br />
+	while(isdigit(c))res = (res &lt;&lt; 1) + (res &lt;&lt; 3) + c - '0',c = getchar();<br />
+	return res * f;<br />
+}<br />
+int deg[MAXN];<br />
+struct edge<br />
+{<br />
+	int to,nxt;<br />
+}e[MAXN &lt;&lt; 1];<br />
+int edgenum = 0;<br />
+int lin[MAXN] = {0};<br />
+void add(int a,int b)<br />
+{<br />
+	++deg[a];++deg[b];<br />
+	e[++edgenum] = (edge){b,lin[a]};lin[a] = edgenum;<br />
+	e[++edgenum] = (edge){a,lin[b]};lin[b] = edgenum;<br />
+	return;<br />
+}<br />
+int root;<br />
+int leaf[MAXN];<br />
+bool tag[MAXN];<br />
+int dfn[MAXN],tot = 0;<br />
+int f[MAXN][20];<br />
+int dep[MAXN];<br />
+void dfs(int k,int fa)<br />
+{<br />
+	dep[k] = dep[fa] + 1;dfn[k] = ++tot; <br />
+	for(int i = lin[k];i != 0;i = e[i].nxt)<br />
+	{<br />
+		if(e[i].to == fa)continue;<br />
+		f[e[i].to][0] = k;<br />
+		for(int x = 1;x &lt;= 19;++x)f[e[i].to][x] = f[f[e[i].to][x - 1]][x - 1];<br />
+		dfs(e[i].to,k);<br />
+		leaf[k] += leaf[e[i].to];<br />
+	}<br />
+	return;<br />
+}<br />
+int skip_to_dep(int k,int d)<br />
+{<br />
+	for(int i = 19;i &gt;= 0;--i)if(dep[f[k][i]] &gt;= d)k = f[k][i];<br />
+	return k;<br />
+}<br />
+int LCA(int a,int b)<br />
+{<br />
+	if(dep[a] &lt; dep[b])swap(a,b);<br />
+	a = skip_to_dep(a,dep[b]);<br />
+	if(a == b)return a;<br />
+	for(int i = 19;i &gt;= 0;--i)<br />
+		if(f[a][i] != f[b][i])a = f[a][i],b = f[b][i];<br />
+	return f[a][0];<br />
+}<br />
+int LCA(int rt,int a,int b)<br />
+{<br />
+	return LCA(a,b) ^ LCA(rt,a) ^ LCA(rt,b);<br />
+}<br />
+int dis(int a,int b)<br />
+{<br />
+	return dep[a] + dep[b] - 2 * dep[LCA(a,b)] + 1;<br />
+} <br />
+int cntleaf(int rt,int k)<br />
+{<br />
+	if(rt == root)return leaf[k];<br />
+	if(k == rt)return leaf[root];<br />
+	if(LCA(k,rt) != k)return leaf[k];<br />
+	int son = skip_to_dep(rt,dep[k] + 1);<br />
+	return leaf[root] - leaf[son];<br />
+}<br />
+int rt,v[MAXN];<br />
+int stack[MAXN],top = 0;<br />
+vector&lt;int&gt; g[MAXN];<br />
+bool cmp_dfn(int a,int b){return dfn[a] &lt; dfn[b];}<br />
+void addv(int a,int b)<br />
+{//cout &lt;&lt; a &lt;&lt; " " &lt;&lt; b &lt;&lt; endl; <br />
+	g[a].push_back(b);g[b].push_back(a);<br />
+	return;<br />
+}<br />
+int siz[MAXN];<br />
+int nxtp(int k,int ano)<br />
+{<br />
+	if(LCA(k,ano) != k)return f[k][0];<br />
+	else return skip_to_dep(ano,dep[k] + 1);<br />
+}<br />
+int dp(int k,int fa)<br />
+{<br />
+	siz[k] = tag[k];<br />
+	int cnt[4] = {0};<br />
+	int son = 0;<br />
+	for(vector&lt;int&gt;::iterator it = g[k].begin();it != g[k].end();++it)<br />
+	{<br />
+		if(*it == fa)continue;<br />
+		int val = dp(*it,k);<br />
+		int nxt = nxtp(k,*it);//cout &lt;&lt; k &lt;&lt; " " &lt;&lt; *it &lt;&lt; " " &lt;&lt; nxt &lt;&lt; " : ";<br />
+		if(val == 0 && cntleaf(rt,nxt) != cntleaf(rt,*it))val = 1;//cout &lt;&lt; val &lt;&lt; endl;<br />
+		cnt[val]++;<br />
+		siz[k] += siz[*it];<br />
+		++son;<br />
+	}<br />
+	g[k].clear();<br />
+	int res;<br />
+	if(tag[k])res = 0;<br />
+	else if(cnt[3])res = 3;<br />
+	else if(siz[k] == cntleaf(rt,k))res = 0;<br />
+	else if(cnt[2] == 0 && cnt[1] &lt;= 1)res = 1;<br />
+	else if((cnt[2] == 1 && son == 1) || (cnt[1] &lt;= 2 && cnt[2] == 0))res = 2;<br />
+	else res = 3;<br />
+	//cout &lt;&lt; k &lt;&lt; " : " &lt;&lt; res &lt;&lt; endl;<br />
+	return res;<br />
+}<br />
+void query()<br />
+{<br />
+	scanf("%d%d",&rt,&v[0]);<br />
+	for(int i = 1;i &lt;= v[0];++i)scanf("%d",&v[i]);<br />
+	v[++v[0]] = rt;<br />
+	sort(v + 1,v + 1 + v[0],cmp_dfn);<br />
+	top = 0;<br />
+	stack[++top] = v[1];<br />
+	for(int i = 2;i &lt;= v[0];++i)<br />
+	{<br />
+		int lca = LCA(v[i],stack[top]);<br />
+		if(lca == stack[top]){stack[++top] = v[i];continue;}<br />
+		while(top &gt;= 2)<br />
+		{<br />
+			if(dfn[lca] &lt; dfn[stack[top - 1]])addv(stack[top - 1],stack[top]),--top;<br />
+			else{addv(lca,stack[top]);--top;break;}<br />
+		}<br />
+		if(top == 1 && dfn[lca] &lt; dfn[stack[top]])addv(lca,stack[top]),stack[top] = lca;<br />
+		if(stack[top] != lca)stack[++top] = lca;<br />
+		stack[++top] = v[i];<br />
+	}<br />
+	while(top &gt;= 2)addv(stack[top - 1],stack[top]),--top;<br />
+	if(dp(rt,0) != 3)puts("YES");<br />
+	else puts("NO");<br />
+	return;<br />
+}<br />
+int main()<br />
+{<br />
+	scanf("%d%d",&n,&q);<br />
+	for(int i = 1;i &lt; n;++i)add(rd(),rd());<br />
+	for(int i = 1;i &lt;= n;++i)<br />
+	{<br />
+		if(deg[i] != 1)root = i;<br />
+		else leaf[i] = 1,tag[i] = true;<br />
+	}<br />
+	dfs(root,0);<br />
+	for(int i = 1;i &lt;= q;++i)query();<br />
+	return 0;<br />
+}<br />
+</pre></code>
+</div>
+        </div>
+        <div class="blogfile_showtag">
+          <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png">
+          In tag:
+<a href="../tags/树-虚树.html">树-虚树</a> 
+          <!--<a href="../tags/blog.html">blog</a>-->
+        </div>
+      </div>
+    </div>
+    <div id="middle_nav">
+      <div class="blog_host">
+        <div class="nav_avator">
+          <img src="http://pic.yupoo.com/wjh15101051/72c1aeab/f51d56e0.jpg" alt="avator">
+        </div>
+        <div class="nav_ID">
+          wjh15101051
+        </div>
+      </div>
+      <div class="nav_list">
+        <li class="tags">
+          <a href="../tags.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png" class="list_icon" id="tags_image">
+            Tags
+          </a>
+        </li>
+        <li class="categories">
+          <a href="../categories.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png" class="list_icon" id="categories_image">
+            Categories
+          </a>
+        </li>
+        <li class="timeline">
+          <a href="../timeline.html">
+            <img src="http://pic.yupoo.com/wjh15101051/30365cc7/c1a3be15.png" class="list_icon" id="timeline_image">
+            Timeline
+          </a>
+        </li>
+        <li class="about">
+          <a href="../about.html">
+            <img src="http://pic.yupoo.com/wjh15101051/24f1cb41/e239086e.png" class="list_icon" id="about_image">
+            About
+          </a>
+        </li>
+        <li class="toolbox">
+          <a href="../toolbox.html">
+            <img src="http://pic.yupoo.com/wjh15101051/dee9f673/d3cf682a.png" class="list_icon" id="toolbox_image">
+            Toolbox
+          </a>
+        </li>
+        <li class="friends">
+            <div class="friends_text">
+              <img src="http://pic.yupoo.com/wjh15101051/d291ebed/29f9c807.png" id="friends_image">
+              Friends
+            </div>
+            <div id="fp_friends_list">
+              <div id="SGcolin">
+                <a href="http://blog.gyx.me/" target="_blank">SGcolin</a>
+              </div>
+              <div id="Xingcy">
+                <a href="https://www.cnblogs.com/xcysblog/" target="_blank">Xingcy</a>
+              </div>
+              <div id="ZH_comld">
+                <a href="https://www.cnblogs.com/ZH-comld/" target="_blank">ZH_comld</a>
+              </div>
+            </div>
+            <br>
+          </div>
+        </li>
+      </div>
+    <div class="music_player">
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer@1.10.0/dist/APlayer.min.css">
+      <script src="https://blog-static.cnblogs.com/files/yjlaugus/APlayer.min.js"></script>
+      <div id="aplayer" class="aplayer"  data-id="5313691453" data-server="netease" data-type="playlist" data-fixed="true" data-listfolded="true" data-order="random" data-theme="#F58EA8"></div>
+      <script src="https://unpkg.com/meting@1.2/dist/Meting.min.js"></script>
+    </div>
+    <div class="bottom">
+      <div>
+        Copyright © 2020
+        <a id="copyright_user_a" href="index.html">
+          <span id="copyright_user">wjh15101051</span>
+        </a>
+      </div>
+      <div class="bottom_anime">ღゝ◡╹)ノ♡</div>
+    </div>
+  </div>
+</body>
+</html>

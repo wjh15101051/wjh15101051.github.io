@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>function</title>
+  <link rel="stylesheet" type="text/css" id="frame_style" href="../css/frame_style1.css">
+  <link rel="stylesheet" type="text/css" id="Markdown_style" href="../css/Markdown_style.css">
+  <script type="text/javascript" src="../jscode/frame.js"></script>
+  <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+  <link rel="stylesheet" href="https://ziyuan.fenxianglu.cn/js/highlight/styles/default.css">
+  <script src="https://ziyuan.fenxianglu.cn/js/highlight/highlight.pack.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+        inlineMath: [['$','$']]
+      }
+    });
+  </script>
+</head>
+<body>
+  <div class="main">
+    <div class="head">
+      <div class="title1">
+        <a href="../index.html">wjh15101051's space</a>
+      </div>
+      <div class="title2">
+        卧薪尝胆，厚积薄发。
+      </div>
+    </div>
+    <div id="middle_blogfile">
+      <div class="blog_blogfile">
+        <div class="blogfile_title">
+            function
+        </div>
+        <div class="blogfile_stitle">
+          <img src="http://pic.yupoo.com/wjh15101051/1e0e1b3a/118165c5.jpg">
+          Date: Mon Mar 04 15:57:26 CST 2019
+          <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png">
+          In Category:
+          <a href="../categories/NoCategory.html">NoCategory</a>
+        </div>
+        <div class="blogfile_content">
+<div class = "MarkdownCommonContent">
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Description：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+给一个函数：
+$$
+f(x)=\prod_{i=0}^k(x-i^2)
+$$
+$k$
+为满足
+$x-k^2&gt;0$
+的最大自然数。
+</div>
+<div class = "MarkdownCommonContent">
+给出
+$L,R,P$
+，求有多少个正整数
+$x\in[L,R]$
+满足
+$P|f(x)$
+。
+</div>
+<div class = "MarkdownCommonContent">
+$1\leqslant L,R\leqslant 10^{18},1\leqslant P\leqslant 10^6$
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Solution：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+设：
+$$
+f_k(x)\prod_{i=0}^k(x-i^2)
+$$
+首先由于
+$f$
+是一个多项式，因此有：
+$f(x+P)=f(x)\bmod P$
+。那么我么就可以对于每个
+$i\in[0,P)$
+统计一下
+$\bmod P=i$
+的
+$x$
+中合法的个数，这个可以这样做，我们可以求出一个
+$maxk[i]$
+表示
+$\bmod P=i$
+的
+$x$
+中
+$f(x)\bmod P=0$
+的最小的
+$k$
+，因为由于
+$f(x)$
+单调而且是一个多项式，所以如果
+$f_k(x)$
+合法，那么
+$k+1$
+也一定是合法的，也就是说
+$x&gt;k^2,x\bmod P=i$
+的
+$x$
+都合法，因此我们如果可以计算出
+$maxk[i]$
+就可以计算
+$x\bmod P=i,P|f(x)$
+的
+$x$
+个数了，我们可以再设一个
+$dp[i][j]$
+表示模
+$P$
+为
+$i$
+并且
+$f(x)$
+是质数
+$j$
+在
+$P$
+中的幂
+$j^q$
+的倍数的
+$k$
+最小是几，那么有
+$maxk[i]=\max_j(dp[i][j])$
+，那么我们就可以不停找直到找够了
+$q$
+个为止，也就是说从小往大枚举
+$x-k^2=0\bmod j$
+的
+$k$
+，每次消掉
+$x-k^2$
+中
+$j$
+的幂，会发现这个是一个二次剩余，但是我们可以把它提前预处理出来放进一个
+$vector$
+里。
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Code：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+<pre><code class="MarkdownParaCode">
+#include&lt;algorithm&gt;<br />
+#include&lt;iostream&gt;<br />
+#include&lt;cstdlib&gt;<br />
+#include&lt;cstdio&gt;<br />
+#include&lt;cmath&gt;<br />
+#include&lt;vector&gt; <br />
+#include&lt;cctype&gt;<br />
+#include&lt;cstring&gt;<br />
+using namespace std;<br />
+typedef long long ll;<br />
+ll L,R,P;<br />
+#define MAXN 1000010<br />
+ll ans[MAXN];<br />
+vector&lt;ll&gt; g[MAXN];<br />
+#define INF 0x3f3f3f3f3f3f3f3f<br />
+ll calc(ll n)<br />
+{<br />
+	if(n == 0)return 0;<br />
+	ll res = 0;<br />
+	for(int i = 0;i &lt; P;++i)<br />
+	{<br />
+		if(ans[i] != INF)<br />
+		{<br />
+			if(ans[i] &gt; n)continue;<br />
+			if(n &gt;= i)res += (n - i) / P + 1;<br />
+			if(ans[i] &gt;= i)res -= (ans[i] - i) / P + 1;<br />
+		}<br />
+		//cout &lt;&lt; ans[i] &lt;&lt; " "; <br />
+	}//cout &lt;&lt; endl;<br />
+	return res;<br />
+}<br />
+void solve(ll p,ll k)<br />
+{<br />
+	for(ll i = 0;i &lt; P;++i)g[i].clear();<br />
+	for(ll i = 0;i &lt; P;++i)g[i * i % p].push_back(i);<br />
+	for(ll i = 0;i &lt; P;++i)<br />
+	{<br />
+		vector&lt;ll&gt; v = g[i % p];<br />
+		int cnt = k;<br />
+		ll x = 0;<br />
+		while(cnt &gt; 0)<br />
+		{<br />
+			for(vector&lt;ll&gt;::iterator it = v.begin();it != v.end();++it)<br />
+			{<br />
+				ll val = (i - *it * *it % P + P) % P;//cout &lt;&lt; val &lt;&lt; endl;<br />
+				while(cnt && val % p == 0)val /= p,--cnt;<br />
+				if(cnt == 0){ans[i] = max(ans[i],(*it + x) * (*it + x));break;}<br />
+			}<br />
+			if(cnt == k){ans[i] = INF;break;}<br />
+			x += P;<br />
+		}<br />
+	}<br />
+	return;<br />
+}<br />
+int main()<br />
+{<br />
+	scanf("%lld%lld%lld",&L,&R,&P);<br />
+	ll pr = P;<br />
+	for(int i = 2;i * i &lt;= P;++i)<br />
+	{<br />
+		if(P % i == 0)<br />
+		{<br />
+			int cnt = 0;<br />
+			while(pr % i == 0)++cnt,pr /= i;<br />
+			solve(i,cnt);<br />
+		}<br />
+	}<br />
+	if(pr != 1)solve(pr,1);<br />
+	cout &lt;&lt; (calc(R) - calc(L - 1)) &lt;&lt; endl;<br />
+	return 0;<br />
+}<br />
+</pre></code>
+</div>
+        </div>
+        <div class="blogfile_showtag">
+          <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png">
+          In tag:
+<a href="../tags/DP-DP.html">DP-DP</a> 
+          <!--<a href="../tags/blog.html">blog</a>-->
+        </div>
+      </div>
+    </div>
+    <div id="middle_nav">
+      <div class="blog_host">
+        <div class="nav_avator">
+          <img src="http://pic.yupoo.com/wjh15101051/72c1aeab/f51d56e0.jpg" alt="avator">
+        </div>
+        <div class="nav_ID">
+          wjh15101051
+        </div>
+      </div>
+      <div class="nav_list">
+        <li class="tags">
+          <a href="../tags.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png" class="list_icon" id="tags_image">
+            Tags
+          </a>
+        </li>
+        <li class="categories">
+          <a href="../categories.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png" class="list_icon" id="categories_image">
+            Categories
+          </a>
+        </li>
+        <li class="timeline">
+          <a href="../timeline.html">
+            <img src="http://pic.yupoo.com/wjh15101051/30365cc7/c1a3be15.png" class="list_icon" id="timeline_image">
+            Timeline
+          </a>
+        </li>
+        <li class="about">
+          <a href="../about.html">
+            <img src="http://pic.yupoo.com/wjh15101051/24f1cb41/e239086e.png" class="list_icon" id="about_image">
+            About
+          </a>
+        </li>
+        <li class="toolbox">
+          <a href="../toolbox.html">
+            <img src="http://pic.yupoo.com/wjh15101051/dee9f673/d3cf682a.png" class="list_icon" id="toolbox_image">
+            Toolbox
+          </a>
+        </li>
+        <li class="friends">
+            <div class="friends_text">
+              <img src="http://pic.yupoo.com/wjh15101051/d291ebed/29f9c807.png" id="friends_image">
+              Friends
+            </div>
+            <div id="fp_friends_list">
+              <div id="SGcolin">
+                <a href="http://blog.gyx.me/" target="_blank">SGcolin</a>
+              </div>
+              <div id="Xingcy">
+                <a href="https://www.cnblogs.com/xcysblog/" target="_blank">Xingcy</a>
+              </div>
+              <div id="ZH_comld">
+                <a href="https://www.cnblogs.com/ZH-comld/" target="_blank">ZH_comld</a>
+              </div>
+            </div>
+            <br>
+          </div>
+        </li>
+      </div>
+    <div class="music_player">
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer@1.10.0/dist/APlayer.min.css">
+      <script src="https://blog-static.cnblogs.com/files/yjlaugus/APlayer.min.js"></script>
+      <div id="aplayer" class="aplayer"  data-id="5313691453" data-server="netease" data-type="playlist" data-fixed="true" data-listfolded="true" data-order="random" data-theme="#F58EA8"></div>
+      <script src="https://unpkg.com/meting@1.2/dist/Meting.min.js"></script>
+    </div>
+    <div class="bottom">
+      <div>
+        Copyright © 2020
+        <a id="copyright_user_a" href="index.html">
+          <span id="copyright_user">wjh15101051</span>
+        </a>
+      </div>
+      <div class="bottom_anime">ღゝ◡╹)ノ♡</div>
+    </div>
+  </div>
+</body>
+</html>

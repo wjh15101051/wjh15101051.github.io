@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Mas的仙人掌</title>
+  <link rel="stylesheet" type="text/css" id="frame_style" href="../css/frame_style1.css">
+  <link rel="stylesheet" type="text/css" id="Markdown_style" href="../css/Markdown_style.css">
+  <script type="text/javascript" src="../jscode/frame.js"></script>
+  <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+  <link rel="stylesheet" href="https://ziyuan.fenxianglu.cn/js/highlight/styles/default.css">
+  <script src="https://ziyuan.fenxianglu.cn/js/highlight/highlight.pack.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+        inlineMath: [['$','$']]
+      }
+    });
+  </script>
+</head>
+<body>
+  <div class="main">
+    <div class="head">
+      <div class="title1">
+        <a href="../index.html">wjh15101051's space</a>
+      </div>
+      <div class="title2">
+        卧薪尝胆，厚积薄发。
+      </div>
+    </div>
+    <div id="middle_blogfile">
+      <div class="blog_blogfile">
+        <div class="blogfile_title">
+            Mas的仙人掌
+        </div>
+        <div class="blogfile_stitle">
+          <img src="http://pic.yupoo.com/wjh15101051/1e0e1b3a/118165c5.jpg">
+          Date: Sat Mar 09 15:20:19 CST 2019
+          <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png">
+          In Category:
+          <a href="../categories/NoCategory.html">NoCategory</a>
+        </div>
+        <div class="blogfile_content">
+<div class = "MarkdownCommonContent">
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Description：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+给一棵树和
+$M$
+条非树边，每条边有
+$p_i$
+的概率会掉落，问期望有多少条边只在一个简单环中。
+</div>
+<div class = "MarkdownCommonContent">
+$1\leqslant n\leqslant 10^6$
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Solution1：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+利用期望的线性性可以发现答案是和这条非树边对应的树链相交的边的概率之积乘上
+$1-$
+这个树链的概率求和。
+</div>
+<div class = "MarkdownCommonContent">
+考虑一个非常暴力的分类讨论，因为原题要求边相交非常不好做，所以我们考虑转化，首先把链拆开两个直上直下的链，去掉
+$LCA$
+，那么两条链相交当且仅当一个链的最高点在另一个链上，这样我们就成功把边相交转化成了点相交，然后分类讨论，假如当前询问的是链
+$k$
+，一种情况是另一条链的最高点在
+$k$
+的最低点到最高点之间，另一种情况是另一条链经过当前链的最高点，两种情况都可以树上差分做，注意可能两条链在
+$LCA$
+处相交，因此再用一个
+$map$
+记录每条链从哪两个子树中伸出来，然后每次把这部分贡献扣掉就行了。
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Code1：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+<pre><code class="MarkdownParaCode">
+#include&lt;algorithm&gt;<br />
+#include&lt;iostream&gt;<br />
+#include&lt;cstdlib&gt;<br />
+#include&lt;cstdio&gt;<br />
+#include&lt;cmath&gt;<br />
+#include&lt;map&gt;<br />
+#include&lt;vector&gt;<br />
+#include&lt;cctype&gt;<br />
+#include&lt;cstring&gt;<br />
+using namespace std;<br />
+inline int rd()<br />
+{<br />
+    register int res = 0,f = 1;register char c = getchar();<br />
+    while(!isdigit(c)){if(c == '-')f = -1;c = getchar();}<br />
+    while(isdigit(c))res = (res &lt;&lt; 1) + (res &lt;&lt; 3) + c - '0',c = getchar();<br />
+    return res * f;<br />
+}<br />
+int n,m;<br />
+#define MAXN 1000010<br />
+struct edge<br />
+{<br />
+    int to,nxt;<br />
+}e[MAXN &lt;&lt; 1];<br />
+int edgenum = 0;<br />
+int lin[MAXN] = {0};<br />
+void add(int a,int b)<br />
+{<br />
+    e[++edgenum] = (edge){b,lin[a]};lin[a] = edgenum;<br />
+    e[++edgenum] = (edge){a,lin[b]};lin[b] = edgenum;<br />
+    return;<br />
+}<br />
+int f[MAXN][21],dep[MAXN];<br />
+void dfs(int k,int depth)<br />
+{<br />
+    dep[k] = depth;<br />
+    for(int i = lin[k];i != 0;i = e[i].nxt)<br />
+    {<br />
+        if(e[i].to == f[k][0])continue;<br />
+        f[e[i].to][0] = k;<br />
+        dfs(e[i].to,depth + 1);<br />
+    }<br />
+    return;<br />
+}<br />
+int skip_to_dep(int a,int depth)<br />
+{<br />
+    for(int k = 20;k &gt;= 0;--k)if(dep[f[a][k]] &gt;= depth)a = f[a][k];<br />
+    return a;<br />
+}<br />
+int LCA(int a,int b)<br />
+{<br />
+    if(dep[a] &lt; dep[b])swap(a,b);<br />
+    a = skip_to_dep(a,dep[b]);<br />
+    if(a == b)return a;<br />
+    for(int k = 20;k &gt;= 0;--k)<br />
+        if(f[a][k] != f[b][k])a = f[a][k],b = f[b][k];<br />
+    return f[a][0];<br />
+}<br />
+struct edges<br />
+{<br />
+    int u,v,w;<br />
+}es[MAXN];<br />
+#define MOD 998244353<br />
+int power(int a,int b)<br />
+{<br />
+    int res = 1;<br />
+    for(;b &gt; 0;b = b &gt;&gt; 1,a = 1ll * a * a % MOD)if(b & 1)res = 1ll * res * a % MOD;<br />
+    return res;<br />
+}<br />
+int inver(int a){return power(a,MOD - 2);}<br />
+struct inte<br />
+{<br />
+    int val,cnt;<br />
+    inte(int v = 0,int c = 0){val = c;cnt = c;}<br />
+    int calc(){return (cnt &gt; 0 ? 0 : val);}<br />
+}val1[MAXN],val2[MAXN],val3[MAXN],val4[MAXN];<br />
+inte operator * (inte a,inte b){a.val = 1ll * a.val * b.val % MOD;a.cnt += b.cnt;return a;}<br />
+inte operator * (inte a,int b)<br />
+{<br />
+    if(b == 0){++a.cnt;return a;}<br />
+    else{a.val = 1ll * a.val * b % MOD;return a;};<br />
+}<br />
+inte operator / (inte a,int b)<br />
+{<br />
+    if(b == 0){--a.cnt;return a;}<br />
+    else{a.val = 1ll * a.val * inver(b) % MOD;return a;};<br />
+}<br />
+inte operator / (inte a,inte b)<br />
+{<br />
+    a.val = 1ll * a.val * inver(b.val) % MOD;a.cnt -= b.cnt;<br />
+    return a;<br />
+}<br />
+#define pii pair&lt;int,int&gt;<br />
+#define smp(a,b) make_pair(min(a,b),max(a,b))<br />
+map&lt;pii,inte&gt; p;<br />
+void push(int k)<br />
+{<br />
+    for(int i = lin[k];i != 0;i = e[i].nxt)<br />
+    {<br />
+        if(e[i].to == f[k][0])continue;<br />
+        val3[e[i].to] = val3[e[i].to] * val3[k];<br />
+        val4[e[i].to] = val4[e[i].to] * val4[k];<br />
+        push(e[i].to);<br />
+        val1[k] = val1[k] * val1[e[i].to];<br />
+        val2[k] = val2[k] * val2[e[i].to];<br />
+    }<br />
+    return;<br />
+}<br />
+int main()<br />
+{<br />
+    scanf("%d%d",&n,&m);<br />
+    for(int i = 1;i &lt; n;++i)add(rd(),rd());<br />
+    dfs(1,1);<br />
+    for(int k = 1;k &lt;= 20;++k)<br />
+        for(int i = 1;i &lt;= n;++i)<br />
+            f[i][k] = f[f[i][k - 1]][k - 1];<br />
+    for(int i = 1;i &lt;= n;++i)val1[i].val = val2[i].val = val3[i].val = val4[i].val = 1;<br />
+    inte sigma;sigma.val = 1;<br />
+    for(int i = 1;i &lt;= m;++i)<br />
+    {<br />
+        es[i].u = rd();es[i].v = rd();es[i].w = rd();<br />
+        sigma = sigma * es[i].w;<br />
+        int lca = LCA(es[i].u,es[i].v);<br />
+        int s1 = skip_to_dep(es[i].u,dep[lca] + 1);<br />
+        int s2 = skip_to_dep(es[i].v,dep[lca] + 1);<br />
+        if(es[i].u != lca)<br />
+        {<br />
+            val1[s1] = val1[s1] * es[i].w;<br />
+            val2[es[i].u] = val2[es[i].u] * es[i].w;<br />
+            val3[es[i].u] = val3[es[i].u] * es[i].w;<br />
+            val4[s1] = val4[s1] * es[i].w;<br />
+        }<br />
+        if(es[i].v != lca)<br />
+        {<br />
+            val1[s2] = val1[s2] * es[i].w;<br />
+            val2[es[i].v] = val2[es[i].v] * es[i].w;<br />
+            val3[es[i].v] = val3[es[i].v] * es[i].w;<br />
+            val4[s2] = val4[s2] * es[i].w;<br />
+        }<br />
+        if(es[i].u != lca && es[i].v != lca)<br />
+        {<br />
+            if(p.find(smp(s1,s2)) == p.end())<br />
+            {<br />
+                if(es[i].w != 0)p[smp(s1,s2)].val = es[i].w;<br />
+                else p[smp(s1,s2)].val = 1,p[smp(s1,s2)].cnt = 1;<br />
+            }<br />
+            else p[smp(s1,s2)] = p[smp(s1,s2)] * es[i].w;<br />
+        }<br />
+    }<br />
+    push(1);<br />
+    int ans = 0;<br />
+    for(int i = 1;i &lt;= m;++i)<br />
+    {<br />
+        inte sum1,sum2;sum1.val = sum2.val = 1;<br />
+        int lca = LCA(es[i].u,es[i].v);<br />
+        int s1 = skip_to_dep(es[i].u,dep[lca] + 1);<br />
+        int s2 = skip_to_dep(es[i].v,dep[lca] + 1);<br />
+        if(es[i].u != lca)sum1 = val4[es[i].u] / val4[lca] * val2[s1] / val1[s1];<br />
+        if(es[i].v != lca)sum2 = val4[es[i].v] / val4[lca] * val2[s2] / val1[s2];<br />
+        inte sum;sum.val = 1;<br />
+        if(es[i].u != lca && es[i].v != lca)sum = sum / p[smp(s1,s2)];<br />
+        sum = sum * sum1 * sum2;<br />
+        sum = sum / es[i].w;<br />
+        sum = sum * (1 - es[i].w + MOD);<br />
+        ans = (ans + sum.calc()) % MOD;<br />
+    }<br />
+    cout &lt;&lt; ans &lt;&lt; endl;<br />
+    return 0;<br />
+}<br />
+</pre></code>
+</div>
+        </div>
+        <div class="blogfile_showtag">
+          <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png">
+          In tag:
+<a href="../tags/树-树上差分.html">树-树上差分</a> 
+          <!--<a href="../tags/blog.html">blog</a>-->
+        </div>
+      </div>
+    </div>
+    <div id="middle_nav">
+      <div class="blog_host">
+        <div class="nav_avator">
+          <img src="http://pic.yupoo.com/wjh15101051/72c1aeab/f51d56e0.jpg" alt="avator">
+        </div>
+        <div class="nav_ID">
+          wjh15101051
+        </div>
+      </div>
+      <div class="nav_list">
+        <li class="tags">
+          <a href="../tags.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png" class="list_icon" id="tags_image">
+            Tags
+          </a>
+        </li>
+        <li class="categories">
+          <a href="../categories.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png" class="list_icon" id="categories_image">
+            Categories
+          </a>
+        </li>
+        <li class="timeline">
+          <a href="../timeline.html">
+            <img src="http://pic.yupoo.com/wjh15101051/30365cc7/c1a3be15.png" class="list_icon" id="timeline_image">
+            Timeline
+          </a>
+        </li>
+        <li class="about">
+          <a href="../about.html">
+            <img src="http://pic.yupoo.com/wjh15101051/24f1cb41/e239086e.png" class="list_icon" id="about_image">
+            About
+          </a>
+        </li>
+        <li class="toolbox">
+          <a href="../toolbox.html">
+            <img src="http://pic.yupoo.com/wjh15101051/dee9f673/d3cf682a.png" class="list_icon" id="toolbox_image">
+            Toolbox
+          </a>
+        </li>
+        <li class="friends">
+            <div class="friends_text">
+              <img src="http://pic.yupoo.com/wjh15101051/d291ebed/29f9c807.png" id="friends_image">
+              Friends
+            </div>
+            <div id="fp_friends_list">
+              <div id="SGcolin">
+                <a href="http://blog.gyx.me/" target="_blank">SGcolin</a>
+              </div>
+              <div id="Xingcy">
+                <a href="https://www.cnblogs.com/xcysblog/" target="_blank">Xingcy</a>
+              </div>
+              <div id="ZH_comld">
+                <a href="https://www.cnblogs.com/ZH-comld/" target="_blank">ZH_comld</a>
+              </div>
+            </div>
+            <br>
+          </div>
+        </li>
+      </div>
+    <div class="music_player">
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer@1.10.0/dist/APlayer.min.css">
+      <script src="https://blog-static.cnblogs.com/files/yjlaugus/APlayer.min.js"></script>
+      <div id="aplayer" class="aplayer"  data-id="5313691453" data-server="netease" data-type="playlist" data-fixed="true" data-listfolded="true" data-order="random" data-theme="#F58EA8"></div>
+      <script src="https://unpkg.com/meting@1.2/dist/Meting.min.js"></script>
+    </div>
+    <div class="bottom">
+      <div>
+        Copyright © 2020
+        <a id="copyright_user_a" href="index.html">
+          <span id="copyright_user">wjh15101051</span>
+        </a>
+      </div>
+      <div class="bottom_anime">ღゝ◡╹)ノ♡</div>
+    </div>
+  </div>
+</body>
+</html>

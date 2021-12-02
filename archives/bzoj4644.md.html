@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>经典傻逼题</title>
+  <link rel="stylesheet" type="text/css" id="frame_style" href="../css/frame_style1.css">
+  <link rel="stylesheet" type="text/css" id="Markdown_style" href="../css/Markdown_style.css">
+  <script type="text/javascript" src="../jscode/frame.js"></script>
+  <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+  <link rel="stylesheet" href="https://ziyuan.fenxianglu.cn/js/highlight/styles/default.css">
+  <script src="https://ziyuan.fenxianglu.cn/js/highlight/highlight.pack.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+        inlineMath: [['$','$']]
+      }
+    });
+  </script>
+</head>
+<body>
+  <div class="main">
+    <div class="head">
+      <div class="title1">
+        <a href="../index.html">wjh15101051's space</a>
+      </div>
+      <div class="title2">
+        卧薪尝胆，厚积薄发。
+      </div>
+    </div>
+    <div id="middle_blogfile">
+      <div class="blog_blogfile">
+        <div class="blogfile_title">
+            经典傻逼题
+        </div>
+        <div class="blogfile_stitle">
+          <img src="http://pic.yupoo.com/wjh15101051/1e0e1b3a/118165c5.jpg">
+          Date: Thu Oct 04 22:50:56 CST 2018
+          <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png">
+          In Category:
+          <a href="../categories/NoCategory.html">NoCategory</a>
+        </div>
+        <div class="blogfile_content">
+<div class = "MarkdownCommonContent">
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Description：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+定义无向图的割为一个点集与图中其他点的连边的异或和，每次加入一条权值为
+$c$
+的边，询问这张图的最大割。
+</div>
+<div class = "MarkdownCommonContent">
+$1\leqslant n\leqslant 500,1\leqslant m\leqslant 1000,1\leqslant l\leqslant 1000$
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Solution：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+由于异或满足消去率，所以设
+$v(i)$
+为与点
+$i$
+相连的边的边权异或和，那么选出来一些点的
+$v(i)$
+异或和就是割，因为在同一子集中的被消去了，所以只要求出每个点的
+$v(i)$
+再加到线性基里求个异或最大值就行了，但是有加边操作，也就是说
+$v(i)$
+会变，但是在两次修改之间是不动的，而线性基支持插入不支持删除，这启示我们可以用线段树分治，每次把一段区间内的
+$v(i)$
+加到线段树的对应区间那里，最后
+$dfs$
+整棵线段树维护一下从根到每个叶子的线性基最大值就行了。
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Code：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+<pre><code class="MarkdownParaCode">
+#include&lt;algorithm&gt;<br />
+#include&lt;iostream&gt;<br />
+#include&lt;cstdlib&gt;<br />
+#include&lt;cstdio&gt;<br />
+#include&lt;cmath&gt;<br />
+#include&lt;vector&gt;<br />
+#include&lt;bitset&gt;<br />
+#include&lt;cstring&gt;<br />
+using namespace std;<br />
+int n,m;<br />
+inline int read()<br />
+{<br />
+	register int res = 0,f = 1;<br />
+	register char c = getchar();<br />
+	while(!isdigit(c))<br />
+	{<br />
+		if(c == '-')f = -1;<br />
+		c = getchar();<br />
+	}<br />
+	while(isdigit(c))<br />
+	{<br />
+		res = (res &lt;&lt; 1) + (res &lt;&lt; 3) + c - '0';<br />
+		c = getchar();<br />
+	}<br />
+	return res * f;<br />
+}<br />
+#define MAXL 1010<br />
+inline bitset&lt;MAXL&gt; readbit()<br />
+{<br />
+	register char c = getchar();<br />
+	while(!isdigit(c))c = getchar();<br />
+	bitset&lt;MAXL&gt; s;<br />
+	while(isdigit(c))<br />
+	{<br />
+		s = s &lt;&lt; 1;s[0] = c - '0';<br />
+		c = getchar();<br />
+	}<br />
+	return s;<br />
+}<br />
+void print(bitset&lt;MAXL&gt; k)<br />
+{<br />
+	bool tag = false;<br />
+	for(int i = MAXL - 1;i &gt;= 0;--i)<br />
+	{<br />
+		if(k[i])tag = true;<br />
+		if(!k[i] && !tag)continue;<br />
+		if(k[i])putchar('1');<br />
+		else putchar('0');<br />
+	}<br />
+	if(!tag)putchar('0');<br />
+	puts("");<br />
+	return;<br />
+}<br />
+#define MAXN 510<br />
+#define MAXM 1010<br />
+bitset&lt;MAXL&gt; val[MAXN];<br />
+int last[MAXN];<br />
+struct node<br />
+{<br />
+	int lc,rc;<br />
+	vector&lt; bitset&lt;MAXL&gt; &gt; v;<br />
+}t[MAXM &lt;&lt; 1];<br />
+int ptr = 0;<br />
+int newnode(){return ++ptr;}<br />
+int root;<br />
+#define mid ((l + r) &gt;&gt; 1)<br />
+void build(int &rt,int l,int r)<br />
+{<br />
+	rt = newnode();<br />
+	if(l == r)return;<br />
+	build(t[rt].lc,l,mid);<br />
+	build(t[rt].rc,mid + 1,r);<br />
+	return;<br />
+}<br />
+void add(int rt,int L,int R,bitset&lt;MAXL&gt; s,int l,int r)<br />
+{<br />
+	if(R &lt; 1)return;<br />
+	if(L &lt;= l && r &lt;= R)<br />
+	{<br />
+		t[rt].v.push_back(s);<br />
+		return;<br />
+	}<br />
+	if(L &lt;= mid)add(t[rt].lc,L,R,s,l,mid);<br />
+	if(R &gt; mid)add(t[rt].rc,L,R,s,mid + 1,r);<br />
+	return;<br />
+}<br />
+struct LinearBase<br />
+{<br />
+	bitset&lt;MAXL&gt; d[MAXL];<br />
+	LinearBase()<br />
+	{<br />
+		for(int i = 0;i &lt; MAXL;++i)d[i].reset();<br />
+	}<br />
+	void insert(bitset&lt;MAXL&gt; k)<br />
+	{<br />
+		for(int i = MAXL - 1;i &gt;= 0;--i)<br />
+		{<br />
+			if((k &gt;&gt; i)[0])<br />
+			{<br />
+				if(!d[i].any())<br />
+				{<br />
+					d[i] = k;<br />
+					return;<br />
+				}<br />
+				else<br />
+				{<br />
+					k ^= d[i];<br />
+				}<br />
+			}<br />
+		}<br />
+	}<br />
+	bitset&lt;MAXL&gt; query()<br />
+	{<br />
+		bitset&lt;MAXL&gt; res;<br />
+		for(int i = MAXL - 1;i &gt;= 0;--i)<br />
+		{<br />
+			if(d[i].any() && !res[i])res ^= d[i];<br />
+		}<br />
+		return res;<br />
+	}<br />
+};<br />
+void pt(int rt,int l,int r,LinearBase k)<br />
+{<br />
+	for(vector&lt; bitset&lt;MAXL&gt; &gt;::iterator it = t[rt].v.begin();it != t[rt].v.end();++it)<br />
+	{<br />
+		k.insert(*it);<br />
+	}<br />
+	if(l == r)<br />
+	{<br />
+		print(k.query());<br />
+		return;<br />
+	}<br />
+	pt(t[rt].lc,l,mid,k);<br />
+	pt(t[rt].rc,mid + 1,r,k);<br />
+	return;<br />
+}<br />
+int main()<br />
+{<br />
+	read();n = read();m = read();<br />
+	build(root,1,m);<br />
+	int x,y;<br />
+	bitset&lt;MAXL&gt; s;<br />
+	for(int i = 1;i &lt;= m;++i)<br />
+	{<br />
+		x = read();y = read();s = readbit();<br />
+		add(root,last[x] + 1,i - 1,val[x],1,m);<br />
+		add(root,last[y] + 1,i - 1,val[y],1,m);<br />
+		last[x] = last[y] = i - 1;<br />
+		val[x] ^= s;val[y] ^= s;<br />
+	}<br />
+	for(int i = 1;i &lt;= n;++i)<br />
+	{<br />
+		add(root,last[i] + 1,m,val[i],1,m);<br />
+	}<br />
+	LinearBase lb;<br />
+	pt(root,1,m,lb);<br />
+	return 0;<br />
+}<br />
+</pre></code>
+</div>
+        </div>
+        <div class="blogfile_showtag">
+          <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png">
+          In tag:
+<a href="../tags/数据结构-线段树分治.html">数据结构-线段树分治</a> <a href="../tags/数学-线性基.html">数学-线性基</a> 
+          <!--<a href="../tags/blog.html">blog</a>-->
+        </div>
+      </div>
+    </div>
+    <div id="middle_nav">
+      <div class="blog_host">
+        <div class="nav_avator">
+          <img src="http://pic.yupoo.com/wjh15101051/72c1aeab/f51d56e0.jpg" alt="avator">
+        </div>
+        <div class="nav_ID">
+          wjh15101051
+        </div>
+      </div>
+      <div class="nav_list">
+        <li class="tags">
+          <a href="../tags.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png" class="list_icon" id="tags_image">
+            Tags
+          </a>
+        </li>
+        <li class="categories">
+          <a href="../categories.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png" class="list_icon" id="categories_image">
+            Categories
+          </a>
+        </li>
+        <li class="timeline">
+          <a href="../timeline.html">
+            <img src="http://pic.yupoo.com/wjh15101051/30365cc7/c1a3be15.png" class="list_icon" id="timeline_image">
+            Timeline
+          </a>
+        </li>
+        <li class="about">
+          <a href="../about.html">
+            <img src="http://pic.yupoo.com/wjh15101051/24f1cb41/e239086e.png" class="list_icon" id="about_image">
+            About
+          </a>
+        </li>
+        <li class="toolbox">
+          <a href="../toolbox.html">
+            <img src="http://pic.yupoo.com/wjh15101051/dee9f673/d3cf682a.png" class="list_icon" id="toolbox_image">
+            Toolbox
+          </a>
+        </li>
+        <li class="friends">
+            <div class="friends_text">
+              <img src="http://pic.yupoo.com/wjh15101051/d291ebed/29f9c807.png" id="friends_image">
+              Friends
+            </div>
+            <div id="fp_friends_list">
+              <div id="SGcolin">
+                <a href="http://blog.gyx.me/" target="_blank">SGcolin</a>
+              </div>
+              <div id="Xingcy">
+                <a href="https://www.cnblogs.com/xcysblog/" target="_blank">Xingcy</a>
+              </div>
+              <div id="ZH_comld">
+                <a href="https://www.cnblogs.com/ZH-comld/" target="_blank">ZH_comld</a>
+              </div>
+            </div>
+            <br>
+          </div>
+        </li>
+      </div>
+    <div class="music_player">
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer@1.10.0/dist/APlayer.min.css">
+      <script src="https://blog-static.cnblogs.com/files/yjlaugus/APlayer.min.js"></script>
+      <div id="aplayer" class="aplayer"  data-id="5313691453" data-server="netease" data-type="playlist" data-fixed="true" data-listfolded="true" data-order="random" data-theme="#F58EA8"></div>
+      <script src="https://unpkg.com/meting@1.2/dist/Meting.min.js"></script>
+    </div>
+    <div class="bottom">
+      <div>
+        Copyright © 2020
+        <a id="copyright_user_a" href="index.html">
+          <span id="copyright_user">wjh15101051</span>
+        </a>
+      </div>
+      <div class="bottom_anime">ღゝ◡╹)ノ♡</div>
+    </div>
+  </div>
+</body>
+</html>

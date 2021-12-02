@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>黑盒</title>
+  <link rel="stylesheet" type="text/css" id="frame_style" href="../css/frame_style1.css">
+  <link rel="stylesheet" type="text/css" id="Markdown_style" href="../css/Markdown_style.css">
+  <script type="text/javascript" src="../jscode/frame.js"></script>
+  <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+  <link rel="stylesheet" href="https://ziyuan.fenxianglu.cn/js/highlight/styles/default.css">
+  <script src="https://ziyuan.fenxianglu.cn/js/highlight/highlight.pack.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+        inlineMath: [['$','$']]
+      }
+    });
+  </script>
+</head>
+<body>
+  <div class="main">
+    <div class="head">
+      <div class="title1">
+        <a href="../index.html">wjh15101051's space</a>
+      </div>
+      <div class="title2">
+        卧薪尝胆，厚积薄发。
+      </div>
+    </div>
+    <div id="middle_blogfile">
+      <div class="blog_blogfile">
+        <div class="blogfile_title">
+            黑盒
+        </div>
+        <div class="blogfile_stitle">
+          <img src="http://pic.yupoo.com/wjh15101051/1e0e1b3a/118165c5.jpg">
+          Date: Thu Jan 10 10:40:43 CST 2019
+          <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png">
+          In Category:
+          <a href="../categories/NoCategory.html">NoCategory</a>
+        </div>
+        <div class="blogfile_content">
+<div class = "MarkdownCommonContent">
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Description：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+有一个数列
+$a$
+，有一个运算
+$magic(x,y)$
+，保证满足交换律和结合律，每次删去黑盒中的
+$m$
+个元素，并求剩下的元素作
+$magic$
+运算后的值。
+</div>
+<div class = "MarkdownCommonContent">
+$n\leqslant 2000, 2^m\leqslant n, 0\leqslant a_i&lt;2^{64}$
+</div>
+<div class = "MarkdownCommonContent">
+交互题，要求预处理的
+$magic$
+次数不超过
+$4n$
+，单次询问
+$magic$
+次数不超过
+$4(m+1)$
+。
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Solution：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+直接线段树肯定是不行的，有一个神奇的做法叫做
+$Method\ of\ Four\ Russians$
+，也就是说在预处理的时候每
+$8$
+个分一段，每一段内预处理前后缀和，消耗
+$2n$
+个询问，然后对于所有整块的，用一棵线段树维护，在线段树的每一层预处理前后缀和，消耗
+$(n/8)\log (n/8)\leqslant 2n$
+个询问，类似于分治，如果只在左半边就只进入左半边，否则进入右半边，这样在线段树上查询一次只消耗
+$1$
+个询问，查询时除去删掉的
+$m$
+个元素，还有
+$m+1$
+段，对着
+$m+1$
+段分别求答案，最后合并，合并消耗
+$m+1$
+个询问，也就是说我们最后单次询问均摊下来不能超过
+$3$
+个询问，如果两个端点分别在不同的块中，那么消耗恰好三个询问（左边零散的和中间大块的合并，中间大块的的在线段树上计算，最后和右边的合并），如果在一个块中那么如果是前后缀直接回答，否则就暴力扫，但是这样一次最多消耗
+$5$
+个询问，但实际上如果有一边顶到块的边界了，他边界的另一边那个块就没有另一边零散的部分了，可以画个图理解，因此均摊下来询问数还是不超过
+$3$
+。
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Code：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+<pre><code class="MarkdownParaCode">
+#include&lt;algorithm&gt;<br />
+#include&lt;iostream&gt;<br />
+#include&lt;cstdlib&gt;<br />
+#include&lt;cstdio&gt;<br />
+#include&lt;cmath&gt;<br />
+#include&lt;cctype&gt;<br />
+#include&lt;cstring&gt;<br />
+using namespace std;<br />
+#include"blackbox.h"<br />
+typedef unsigned long long ull;<br />
+#define MAXN 2070<br />
+int nn;<br />
+ull s[MAXN];<br />
+ull ss[15][MAXN];<br />
+ull sum1[MAXN],sum2[MAXN];<br />
+ull sum[MAXN];<br />
+int belong[MAXN],L[MAXN],R[MAXN];<br />
+int blo,tot;<br />
+#define mid ((l + r) &gt;&gt; 1)<br />
+map&lt;pair&lt;ull,ull&gt;,ull&gt; mem;<br />
+inline ull mymagic(ull a,ull b)<br />
+{<br />
+	if(a &gt; b)swap(a,b);<br />
+	if(mem.find(make_pair(a,b)) != mem.end())return mem[make_pair(a,b)];<br />
+	return mem[make_pair(a,b)] = magic(a,b);<br />
+}<br />
+void build(int d,int l,int r)<br />
+{<br />
+	if(l == r)return;<br />
+	build(d + 1,l,mid);<br />
+	build(d + 1,mid + 1,r);<br />
+	ss[d][mid] = sum[mid];<br />
+	for(int i = mid - 1;i &gt;= l;--i)ss[d][i] = mymagic(sum[i],ss[d][i + 1]);<br />
+	ss[d][mid + 1] = sum[mid + 1];<br />
+	for(int i = mid + 2;i &lt;= r;++i)ss[d][i] = mymagic(sum[i],ss[d][i - 1]);<br />
+	return;<br />
+}<br />
+void init(vector&lt;ull&gt; a,int m)<br />
+{<br />
+	nn = a.size();<br />
+	for(int i = 1;i &lt;= nn;++i)s[i] = a[i - 1];<br />
+	blo = 8;<br />
+	for(int i = 1;i &lt;= nn;++i)<br />
+	{<br />
+		belong[i] = (i - 1) / blo + 1;<br />
+		if(L[belong[i]] == 0)L[belong[i]] = i;<br />
+		R[belong[i]] = i;<br />
+	}<br />
+	tot = belong[nn];<br />
+	for(int i = 1;i &lt;= tot;++i)<br />
+	{<br />
+		sum1[L[i]] = s[L[i]];<br />
+		for(int j = L[i] + 1;j &lt;= R[i];++j)sum1[j] = mymagic(sum1[j - 1],s[j]);<br />
+		sum2[R[i]] = s[R[i]];<br />
+		for(int j = R[i] - 1;j &gt; L[i];--j)sum2[j] = mymagic(sum2[j + 1],s[j]);<br />
+		sum2[L[i]] = sum[i] = sum1[R[i]];<br />
+	}<br />
+	build(1,1,tot);<br />
+	return;<br />
+}<br />
+ull query(int d,int L,int R,int l,int r)<br />
+{<br />
+	if(l == r)return sum[l];<br />
+	if(R &lt;= mid)return query(d + 1,L,R,l,mid);<br />
+	if(L &gt; mid)return query(d + 1,L,R,mid + 1,r);<br />
+	return mymagic(ss[d][L],ss[d][R]);<br />
+}<br />
+ull calc(int l,int r)<br />
+{<br />
+	if(belong[l] == belong[r])<br />
+	{<br />
+		ull res = s[l];<br />
+		for(int i = l + 1;i &lt;= r;++i)res = mymagic(res,s[i]);<br />
+		return res;<br />
+	}<br />
+	int lef = belong[l],rig = belong[r];<br />
+	ull res;<br />
+	bool first = true;<br />
+	if(l != L[lef])<br />
+	{<br />
+		++lef;<br />
+		if(first)res = sum2[l],first = false;<br />
+		else res = mymagic(res,sum2[l]);<br />
+	}<br />
+	if(r != R[rig])<br />
+	{<br />
+		--rig;<br />
+		if(first)res = sum1[r],first = false;<br />
+		else res = mymagic(res,sum1[r]);<br />
+	}<br />
+	if(lef &lt;= rig)<br />
+	{<br />
+		if(first)res = query(1,lef,rig,1,tot);<br />
+		else res = mymagic(res,query(1,lef,rig,1,tot));<br />
+	}<br />
+	return res;<br />
+}<br />
+ull query(vector&lt;int&gt; u)<br />
+{<br />
+	u.push_back(nn);<br />
+	sort(u.begin(),u.end());<br />
+	ull ans = 0;<br />
+	int last = 1;<br />
+	bool first = true;<br />
+	for(int x = 0; x &lt; u.size(); ++x)<br />
+	{<br />
+		++u[x];<br />
+		if(u[x] &gt; last)<br />
+		{<br />
+			ull res = calc(last,u[x] - 1);<br />
+			if(first)ans = res,first = false;<br />
+			else ans = mymagic(ans,res);<br />
+		}<br />
+		last = u[x] + 1;<br />
+	}<br />
+	return ans;<br />
+}<br />
+</pre></code>
+</div>
+        </div>
+        <div class="blogfile_showtag">
+          <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png">
+          In tag:
+<a href="../tags/数据结构-线段树.html">数据结构-线段树</a> <a href="../tags/数据结构-Method of Four Russians.html">数据结构-Method of Four Russians</a> <a href="../tags/数据结构-分块.html">数据结构-分块</a> 
+          <!--<a href="../tags/blog.html">blog</a>-->
+        </div>
+      </div>
+    </div>
+    <div id="middle_nav">
+      <div class="blog_host">
+        <div class="nav_avator">
+          <img src="http://pic.yupoo.com/wjh15101051/72c1aeab/f51d56e0.jpg" alt="avator">
+        </div>
+        <div class="nav_ID">
+          wjh15101051
+        </div>
+      </div>
+      <div class="nav_list">
+        <li class="tags">
+          <a href="../tags.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png" class="list_icon" id="tags_image">
+            Tags
+          </a>
+        </li>
+        <li class="categories">
+          <a href="../categories.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png" class="list_icon" id="categories_image">
+            Categories
+          </a>
+        </li>
+        <li class="timeline">
+          <a href="../timeline.html">
+            <img src="http://pic.yupoo.com/wjh15101051/30365cc7/c1a3be15.png" class="list_icon" id="timeline_image">
+            Timeline
+          </a>
+        </li>
+        <li class="about">
+          <a href="../about.html">
+            <img src="http://pic.yupoo.com/wjh15101051/24f1cb41/e239086e.png" class="list_icon" id="about_image">
+            About
+          </a>
+        </li>
+        <li class="toolbox">
+          <a href="../toolbox.html">
+            <img src="http://pic.yupoo.com/wjh15101051/dee9f673/d3cf682a.png" class="list_icon" id="toolbox_image">
+            Toolbox
+          </a>
+        </li>
+        <li class="friends">
+            <div class="friends_text">
+              <img src="http://pic.yupoo.com/wjh15101051/d291ebed/29f9c807.png" id="friends_image">
+              Friends
+            </div>
+            <div id="fp_friends_list">
+              <div id="SGcolin">
+                <a href="http://blog.gyx.me/" target="_blank">SGcolin</a>
+              </div>
+              <div id="Xingcy">
+                <a href="https://www.cnblogs.com/xcysblog/" target="_blank">Xingcy</a>
+              </div>
+              <div id="ZH_comld">
+                <a href="https://www.cnblogs.com/ZH-comld/" target="_blank">ZH_comld</a>
+              </div>
+            </div>
+            <br>
+          </div>
+        </li>
+      </div>
+    <div class="music_player">
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer@1.10.0/dist/APlayer.min.css">
+      <script src="https://blog-static.cnblogs.com/files/yjlaugus/APlayer.min.js"></script>
+      <div id="aplayer" class="aplayer"  data-id="5313691453" data-server="netease" data-type="playlist" data-fixed="true" data-listfolded="true" data-order="random" data-theme="#F58EA8"></div>
+      <script src="https://unpkg.com/meting@1.2/dist/Meting.min.js"></script>
+    </div>
+    <div class="bottom">
+      <div>
+        Copyright © 2020
+        <a id="copyright_user_a" href="index.html">
+          <span id="copyright_user">wjh15101051</span>
+        </a>
+      </div>
+      <div class="bottom_anime">ღゝ◡╹)ノ♡</div>
+    </div>
+  </div>
+</body>
+</html>

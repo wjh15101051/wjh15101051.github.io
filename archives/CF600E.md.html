@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Lomsat gelral</title>
+  <link rel="stylesheet" type="text/css" id="frame_style" href="../css/frame_style1.css">
+  <link rel="stylesheet" type="text/css" id="Markdown_style" href="../css/Markdown_style.css">
+  <script type="text/javascript" src="../jscode/frame.js"></script>
+  <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+  <link rel="stylesheet" href="https://ziyuan.fenxianglu.cn/js/highlight/styles/default.css">
+  <script src="https://ziyuan.fenxianglu.cn/js/highlight/highlight.pack.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+        inlineMath: [['$','$']]
+      }
+    });
+  </script>
+</head>
+<body>
+  <div class="main">
+    <div class="head">
+      <div class="title1">
+        <a href="../index.html">wjh15101051's space</a>
+      </div>
+      <div class="title2">
+        卧薪尝胆，厚积薄发。
+      </div>
+    </div>
+    <div id="middle_blogfile">
+      <div class="blog_blogfile">
+        <div class="blogfile_title">
+            Lomsat gelral
+        </div>
+        <div class="blogfile_stitle">
+          <img src="http://pic.yupoo.com/wjh15101051/1e0e1b3a/118165c5.jpg">
+          Date: Tue Dec 18 21:55:39 CST 2018
+          <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png">
+          In Category:
+          <a href="../categories/NoCategory.html">NoCategory</a>
+        </div>
+        <div class="blogfile_content">
+<div class = "MarkdownCommonContent">
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Description：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+给一棵树，每个点有颜色，求以每个点为根的子树出现次数最多的颜色的编号和。
+</div>
+<div class = "MarkdownCommonContent">
+$1\leqslant n\leqslant10^5$
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Solution：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+通过这题学习一下树上启发式合并。
+</div>
+<div class = "MarkdownCommonContent">
+树上启发式合并实际上是一个静态的链分治，把每个节点的贡献分成两类，一是对计算这个点的答案的贡献，二是对当前计算的这个点的贡献，对整棵树进行轻重链剖分后，对于当前这个点，先
+$dfs$
+所有轻子树，计算出来了所有轻子树的答案，但是不保留它对当前这个点的贡献，然后
+$dfs$
+重儿子，计算所有重儿子的贡献，保留它对当前这个点的贡献，然后再
+$dfs$
+轻子树，计算他对当前这个点的贡献，这样每个重儿子只
+$dfs$
+了一遍，优化了时间复杂度。
+</div>
+<div class = "MarkdownCommonContent">
+这道题的话，对轻子树不保留它的出现次数，对重儿子保留，就可以计算答案了。
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Code：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+<pre><code class="MarkdownParaCode">
+#include&lt;algorithm&gt;<br />
+#include&lt;iostream&gt;<br />
+#include&lt;cstdlib&gt;<br />
+#include&lt;cstdio&gt;<br />
+#include&lt;cmath&gt;<br />
+#include&lt;cctype&gt;<br />
+#include&lt;cstring&gt;<br />
+using namespace std;<br />
+int n;<br />
+#define MAXN 100010<br />
+int col[MAXN];<br />
+struct edge<br />
+{<br />
+	int to,nxt;<br />
+}e[MAXN &lt;&lt; 1];<br />
+int edgenum = 0;<br />
+int lin[MAXN] = {0};<br />
+void add(int a,int b)<br />
+{<br />
+	e[++edgenum] = (edge){b,lin[a]};lin[a] = edgenum;<br />
+	e[++edgenum] = (edge){a,lin[b]};lin[b] = edgenum;<br />
+	return;<br />
+}<br />
+int son[MAXN],siz[MAXN];<br />
+void dfs(int k,int fa)<br />
+{<br />
+	siz[k] = 1;<br />
+	for(int i = lin[k];i != 0;i = e[i].nxt)<br />
+	{<br />
+		if(e[i].to == fa)continue;<br />
+		dfs(e[i].to,k);<br />
+		siz[k] += siz[e[i].to];<br />
+		if(son[k] == 0 || siz[e[i].to] &gt; siz[son[k]])<br />
+		{<br />
+			son[k] = e[i].to;<br />
+		}<br />
+	}<br />
+	return;<br />
+}<br />
+long long ans[MAXN];<br />
+int cnt[MAXN];<br />
+bool isheavy[MAXN];<br />
+int maxv = 0;<br />
+pair&lt;int,long long&gt; f[MAXN];<br />
+void updata(int k,int fa,int val)<br />
+{<br />
+	int &c = cnt[col[k]];<br />
+	f[c].first--;f[c].second -= col[k];<br />
+	c += val;<br />
+	f[c].first++;f[c].second += col[k];<br />
+	if(val == 1)maxv = max(maxv,c);<br />
+	else if(f[maxv].first == 0)--maxv;<br />
+	for(int i = lin[k];i != 0;i = e[i].nxt)<br />
+		if(e[i].to != fa && !isheavy[e[i].to])updata(e[i].to,k,val);<br />
+	return;<br />
+}<br />
+void dfs(int k,int fa,int keep)<br />
+{<br />
+	for(int i = lin[k];i != 0;i = e[i].nxt)<br />
+		if(e[i].to != fa && e[i].to != son[k])dfs(e[i].to,k,0);<br />
+	if(son[k] != 0){dfs(son[k],k,1);isheavy[son[k]] = true;}<br />
+	updata(k,fa,1);<br />
+	ans[k] = f[maxv].second;<br />
+	isheavy[son[k]] = false;<br />
+	if(!keep)updata(k,fa,-1);<br />
+	return;<br />
+}<br />
+int main()<br />
+{<br />
+	scanf("%d",&n);<br />
+	for(int i = 1;i &lt;= n;++i)scanf("%d",&col[i]);<br />
+	int a,b;<br />
+	for(int i = 1;i &lt; n;++i)<br />
+	{<br />
+		scanf("%d%d",&a,&b);<br />
+		add(a,b);<br />
+	}<br />
+	dfs(1,0);<br />
+	dfs(1,0,1);<br />
+	for(int i = 1;i &lt;= n;++i)<br />
+	{<br />
+		printf("%I64d ",ans[i]);<br />
+	}<br />
+	puts("");<br />
+	return 0;<br />
+}<br />
+</pre></code>
+</div>
+        </div>
+        <div class="blogfile_showtag">
+          <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png">
+          In tag:
+<a href="../tags/数据结构-树上启发式合并.html">数据结构-树上启发式合并</a> 
+          <!--<a href="../tags/blog.html">blog</a>-->
+        </div>
+      </div>
+    </div>
+    <div id="middle_nav">
+      <div class="blog_host">
+        <div class="nav_avator">
+          <img src="http://pic.yupoo.com/wjh15101051/72c1aeab/f51d56e0.jpg" alt="avator">
+        </div>
+        <div class="nav_ID">
+          wjh15101051
+        </div>
+      </div>
+      <div class="nav_list">
+        <li class="tags">
+          <a href="../tags.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png" class="list_icon" id="tags_image">
+            Tags
+          </a>
+        </li>
+        <li class="categories">
+          <a href="../categories.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png" class="list_icon" id="categories_image">
+            Categories
+          </a>
+        </li>
+        <li class="timeline">
+          <a href="../timeline.html">
+            <img src="http://pic.yupoo.com/wjh15101051/30365cc7/c1a3be15.png" class="list_icon" id="timeline_image">
+            Timeline
+          </a>
+        </li>
+        <li class="about">
+          <a href="../about.html">
+            <img src="http://pic.yupoo.com/wjh15101051/24f1cb41/e239086e.png" class="list_icon" id="about_image">
+            About
+          </a>
+        </li>
+        <li class="toolbox">
+          <a href="../toolbox.html">
+            <img src="http://pic.yupoo.com/wjh15101051/dee9f673/d3cf682a.png" class="list_icon" id="toolbox_image">
+            Toolbox
+          </a>
+        </li>
+        <li class="friends">
+            <div class="friends_text">
+              <img src="http://pic.yupoo.com/wjh15101051/d291ebed/29f9c807.png" id="friends_image">
+              Friends
+            </div>
+            <div id="fp_friends_list">
+              <div id="SGcolin">
+                <a href="http://blog.gyx.me/" target="_blank">SGcolin</a>
+              </div>
+              <div id="Xingcy">
+                <a href="https://www.cnblogs.com/xcysblog/" target="_blank">Xingcy</a>
+              </div>
+              <div id="ZH_comld">
+                <a href="https://www.cnblogs.com/ZH-comld/" target="_blank">ZH_comld</a>
+              </div>
+            </div>
+            <br>
+          </div>
+        </li>
+      </div>
+    <div class="music_player">
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer@1.10.0/dist/APlayer.min.css">
+      <script src="https://blog-static.cnblogs.com/files/yjlaugus/APlayer.min.js"></script>
+      <div id="aplayer" class="aplayer"  data-id="5313691453" data-server="netease" data-type="playlist" data-fixed="true" data-listfolded="true" data-order="random" data-theme="#F58EA8"></div>
+      <script src="https://unpkg.com/meting@1.2/dist/Meting.min.js"></script>
+    </div>
+    <div class="bottom">
+      <div>
+        Copyright © 2020
+        <a id="copyright_user_a" href="index.html">
+          <span id="copyright_user">wjh15101051</span>
+        </a>
+      </div>
+      <div class="bottom_anime">ღゝ◡╹)ノ♡</div>
+    </div>
+  </div>
+</body>
+</html>

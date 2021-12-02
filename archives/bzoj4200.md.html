@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>NOI2015 小园丁与老司机</title>
+  <link rel="stylesheet" type="text/css" id="frame_style" href="../css/frame_style1.css">
+  <link rel="stylesheet" type="text/css" id="Markdown_style" href="../css/Markdown_style.css">
+  <script type="text/javascript" src="../jscode/frame.js"></script>
+  <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+  <link rel="stylesheet" href="https://ziyuan.fenxianglu.cn/js/highlight/styles/default.css">
+  <script src="https://ziyuan.fenxianglu.cn/js/highlight/highlight.pack.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+        inlineMath: [['$','$']]
+      }
+    });
+  </script>
+</head>
+<body>
+  <div class="main">
+    <div class="head">
+      <div class="title1">
+        <a href="../index.html">wjh15101051's space</a>
+      </div>
+      <div class="title2">
+        卧薪尝胆，厚积薄发。
+      </div>
+    </div>
+    <div id="middle_blogfile">
+      <div class="blog_blogfile">
+        <div class="blogfile_title">
+            NOI2015 小园丁与老司机
+        </div>
+        <div class="blogfile_stitle">
+          <img src="http://pic.yupoo.com/wjh15101051/1e0e1b3a/118165c5.jpg">
+          Date: Tue Mar 19 08:10:38 CST 2019
+          <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png">
+          In Category:
+          <a href="../categories/NoCategory.html">NoCategory</a>
+        </div>
+        <div class="blogfile_content">
+<div class = "MarkdownCommonContent">
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Description：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+平面上有
+$n$
+个点可以产生收益，
+$A$
+每次只能朝左，右，上，左上和右上五个方向走到最近的一个没有产生过收益的点停下来，问
+$A$
+最多能得到多少收益，
+$B$
+要把所有可能在最优方案下的路径全部覆盖，每次纵坐标必须增大，问最少需要几次。
+</div>
+<div class = "MarkdownCommonContent">
+$1\leqslant n\leqslant 50000,$
+同一层的点不超过
+$1000$
+个。
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Solution：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+第一问直接
+$DP$
+，开一个桶记录上一个在
+$x=k,y=x+k,y=-x+k$
+的点是哪一个就可以处理行与行之间的转移，行内的转移稍微有点复杂，如果从某个点进入从这个点离开，那么只能获得这个点的收益，因为根据题意不能两次到达同一个点，如果从另一个点离开，那么可以获得他们之间的以及左边或者右边的收益，画个图就是：
+</div>
+<div class = "MarkdownCommonContent">
+<img class = "MarkdownImg" src="https://i.loli.net/2019/03/19/5c90374480ca1.png"  alt="" />
+</div>
+<div class = "MarkdownCommonContent">
+那么我们就从左往右扫一下再从右往左扫一下得到每个点左边或者右边的收益就行了。
+</div>
+<div class = "MarkdownCommonContent">
+因为要输出路径所以记一下转移倒序输出，
+</div>
+<div class = "MarkdownCommonContent">
+第二问有点复杂，首先我们需要知道哪些边可能在最优路径上，这个可以反着
+$DP$
+一下得到，然后我们可以建出来一个转移图，要求的就是用最小的次数覆盖整个图，这个可以看成是一个有源汇有上下界最小流问题，可以先做一遍有源汇可行流，再减去残量网络上
+$T$
+到
+$S$
+得最大流即可。
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Code：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+<pre><code class="MarkdownParaCode">
+#include&lt;algorithm&gt;<br />
+#include&lt;iostream&gt;<br />
+#include&lt;cstdlib&gt;<br />
+#include&lt;cstdio&gt;<br />
+#include&lt;cmath&gt;<br />
+#include&lt;map&gt;<br />
+#include&lt;queue&gt;<br />
+#include&lt;vector&gt;<br />
+#include&lt;cctype&gt;<br />
+#include&lt;cstring&gt;<br />
+using namespace std;<br />
+inline int rd()<br />
+{<br />
+	register int res = 0,f = 1;register char c = getchar();<br />
+	while(!isdigit(c)){if(c == '-')f = -1;c = getchar();}<br />
+	while(isdigit(c))res = (res &lt;&lt; 1) + (res &lt;&lt; 3) + c - '0',c = getchar();<br />
+	return res * f;<br />
+}<br />
+int n;<br />
+#define MAXN 50010<br />
+struct point<br />
+{<br />
+	int x,y,id;<br />
+}p[MAXN];<br />
+map&lt;int,int&gt; bas1,bas2,bas3;<br />
+int b1[MAXN],b2[MAXN],b3[MAXN];<br />
+map&lt;int,vector&lt;point&gt; &gt; s;<br />
+#define iter vector&lt;point&gt;::iterator<br />
+#define INF 0x3f3f3f3f<br />
+int vall[MAXN],valr[MAXN],val[MAXN];<br />
+int lasl[MAXN],lasr[MAXN],las[MAXN];<br />
+int f[MAXN],pre[MAXN],pretag[MAXN];<br />
+bool vis[MAXN];<br />
+int ans = 0,st = 0x3f3f3f3f;<br />
+void print(int k)<br />
+{<br />
+	if(k == 0)return;<br />
+	if(pretag[k] == 0)<br />
+	{<br />
+		printf("%d ",k);<br />
+		print(pre[k]);<br />
+		return;<br />
+	}<br />
+	if(pretag[k] == -1)<br />
+	{<br />
+		int cur = k;<br />
+		while(lasl[cur] != 0)printf("%d ",cur),cur = lasl[cur];<br />
+		printf("%d ",cur);cur = lasr[k];<br />
+		while(cur != pre[k])printf("%d ",cur),cur = lasr[cur];<br />
+		printf("%d ",pre[k]);<br />
+		print(las[pre[k]]);<br />
+		return;<br />
+	}<br />
+	if(pretag[k] == 1)<br />
+	{<br />
+		int cur = k;<br />
+		while(lasr[cur] != 0)printf("%d ",cur),cur = lasr[cur];<br />
+		printf("%d ",cur);cur = lasl[k];<br />
+		while(cur != pre[k])printf("%d ",cur),cur = lasl[cur];<br />
+		printf("%d ",pre[k]);<br />
+		print(las[pre[k]]);<br />
+		return;<br />
+	}<br />
+	return;<br />
+}<br />
+bool cmp_x(point a,point b){return a.x &lt; b.x;}<br />
+void solve1()<br />
+{<br />
+	for(int i = 1;i &lt;= n;++i)s[-p[i].y].push_back(p[i]);<br />
+	for(map&lt;int,vector&lt;point&gt; &gt;::iterator k = s.begin();k != s.end();++k)<br />
+	{<br />
+		vector&lt;point&gt; t = k -&gt; second;<br />
+		sort(t.begin(),t.end(),cmp_x);<br />
+		int last = 0;<br />
+		int siz = t.size() - 1;<br />
+		for(int i = 0;i &lt;= siz;++i)vall[t[i].id] = 1 + vall[last],lasl[t[i].id] = last,last = t[i].id;<br />
+		last = 0;<br />
+		for(int i = siz;i &gt;= 0;--i)valr[t[i].id] = 1 + valr[last],lasr[t[i].id] = last,last = t[i].id;<br />
+		for(int i = 0;i &lt;= siz;++i)<br />
+		{<br />
+			b1[t[i].id] = bas1[t[i].x];b2[t[i].id] = bas2[t[i].y - t[i].x];b3[t[i].id] = bas3[t[i].y + t[i].x];<br />
+			if(f[b1[t[i].id]] &gt; val[t[i].id])val[t[i].id] = f[b1[t[i].id]],las[t[i].id] = b1[t[i].id];<br />
+			if(f[b2[t[i].id]] &gt; val[t[i].id])val[t[i].id] = f[b2[t[i].id]],las[t[i].id] = b2[t[i].id];<br />
+			if(f[b3[t[i].id]] &gt; val[t[i].id])val[t[i].id] = f[b3[t[i].id]],las[t[i].id] = b3[t[i].id];<br />
+		}<br />
+		for(int i = 0;i &lt;= siz;++i)<br />
+		{<br />
+			for(int j = 0;j &lt;= siz;++j)<br />
+			{<br />
+				if(i == j)<br />
+				{<br />
+					if(val[t[i].id] + 1 &gt; f[t[i].id])f[t[i].id] = val[t[i].id] + 1,pre[t[i].id] = las[t[i].id],pretag[t[i].id] = 0;<br />
+				}<br />
+				else<br />
+				{<br />
+					if(i &lt; j && val[t[j].id] + vall[t[j].id] &gt; f[t[i].id])f[t[i].id] = val[t[j].id] + vall[t[j].id],pre[t[i].id] = t[j].id,pretag[t[i].id] = -1;<br />
+					if(i &gt; j && val[t[j].id] + valr[t[j].id] &gt; f[t[i].id])f[t[i].id] = val[t[j].id] + valr[t[j].id],pre[t[i].id] = t[j].id,pretag[t[i].id] = 1;<br />
+				}<br />
+			}<br />
+		}<br />
+		for(int i = 0;i &lt;= siz;++i)bas1[t[i].x] = bas2[t[i].y - t[i].x] = bas3[t[i].y + t[i].x] = t[i].id;<br />
+	}<br />
+	if(bas1[0] != 0 && f[bas1[0]] &gt; ans || (f[bas1[0]] == ans && bas1[0] &lt; st))ans = f[bas1[0]],st = bas1[0];<br />
+	if(bas2[0] != 0 && f[bas2[0]] &gt; ans || (f[bas2[0]] == ans && bas2[0] &lt; st))ans = f[bas2[0]],st = bas2[0];<br />
+	if(bas3[0] != 0 && f[bas3[0]] &gt; ans || (f[bas3[0]] == ans && bas3[0] &lt; st))ans = f[bas3[0]],st = bas3[0];<br />
+	cout &lt;&lt; ans &lt;&lt; endl;<br />
+	print(st);cout &lt;&lt; endl;<br />
+	return;<br />
+}<br />
+vector&lt;int&gt; vec[MAXN];<br />
+bool added[MAXN];<br />
+bool valid[MAXN];<br />
+namespace FLOW<br />
+{<br />
+	int s,t;<br />
+	struct edge<br />
+	{<br />
+		int to,nxt,f;<br />
+	}e[MAXN * 20];<br />
+	int edgenum = 0;<br />
+	int lin[MAXN];<br />
+	void add(int a,int b,int f)<br />
+	{<br />
+		e[edgenum] = (edge){b,lin[a],f};lin[a] = edgenum++;<br />
+		e[edgenum] = (edge){a,lin[b],0};lin[b] = edgenum++;<br />
+		return;<br />
+	}<br />
+	int ind[MAXN];<br />
+	void adde(int a,int b,int l)<br />
+	{//if(l == 1)cout &lt;&lt; a &lt;&lt; " " &lt;&lt; b &lt;&lt; endl;<br />
+		add(a,b,INF - l);<br />
+		ind[a] -= l;ind[b] += l;<br />
+		return;<br />
+	}<br />
+	int S,T;<br />
+	int ch[MAXN];<br />
+	int head[MAXN];<br />
+	bool BFS()<br />
+	{<br />
+		queue&lt;int&gt; q;q.push(S);<br />
+		memset(ch,-1,sizeof(ch));ch[S] = 0;<br />
+		while(!q.empty())<br />
+		{<br />
+			int k = q.front();q.pop();<br />
+			for(int i = lin[k];i != -1;i = e[i].nxt)<br />
+			{<br />
+				if(ch[e[i].to] == -1 && e[i].f)<br />
+				{<br />
+					ch[e[i].to] = ch[k] + 1;<br />
+					q.push(e[i].to);<br />
+				}<br />
+			}<br />
+		}<br />
+		return (ch[T] != -1);<br />
+	}<br />
+	int flow(int k,int f)<br />
+	{<br />
+		if(k == T)return f;<br />
+		int r = 0;<br />
+		for(int i = lin[k];i != -1 && f &gt; r;i = e[i].nxt)<br />
+		{<br />
+			if(ch[e[i].to] == ch[k] + 1 && e[i].f)<br />
+			{<br />
+				int l = flow(e[i].to,min(f - r,e[i].f));<br />
+				e[i].f -= l;r += l;e[i ^ 1].f += l;<br />
+			}<br />
+			lin[k] = i;<br />
+		}<br />
+		if(r == 0)ch[k] = -1;<br />
+		return r;<br />
+	}<br />
+	long long dinic()<br />
+	{<br />
+		long long ans = 0,r;<br />
+		memcpy(head,lin,sizeof(lin));<br />
+		while(BFS())<br />
+		{<br />
+			int r = flow(S,INF);<br />
+			ans += r;<br />
+			memcpy(lin,head,sizeof(lin));<br />
+		}<br />
+		return ans;<br />
+	}<br />
+	int calc()<br />
+	{<br />
+		S = t + 1;T = S + 1;<br />
+		for(int i = 1;i &lt;= t;++i)<br />
+		{<br />
+			if(ind[i] &lt; 0)add(i,T,-ind[i]);<br />
+			if(ind[i] &gt; 0)add(S,i,ind[i]);<br />
+		}<br />
+		dinic();<br />
+		add(t,s,INF);<br />
+		return dinic();<br />
+	}<br />
+}<br />
+void solve2()<br />
+{<br />
+	memset(FLOW::lin,-1,sizeof(FLOW::lin));<br />
+	s.clear();<br />
+	for(int i = 1;i &lt;= n;++i)s[p[i].y].push_back(p[i]);<br />
+	FLOW::s = n + 1;FLOW::t = n + 2; <br />
+	if(f[bas1[0]] == ans)FLOW::adde(FLOW::s,bas1[0],1),valid[bas1[0]] = true;<br />
+	if(f[bas2[0]] == ans)FLOW::adde(FLOW::s,bas2[0],1),valid[bas2[0]] = true;<br />
+	if(f[bas3[0]] == ans)FLOW::adde(FLOW::s,bas3[0],1),valid[bas3[0]] = true;<br />
+	for(int i = 1;i &lt;= n;++i)<br />
+	{<br />
+		if(!valid[i])FLOW::adde(FLOW::s,i,0);<br />
+		FLOW::adde(i,FLOW::t,0);<br />
+	}<br />
+	for(map&lt;int,vector&lt;point&gt; &gt;::iterator it = s.begin();it != s.end();++it)<br />
+	{<br />
+		vector&lt;point&gt; t = it -&gt; second;//cout &lt;&lt; it -&gt; first &lt;&lt; endl;<br />
+		//cout &lt;&lt; " : ";for(vector&lt;point&gt;::iterator ii = t.begin();ii != t.end();++ii)cout &lt;&lt; ii -&gt; id &lt;&lt; " ";cout &lt;&lt; endl;<br />
+		//cout &lt;&lt; " : ";for(vector&lt;point&gt;::iterator ii = t.begin();ii != t.end();++ii)cout &lt;&lt; f[ii -&gt; id] &lt;&lt; " ";cout &lt;&lt; endl;<br />
+		sort(t.begin(),t.end(),cmp_x);<br />
+		int siz = t.size() - 1;<br />
+		for(int i = 0;i &lt;= siz;++i)<br />
+		{<br />
+			if(!valid[t[i].id])continue;<br />
+			for(int j = 0;j &lt;= siz;++j)<br />
+			{<br />
+				int x = t[i].id,y = t[j].id;<br />
+				if(i == j)<br />
+				{<br />
+					if(val[t[i].id] + 1 == f[t[i].id] && !added[x])<br />
+					{<br />
+						if(b1[x] != 0 && f[b1[x]] == val[x])FLOW::adde(x,b1[x],1),valid[b1[x]] = true;<br />
+						if(b2[x] != 0 && f[b2[x]] == val[x])FLOW::adde(x,b2[x],1),valid[b2[x]] = true;<br />
+						if(b3[x] != 0 && f[b3[x]] == val[x])FLOW::adde(x,b3[x],1),valid[b3[x]] = true;<br />
+						added[x] = true;<br />
+					}<br />
+				}<br />
+				else<br />
+				{<br />
+					if(((i &lt; j && val[y] + vall[y] == f[x]) || (i &gt; j && val[y] + valr[y] == f[x])) && !added[y])<br />
+					{<br />
+						if(b1[y] != 0 && f[b1[y]] == val[y])FLOW::adde(y,b1[y],1),valid[b1[y]] = true;<br />
+						if(b2[y] != 0 && f[b2[y]] == val[y])FLOW::adde(y,b2[y],1),valid[b2[y]] = true;<br />
+						if(b3[y] != 0 && f[b3[y]] == val[y])FLOW::adde(y,b3[y],1),valid[b3[y]] = true;<br />
+						added[y] = true;<br />
+					}<br />
+				}<br />
+			}<br />
+		}<br />
+	}<br />
+	cout &lt;&lt; FLOW::calc() &lt;&lt; endl;<br />
+	return;<br />
+}<br />
+int main()<br />
+{<br />
+	scanf("%d",&n);<br />
+	for(int i = 1;i &lt;= n;++i)<br />
+	{<br />
+		p[i].x = rd();<br />
+		p[i].y = rd();<br />
+		p[i].id = i;<br />
+	}<br />
+	solve1();<br />
+	solve2();<br />
+	return 0;<br />
+}<br />
+</pre></code>
+</div>
+        </div>
+        <div class="blogfile_showtag">
+          <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png">
+          In tag:
+<a href="../tags/DP-DP.html">DP-DP</a> <a href="../tags/图论-有源汇有上下界最小流.html">图论-有源汇有上下界最小流</a> 
+          <!--<a href="../tags/blog.html">blog</a>-->
+        </div>
+      </div>
+    </div>
+    <div id="middle_nav">
+      <div class="blog_host">
+        <div class="nav_avator">
+          <img src="http://pic.yupoo.com/wjh15101051/72c1aeab/f51d56e0.jpg" alt="avator">
+        </div>
+        <div class="nav_ID">
+          wjh15101051
+        </div>
+      </div>
+      <div class="nav_list">
+        <li class="tags">
+          <a href="../tags.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png" class="list_icon" id="tags_image">
+            Tags
+          </a>
+        </li>
+        <li class="categories">
+          <a href="../categories.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png" class="list_icon" id="categories_image">
+            Categories
+          </a>
+        </li>
+        <li class="timeline">
+          <a href="../timeline.html">
+            <img src="http://pic.yupoo.com/wjh15101051/30365cc7/c1a3be15.png" class="list_icon" id="timeline_image">
+            Timeline
+          </a>
+        </li>
+        <li class="about">
+          <a href="../about.html">
+            <img src="http://pic.yupoo.com/wjh15101051/24f1cb41/e239086e.png" class="list_icon" id="about_image">
+            About
+          </a>
+        </li>
+        <li class="toolbox">
+          <a href="../toolbox.html">
+            <img src="http://pic.yupoo.com/wjh15101051/dee9f673/d3cf682a.png" class="list_icon" id="toolbox_image">
+            Toolbox
+          </a>
+        </li>
+        <li class="friends">
+            <div class="friends_text">
+              <img src="http://pic.yupoo.com/wjh15101051/d291ebed/29f9c807.png" id="friends_image">
+              Friends
+            </div>
+            <div id="fp_friends_list">
+              <div id="SGcolin">
+                <a href="http://blog.gyx.me/" target="_blank">SGcolin</a>
+              </div>
+              <div id="Xingcy">
+                <a href="https://www.cnblogs.com/xcysblog/" target="_blank">Xingcy</a>
+              </div>
+              <div id="ZH_comld">
+                <a href="https://www.cnblogs.com/ZH-comld/" target="_blank">ZH_comld</a>
+              </div>
+            </div>
+            <br>
+          </div>
+        </li>
+      </div>
+    <div class="music_player">
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer@1.10.0/dist/APlayer.min.css">
+      <script src="https://blog-static.cnblogs.com/files/yjlaugus/APlayer.min.js"></script>
+      <div id="aplayer" class="aplayer"  data-id="5313691453" data-server="netease" data-type="playlist" data-fixed="true" data-listfolded="true" data-order="random" data-theme="#F58EA8"></div>
+      <script src="https://unpkg.com/meting@1.2/dist/Meting.min.js"></script>
+    </div>
+    <div class="bottom">
+      <div>
+        Copyright © 2020
+        <a id="copyright_user_a" href="index.html">
+          <span id="copyright_user">wjh15101051</span>
+        </a>
+      </div>
+      <div class="bottom_anime">ღゝ◡╹)ノ♡</div>
+    </div>
+  </div>
+</body>
+</html>

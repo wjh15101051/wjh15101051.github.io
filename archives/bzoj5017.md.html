@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>SNOI2017 炸弹</title>
+  <link rel="stylesheet" type="text/css" id="frame_style" href="../css/frame_style1.css">
+  <link rel="stylesheet" type="text/css" id="Markdown_style" href="../css/Markdown_style.css">
+  <script type="text/javascript" src="../jscode/frame.js"></script>
+  <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+  <link rel="stylesheet" href="https://ziyuan.fenxianglu.cn/js/highlight/styles/default.css">
+  <script src="https://ziyuan.fenxianglu.cn/js/highlight/highlight.pack.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+        inlineMath: [['$','$']]
+      }
+    });
+  </script>
+</head>
+<body>
+  <div class="main">
+    <div class="head">
+      <div class="title1">
+        <a href="../index.html">wjh15101051's space</a>
+      </div>
+      <div class="title2">
+        卧薪尝胆，厚积薄发。
+      </div>
+    </div>
+    <div id="middle_blogfile">
+      <div class="blog_blogfile">
+        <div class="blogfile_title">
+            SNOI2017 炸弹
+        </div>
+        <div class="blogfile_stitle">
+          <img src="http://pic.yupoo.com/wjh15101051/1e0e1b3a/118165c5.jpg">
+          Date: Sun Jul 15 18:18:18 CST 2018
+          <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png">
+          In Category:
+          <a href="../categories/NoCategory.html">NoCategory</a>
+        </div>
+        <div class="blogfile_content">
+<div class = "MarkdownCommonContent">
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Description：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+在一条直线上有
+$N$
+个炸弹，每个炸弹的坐标是
+$X_i$
+，爆炸半径是
+$R_i$
+，当一个炸弹爆炸时，如果另一个炸弹所在位置
+$X_j$
+满足：
+$X_i−R_i\le X_j\le X_i+R_i$
+，那么，该炸弹也会被引爆。
+</div>
+<div class = "MarkdownCommonContent">
+求
+$$\begin{align}\sum_{i=1}^n{i\times炸弹i能引爆的炸弹个数}\end{align}$
+$
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Solution：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+当一个炸弹
+$i$
+被引爆时，对于能够被当前这颗炸弹
+$i$
+引爆的炸弹
+$j$
+，建一条
+$i\to j$
+的边，但是由于题目中的边数较多，所以不可能这样建图。当一个炸弹被引爆，那么最总一共被引爆的炸弹一定是连续的，那么区间问题我们就可以用线段树来做。
+</div>
+<div class = "MarkdownCommonContent">
+建完边后，
+$tarjan$
+缩点，最后
+$toposort$
+，反向建图，从最远的点一步一步的推回去，记录能炸掉的边界
+$lbound$
+和
+$rbound$
+，即可得到每个能炸掉的个数。
+</div>
+<div class = "MarkdownCommonContent">
+模数一定不要
+$+=$
+！！！
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Code：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+<pre><code class="MarkdownParaCode">
+#include&lt;algorithm&gt;<br />
+#include&lt;iostream&gt;<br />
+#include&lt;cstdlib&gt;<br />
+#include&lt;cstdio&gt;<br />
+#include&lt;cmath&gt;<br />
+#include&lt;stack&gt;<br />
+#include&lt;map&gt;<br />
+#include&lt;vector&gt;<br />
+#include&lt;queue&gt;<br />
+#include&lt;cstring&gt;<br />
+using namespace std;<br />
+int n;<br />
+#define MAXN 500010<br />
+#define MOD 1000000007ll<br />
+typedef long long ll;<br />
+ll x[MAXN],r[MAXN];<br />
+ll to[MAXN],tot;<br />
+map&lt;ll,int&gt; p;<br />
+struct edge<br />
+{<br />
+	int to,nxt;<br />
+}e[MAXN &lt;&lt; 5];<br />
+int lin[MAXN &lt;&lt; 1] = {0};<br />
+int edgenum = 0;<br />
+void add(int a,int b)<br />
+{<br />
+	++edgenum;e[edgenum].to = b;e[edgenum].nxt = lin[a];lin[a] = edgenum;<br />
+	return; <br />
+}<br />
+struct node<br />
+{<br />
+	int lc,rc;<br />
+}t[MAXN &lt;&lt; 1];<br />
+int ptr = 0;<br />
+int newnode(){return ++ptr;}<br />
+int root;<br />
+#define mid ((l + r) &gt;&gt; 1)<br />
+int lef[MAXN];<br />
+void build(int &rt,int l,int r)<br />
+{<br />
+	rt = newnode();<br />
+	if(l == r)<br />
+	{<br />
+		lef[l] = rt;<br />
+		return;<br />
+	}<br />
+	build(t[rt].lc,l,mid);add(rt,t[rt].lc);<br />
+	build(t[rt].rc,mid + 1,r);add(rt,t[rt].rc);<br />
+	return;<br />
+}<br />
+void set(int rt,int k,int L,int R,int l,int r)<br />
+{<br />
+	if(L &lt;= l && r &lt;= R)<br />
+	{<br />
+		add(k,rt);<br />
+		return;<br />
+	}<br />
+	if(L &lt;= mid)set(t[rt].lc,k,L,R,l,mid);<br />
+	if(R &gt; mid)set(t[rt].rc,k,L,R,mid + 1,r);<br />
+	return;<br />
+}<br />
+int dfn[MAXN &lt;&lt; 1],low[MAXN &lt;&lt; 1],tag = 0,ins[MAXN &lt;&lt; 1],scc = 0;<br />
+bool v[MAXN &lt;&lt; 1];<br />
+stack&lt;int&gt; s;<br />
+ll lbound[MAXN &lt;&lt; 1],rbound[MAXN &lt;&lt; 1];<br />
+void tarjan(int k)<br />
+{<br />
+	dfn[k] = low[k] = ++tag;<br />
+	v[k] = true;s.push(k);<br />
+	for(int i = lin[k];i != 0;i = e[i].nxt)<br />
+	{<br />
+		if(dfn[e[i].to] == 0)<br />
+		{<br />
+			tarjan(e[i].to);<br />
+			low[k] = min(low[k],low[e[i].to]);<br />
+		}<br />
+		else if(v[e[i].to])<br />
+		{<br />
+			low[k] = min(low[k],dfn[e[i].to]);<br />
+		}<br />
+	}<br />
+	if(low[k] == dfn[k])<br />
+	{<br />
+		int t;<br />
+		++scc;<br />
+		do<br />
+		{<br />
+			t = s.top();s.pop();<br />
+			v[t] = false;<br />
+			ins[t] = scc;<br />
+		}while(t != k);<br />
+	}<br />
+	return;<br />
+}<br />
+vector&lt;int&gt; g[MAXN &lt;&lt; 1];<br />
+int ind[MAXN &lt;&lt; 1];<br />
+int main()<br />
+{<br />
+	scanf("%d",&n);<br />
+	for(int i = 1;i &lt;= n;++i)<br />
+	{<br />
+		scanf("%lld%lld",&x[i],&r[i]);<br />
+		if(i == 1 || x[i] != x[i - 1])<br />
+		{<br />
+			p[x[i]] = ++tot;<br />
+			to[tot] = x[i];<br />
+		}<br />
+	}<br />
+	build(root,1,tot);<br />
+	for(int i = 1;i &lt;= n;++i)<br />
+	{<br />
+		int L = lower_bound(to + 1,to + 1 + tot,x[i] - r[i]) - to,R = upper_bound(to + 1,to + 1 + tot,x[i] + r[i]) - to - 1;<br />
+		set(root,lef[p[x[i]]],L,R,1,tot);<br />
+	}<br />
+	memset(lbound,0x3f,sizeof(lbound));<br />
+	memset(rbound,0xc0,sizeof(rbound));<br />
+	for(int i = 1;i &lt;= ptr;++i)<br />
+	{<br />
+		if(dfn[i] == 0)tarjan(i);<br />
+	}<br />
+	for(int k = 1;k &lt;= ptr;++k)<br />
+	{<br />
+		for(int i = lin[k];i != 0;i = e[i].nxt)<br />
+		{<br />
+			if(ins[k] != ins[e[i].to])<br />
+			{<br />
+				g[ins[e[i].to]].push_back(ins[k]);<br />
+				++ind[ins[k]];<br />
+			}<br />
+		}<br />
+	}<br />
+	queue&lt;int&gt; q;<br />
+	for(int i = 1;i &lt;= n;++i)<br />
+	{<br />
+		lbound[ins[lef[i]]] = min(lbound[ins[lef[i]]],x[i]);<br />
+		rbound[ins[lef[i]]] = max(rbound[ins[lef[i]]],x[i]);<br />
+	}<br />
+	for(int i = 1;i &lt;= scc;++i)<br />
+	{<br />
+		if(ind[i] == 0){q.push(i);}<br />
+	}<br />
+	while(!q.empty())<br />
+	{<br />
+		int k = q.front();q.pop();<br />
+		for(int i = 0;i &lt; g[k].size();++i)<br />
+		{<br />
+			lbound[g[k][i]] = min(lbound[g[k][i]],lbound[k]);<br />
+			rbound[g[k][i]] = max(rbound[g[k][i]],rbound[k]);<br />
+			--ind[g[k][i]];<br />
+			if(ind[g[k][i]] == 0)<br />
+			{<br />
+				q.push(g[k][i]);<br />
+			}<br />
+		}<br />
+	}<br />
+	ll ans = 0;<br />
+	for(int i = 1;i &lt;= n;++i)<br />
+	{<br />
+		ans += ((ll)((upper_bound(x + 1,x + 1 + n,rbound[ins[lef[i]]]) - x) - (lower_bound(x + 1,x + 1 + n,lbound[ins[lef[i]]]) - x)) * (ll)i) % MOD;<br />
+		ans %= MOD; <br />
+	}<br />
+	cout &lt;&lt; ans &lt;&lt; endl;<br />
+	return 0;<br />
+}<br />
+</pre></code>
+</div>
+        </div>
+        <div class="blogfile_showtag">
+          <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png">
+          In tag:
+<a href="../tags/数据结构-线段树.html">数据结构-线段树</a> <a href="../tags/数据结构-线段树优化建图.html">数据结构-线段树优化建图</a> <a href="../tags/图论-tarjan.html">图论-tarjan</a> <a href="../tags/图论-拓扑排序.html">图论-拓扑排序</a> 
+          <!--<a href="../tags/blog.html">blog</a>-->
+        </div>
+      </div>
+    </div>
+    <div id="middle_nav">
+      <div class="blog_host">
+        <div class="nav_avator">
+          <img src="http://pic.yupoo.com/wjh15101051/72c1aeab/f51d56e0.jpg" alt="avator">
+        </div>
+        <div class="nav_ID">
+          wjh15101051
+        </div>
+      </div>
+      <div class="nav_list">
+        <li class="tags">
+          <a href="../tags.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png" class="list_icon" id="tags_image">
+            Tags
+          </a>
+        </li>
+        <li class="categories">
+          <a href="../categories.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png" class="list_icon" id="categories_image">
+            Categories
+          </a>
+        </li>
+        <li class="timeline">
+          <a href="../timeline.html">
+            <img src="http://pic.yupoo.com/wjh15101051/30365cc7/c1a3be15.png" class="list_icon" id="timeline_image">
+            Timeline
+          </a>
+        </li>
+        <li class="about">
+          <a href="../about.html">
+            <img src="http://pic.yupoo.com/wjh15101051/24f1cb41/e239086e.png" class="list_icon" id="about_image">
+            About
+          </a>
+        </li>
+        <li class="toolbox">
+          <a href="../toolbox.html">
+            <img src="http://pic.yupoo.com/wjh15101051/dee9f673/d3cf682a.png" class="list_icon" id="toolbox_image">
+            Toolbox
+          </a>
+        </li>
+        <li class="friends">
+            <div class="friends_text">
+              <img src="http://pic.yupoo.com/wjh15101051/d291ebed/29f9c807.png" id="friends_image">
+              Friends
+            </div>
+            <div id="fp_friends_list">
+              <div id="SGcolin">
+                <a href="http://blog.gyx.me/" target="_blank">SGcolin</a>
+              </div>
+              <div id="Xingcy">
+                <a href="https://www.cnblogs.com/xcysblog/" target="_blank">Xingcy</a>
+              </div>
+              <div id="ZH_comld">
+                <a href="https://www.cnblogs.com/ZH-comld/" target="_blank">ZH_comld</a>
+              </div>
+            </div>
+            <br>
+          </div>
+        </li>
+      </div>
+    <div class="music_player">
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer@1.10.0/dist/APlayer.min.css">
+      <script src="https://blog-static.cnblogs.com/files/yjlaugus/APlayer.min.js"></script>
+      <div id="aplayer" class="aplayer"  data-id="5313691453" data-server="netease" data-type="playlist" data-fixed="true" data-listfolded="true" data-order="random" data-theme="#F58EA8"></div>
+      <script src="https://unpkg.com/meting@1.2/dist/Meting.min.js"></script>
+    </div>
+    <div class="bottom">
+      <div>
+        Copyright © 2020
+        <a id="copyright_user_a" href="index.html">
+          <span id="copyright_user">wjh15101051</span>
+        </a>
+      </div>
+      <div class="bottom_anime">ღゝ◡╹)ノ♡</div>
+    </div>
+  </div>
+</body>
+</html>

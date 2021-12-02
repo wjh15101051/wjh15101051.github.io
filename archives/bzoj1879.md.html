@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>SDOI2009 bill的挑战</title>
+  <link rel="stylesheet" type="text/css" id="frame_style" href="../css/frame_style1.css">
+  <link rel="stylesheet" type="text/css" id="Markdown_style" href="../css/Markdown_style.css">
+  <script type="text/javascript" src="../jscode/frame.js"></script>
+  <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+  <link rel="stylesheet" href="https://ziyuan.fenxianglu.cn/js/highlight/styles/default.css">
+  <script src="https://ziyuan.fenxianglu.cn/js/highlight/highlight.pack.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+        inlineMath: [['$','$']]
+      }
+    });
+  </script>
+</head>
+<body>
+  <div class="main">
+    <div class="head">
+      <div class="title1">
+        <a href="../index.html">wjh15101051's space</a>
+      </div>
+      <div class="title2">
+        卧薪尝胆，厚积薄发。
+      </div>
+    </div>
+    <div id="middle_blogfile">
+      <div class="blog_blogfile">
+        <div class="blogfile_title">
+            SDOI2009 bill的挑战
+        </div>
+        <div class="blogfile_stitle">
+          <img src="http://pic.yupoo.com/wjh15101051/1e0e1b3a/118165c5.jpg">
+          Date: Wed May 23 16:30:00 CST 2018
+          <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png">
+          In Category:
+          <a href="../categories/NoCategory.html">NoCategory</a>
+        </div>
+        <div class="blogfile_content">
+<div class = "MarkdownCommonContent">
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Description:
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+给出
+$N$
+个串，每个串由小写字母或‘ ? ’组成，求与其中恰好
+$K$
+个串匹配的字符串个数
+</div>
+<div class = "MarkdownCommonContent">
+$ 1 \le N \le 15 $
+   
+$ len \le 50 $
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Solution:
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+$ f[i][j] $
+表示前
+$i$
+位恰好与集合
+$j$
+中的串匹配的字符串个数，注意是恰好，转移时枚举当前选哪个字符，注意需要保证"恰好"条件，设第
+$i$
+位选字符
+$j$
+能转移的集合为
+$tag[i][j]$
+，则转移方程为：
+</div>
+<div class = "MarkdownCommonContent">
+$ f[i][k $
+ 
+$\&$
+ 
+$ tag[i][j]] $
+ = 
+$\sum_{j='a'}^{'z'} f[i - 1][k]$
+</div>
+<div class = "MarkdownCommonContent">
+考虑它是怎样保证恰好条件的：若当前状态能保证恰好，则集合
+$k$
+中可以从
+$j$
+转移的子集（
+$k\&tag[i][j]$
+）加上一个字符
+$j$
+一定也不存在一个统计上的字符串可以满足其他状态
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Code:
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+<pre><code class="MarkdownParaCode">
+#include&lt;algorithm&gt;<br />
+#include&lt;iostream&gt;<br />
+#include&lt;cstdlib&gt;<br />
+#include&lt;cstdio&gt;<br />
+#include&lt;cmath&gt;<br />
+#include&lt;cstring&gt;<br />
+using namespace std;<br />
+#define MOD 1000003<br />
+#define MAXN 16<br />
+#define MAXL 52<br />
+int cnt[1 &lt;&lt; MAXN];<br />
+int testcases;<br />
+int n,k;<br />
+int l;<br />
+int f[MAXL][1 &lt;&lt; MAXN];<br />
+char c[MAXN][MAXL];<br />
+void work()<br />
+{<br />
+	scanf("%d%d",&n,&k);<br />
+	for(int i = 1;i &lt;= n;++i)<br />
+	{<br />
+		scanf("%s",c[i]);<br />
+	}<br />
+	l = strlen(c[1]);<br />
+	for(int i = 1;i &lt;= n;++i)<br />
+	{	<br />
+		for(int j = l;j &gt;= 1;--j)<br />
+		{<br />
+			c[i][j] = c[i][j - 1];<br />
+		}<br />
+	}<br />
+	memset(f,0,sizeof(f));<br />
+	int tot = (1 &lt;&lt; n) - 1;<br />
+	f[0][tot] = 1;<br />
+	for(int i = 1;i &lt;= l;++i)<br />
+	{<br />
+		for(int j = 1;j &lt;= 26;++j)<br />
+		{<br />
+			int tag = 0;<br />
+			for(int t = 1;t &lt;= n;++t)<br />
+			{<br />
+				if(j + 'a' - 1 == c[t][i] || c[t][i] == '?')<br />
+				{<br />
+					tag |= (1 &lt;&lt; (t - 1));<br />
+				}<br />
+			}<br />
+			for(int k = 0;k &lt;= tot;++k)<br />
+			{<br />
+				f[i][k & tag] = (f[i][k & tag] + f[i - 1][k]) % MOD;<br />
+			}<br />
+		}<br />
+	}<br />
+	int ans = 0;<br />
+	for(int i = 0;i &lt;= tot;++i)<br />
+	{<br />
+		if(cnt[i] == k)<br />
+		{<br />
+			ans = (ans + f[l][i]) % MOD;<br />
+		}<br />
+	}<br />
+	cout &lt;&lt; ans &lt;&lt; endl;<br />
+	return;<br />
+}<br />
+int main()<br />
+{<br />
+	cnt[0] = 0;<br />
+	for(int i = 1;i &lt; (1 &lt;&lt; MAXN);++i)<br />
+	{<br />
+		if(i & 1)cnt[i] = cnt[i &gt;&gt; 1] + 1;<br />
+		else cnt[i] = cnt[i &gt;&gt; 1];<br />
+	}<br />
+	scanf("%d",&testcases);<br />
+	for(int i = 1;i &lt;= testcases;++i)work();<br />
+	return 0;<br />
+}<br />
+</pre></code>
+</div>
+        </div>
+        <div class="blogfile_showtag">
+          <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png">
+          In tag:
+<a href="../tags/DP-状压DP.html">DP-状压DP</a> 
+          <!--<a href="../tags/blog.html">blog</a>-->
+        </div>
+      </div>
+    </div>
+    <div id="middle_nav">
+      <div class="blog_host">
+        <div class="nav_avator">
+          <img src="http://pic.yupoo.com/wjh15101051/72c1aeab/f51d56e0.jpg" alt="avator">
+        </div>
+        <div class="nav_ID">
+          wjh15101051
+        </div>
+      </div>
+      <div class="nav_list">
+        <li class="tags">
+          <a href="../tags.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png" class="list_icon" id="tags_image">
+            Tags
+          </a>
+        </li>
+        <li class="categories">
+          <a href="../categories.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png" class="list_icon" id="categories_image">
+            Categories
+          </a>
+        </li>
+        <li class="timeline">
+          <a href="../timeline.html">
+            <img src="http://pic.yupoo.com/wjh15101051/30365cc7/c1a3be15.png" class="list_icon" id="timeline_image">
+            Timeline
+          </a>
+        </li>
+        <li class="about">
+          <a href="../about.html">
+            <img src="http://pic.yupoo.com/wjh15101051/24f1cb41/e239086e.png" class="list_icon" id="about_image">
+            About
+          </a>
+        </li>
+        <li class="toolbox">
+          <a href="../toolbox.html">
+            <img src="http://pic.yupoo.com/wjh15101051/dee9f673/d3cf682a.png" class="list_icon" id="toolbox_image">
+            Toolbox
+          </a>
+        </li>
+        <li class="friends">
+            <div class="friends_text">
+              <img src="http://pic.yupoo.com/wjh15101051/d291ebed/29f9c807.png" id="friends_image">
+              Friends
+            </div>
+            <div id="fp_friends_list">
+              <div id="SGcolin">
+                <a href="http://blog.gyx.me/" target="_blank">SGcolin</a>
+              </div>
+              <div id="Xingcy">
+                <a href="https://www.cnblogs.com/xcysblog/" target="_blank">Xingcy</a>
+              </div>
+              <div id="ZH_comld">
+                <a href="https://www.cnblogs.com/ZH-comld/" target="_blank">ZH_comld</a>
+              </div>
+            </div>
+            <br>
+          </div>
+        </li>
+      </div>
+    <div class="music_player">
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer@1.10.0/dist/APlayer.min.css">
+      <script src="https://blog-static.cnblogs.com/files/yjlaugus/APlayer.min.js"></script>
+      <div id="aplayer" class="aplayer"  data-id="5313691453" data-server="netease" data-type="playlist" data-fixed="true" data-listfolded="true" data-order="random" data-theme="#F58EA8"></div>
+      <script src="https://unpkg.com/meting@1.2/dist/Meting.min.js"></script>
+    </div>
+    <div class="bottom">
+      <div>
+        Copyright © 2020
+        <a id="copyright_user_a" href="index.html">
+          <span id="copyright_user">wjh15101051</span>
+        </a>
+      </div>
+      <div class="bottom_anime">ღゝ◡╹)ノ♡</div>
+    </div>
+  </div>
+</body>
+</html>

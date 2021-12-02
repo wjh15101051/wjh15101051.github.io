@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>doll</title>
+  <link rel="stylesheet" type="text/css" id="frame_style" href="../css/frame_style1.css">
+  <link rel="stylesheet" type="text/css" id="Markdown_style" href="../css/Markdown_style.css">
+  <script type="text/javascript" src="../jscode/frame.js"></script>
+  <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+  <link rel="stylesheet" href="https://ziyuan.fenxianglu.cn/js/highlight/styles/default.css">
+  <script src="https://ziyuan.fenxianglu.cn/js/highlight/highlight.pack.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+        inlineMath: [['$','$']]
+      }
+    });
+  </script>
+</head>
+<body>
+  <div class="main">
+    <div class="head">
+      <div class="title1">
+        <a href="../index.html">wjh15101051's space</a>
+      </div>
+      <div class="title2">
+        卧薪尝胆，厚积薄发。
+      </div>
+    </div>
+    <div id="middle_blogfile">
+      <div class="blog_blogfile">
+        <div class="blogfile_title">
+            doll
+        </div>
+        <div class="blogfile_stitle">
+          <img src="http://pic.yupoo.com/wjh15101051/1e0e1b3a/118165c5.jpg">
+          Date: Sat Mar 23 20:19:45 CST 2019
+          <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png">
+          In Category:
+          <a href="../categories/NoCategory.html">NoCategory</a>
+        </div>
+        <div class="blogfile_content">
+<div class = "MarkdownCommonContent">
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Description：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+一个抓娃娃机，每个娃娃有一个坐标，要求从
+$(0,10^6)$
+按
+$1\sim n$
+的顺序依次经过所有娃娃最后回到
+$(10^6,10^6)$
+，不能从娃娃下面经过，在最开始可以选择把一些娃娃
+$+1$
+，求调整后经过的最短距离。
+</div>
+<div class = "MarkdownCommonContent">
+$1\leqslant n\leqslant 10^6$
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Solution：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+列出答案的式子：
+$$
+\begin{align}
+ans&=10^6-y_1+\sum_{i=1}^{n-1}\Big(2\times \mathrm{maxy}(\min(x_i,x_{i+1}),\max(x_i,x_{i+1}))-y_i-y_{i+1}\Big)+10^6-y_n\\
+&=2\times \Big(10^6+\sum_{i=1}^{n-1}\mathrm{maxy}(\min(x_i,x_{i+1}),\max(x_i,x_{i+1}))-\sum_{i=1}^ny_i\Big)
+\end{align}
+$$
+也就是我们实际上是要最小化：
+$$
+\sum_{i=1}^{n-1}\mathrm{maxy}(\min(x_i,x_{i+1}),\max(x_i,x_{i+1}))-\sum_{i=1}^ny_i
+$$
+先考虑一个部分分，
+$y_i$
+两两不同，那么因为最多只能加一，所以不同的
+$y_i$
+不会相互影响，我们只要统计出有多少个区间以这个点为最高值，然后计算一下加一优还是不加一优即可。
+</div>
+<div class = "MarkdownCommonContent">
+上面那个做法启发我们分别处理每个
+$\mathrm{maxy}(\min(x_i,x_{i+1}),\max(x_i,x_{i+1}))$
+，那么问题变成：给你一个序列和很多区间，可以给一个元素
+$+1$
+，最大化
+$(+1$
+的元素个数
+$)-($
+有
+$+1$
+的区间个数
+$)$
+。
+</div>
+<div class = "MarkdownCommonContent">
+这个可以
+$DP$
+：先假设所有区间都有加一，设
+$dp[i]$
+表示
+$i$
+一定
+$+1$
+的最小值，转移为：
+$$
+dp[i]=\min_{j&lt;i}(dp[j]+cnt(j+1,i-1)+1)
+$$
+$cnt$
+表示完全落在这个区间的区间个数。
+</div>
+<div class = "MarkdownCommonContent">
+这个可以线段树优化
+$DP$
+。
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Code：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+<pre><code class="MarkdownParaCode">
+#include&lt;algorithm&gt;<br />
+#include&lt;iostream&gt;<br />
+#include&lt;cstdlib&gt;<br />
+#include&lt;cstdio&gt;<br />
+#include&lt;cmath&gt;<br />
+#include&lt;cctype&gt;<br />
+#include&lt;cstring&gt;<br />
+#pragma GCC optimize("O2,Ofast,inline,unroll-all-loops,-ffast-math")<br />
+using namespace std;<br />
+int n;<br />
+namespace io {<br />
+	const int SIZE = (1 &lt;&lt; 21) + 1;<br />
+	char ibuf[SIZE], *iS, *iT, obuf[SIZE], *oS = obuf, *oT = oS + SIZE - 1, c, qu[55]; int f, qr;<br />
+	// getchar<br />
+	#define gc() (iS == iT ? (iT = (iS = ibuf) + fread (ibuf, 1, SIZE, stdin), (iS == iT ? EOF : *iS ++)) : *iS ++)<br />
+	// print the remaining part<br />
+	inline void flush () {<br />
+		fwrite (obuf, 1, oS - obuf, stdout);<br />
+		oS = obuf;<br />
+	}<br />
+	// putchar<br />
+	inline void putc (char x) {<br />
+		*oS ++ = x;<br />
+		if (oS == oT) flush ();<br />
+	}<br />
+	// input a signed integer<br />
+	template &lt;class I&gt;<br />
+	inline void gi (I &x) {<br />
+		for (f = 1, c = gc(); c &lt; '0' || c &gt; '9'; c = gc()) if (c == '-') f = -1;<br />
+		for (x = 0; c &lt;= '9' && c &gt;= '0'; c = gc()) x = x * 10 + (c & 15); x *= f;<br />
+	}<br />
+	// print a signed integer<br />
+	template &lt;class I&gt;<br />
+	inline void print (I &x) {<br />
+		if (!x) putc ('0'); if (x &lt; 0) putc ('-'), x = -x;<br />
+		while (x) qu[++ qr] = x % 10 + '0',  x /= 10;<br />
+		while (qr) putc (qu[qr --]);<br />
+	}<br />
+	//no need to call flush at the end manually!<br />
+	struct Flusher_ {~Flusher_(){flush();}}io_flusher_;<br />
+}<br />
+using io :: gi;<br />
+using io :: putc;<br />
+using io :: print;<br />
+#define MAXN 1000010<br />
+#define N 1000000<br />
+struct point<br />
+{<br />
+	int x,y;<br />
+}p[MAXN];<br />
+bool cmp_y(point a,point b){return a.y &lt; b.y;}<br />
+#define INF 0x3f3f3f3f<br />
+typedef long long ll;<br />
+#define reg register<br />
+#define I inline<br />
+struct node<br />
+{<br />
+	int lc,rc;<br />
+	int tag,maxv;<br />
+	node(){tag = 0;maxv = 0;}<br />
+}t[MAXN &lt;&lt; 1];<br />
+int ptr = 0;<br />
+I int newnode()<br />
+{<br />
+	reg int k = ++ptr;<br />
+	t[k].lc = t[k].rc = t[k].tag = t[k].maxv = 0;<br />
+	return k;<br />
+}<br />
+int root;<br />
+#define mid ((l + r) &gt;&gt; 1)<br />
+I void build(int &rt,int l,int r)<br />
+{<br />
+	rt = newnode();<br />
+	if(l == r)return;<br />
+	build(t[rt].lc,l,mid);<br />
+	build(t[rt].rc,mid + 1,r);<br />
+	return;<br />
+}<br />
+I void add(int rt,int L,int R,int v,int l,int r)<br />
+{<br />
+	if(L &lt;= l && r &lt;= R){t[rt].tag += v;t[rt].maxv += v;return;}<br />
+	if(L &lt;= mid)add(t[rt].lc,L,R,v,l,mid);<br />
+	if(R &gt; mid)add(t[rt].rc,L,R,v,mid + 1,r);<br />
+	t[rt].maxv = max(t[t[rt].lc].maxv,t[t[rt].rc].maxv) + t[rt].tag;<br />
+	return;<br />
+}<br />
+I int query(int rt,int L,int R,int l,int r)<br />
+{<br />
+	if(L &lt;= l && r &lt;= R)return t[rt].maxv;<br />
+	reg int res = 0;<br />
+	if(L &lt;= mid)res = max(res,query(t[rt].lc,L,R,l,mid));<br />
+	if(R &gt; mid)res = max(res,query(t[rt].rc,L,R,mid + 1,r));<br />
+	return res + t[rt].tag;<br />
+}<br />
+struct seg<br />
+{<br />
+	int l,r,maxv;<br />
+}s[MAXN];<br />
+seg ss[MAXN];<br />
+int tot = 0;<br />
+int pos[MAXN];<br />
+bool cmp_r(seg a,seg b){return a.r &lt; b.r;}<br />
+bool cmp_maxv(seg a,seg b){return a.maxv &lt; b.maxv;}<br />
+I ll work(int v)<br />
+{<br />
+	sort(pos + 1,pos + 1 + pos[0]);<br />
+	ptr = root = 0;<br />
+	sort(ss + 1,ss + 1 + tot,cmp_r);<br />
+	for(reg int i = 1,cur = 1;i &lt;= tot;++i)<br />
+	{<br />
+		ss[i].l = lower_bound(pos + 1,pos + 1 + pos[0],ss[i].l) - pos;<br />
+		while(cur &lt; pos[0] && pos[cur + 1] &lt;= ss[i].r)++cur;<br />
+		ss[i].r = cur;<br />
+	}<br />
+	build(root,0,pos[0]);<br />
+	for(reg int i = 1,cur = 1;i &lt;= pos[0];++i)<br />
+	{<br />
+		add(root,i,i,query(root,0,i - 1,0,pos[0]) + 1,0,pos[0]);<br />
+		while(cur &lt;= tot && ss[cur].r == i)add(root,0,ss[cur].l - 1,1,0,pos[0]),++cur;<br />
+	}<br />
+	reg ll ans = -t[root].maxv + tot + 1ll * tot * v - 1ll * pos[0] * v;<br />
+	return ans;<br />
+}<br />
+int main()<br />
+{<br />
+	freopen("doll.in","r",stdin);<br />
+	freopen("doll.out","w",stdout);<br />
+	scanf("%d",&n);<br />
+	for(reg int i = 1;i &lt;= n;++i)gi(p[i].x),gi(p[i].y);<br />
+	build(root,0,N);<br />
+	for(reg int i = 1;i &lt;= n;++i)add(root,p[i].x,p[i].x,p[i].y,0,N);<br />
+	for(reg int i = 1;i &lt; n;++i)<br />
+	{<br />
+		s[i].l = min(p[i].x,p[i + 1].x);<br />
+		s[i].r = max(p[i].x,p[i + 1].x);<br />
+		s[i].maxv = query(root,s[i].l,s[i].r,0,N);<br />
+	}<br />
+	sort(s + 1,s + 1 + n - 1,cmp_maxv);<br />
+	sort(p + 1,p + 1 + n,cmp_y);<br />
+	reg ll ans = 0;<br />
+	reg int i,j;<br />
+	for(i = 1,j = 1;i &lt; n;++i)<br />
+	{<br />
+		ss[++tot] = s[i];<br />
+		if(i == N || s[i].maxv != s[i + 1].maxv)<br />
+		{<br />
+			pos[0] = 0;<br />
+			while(p[j].y &lt; s[i].maxv)ans -= p[j].y + 1,++j;<br />
+			while(j &lt;= n && p[j].y == s[i].maxv)pos[++pos[0]] = p[j].x,++j;<br />
+			ans += work(s[i].maxv);<br />
+			tot = 0;<br />
+		}<br />
+	}<br />
+	while(j &lt;= n)ans -= p[j].y + 1,++j;<br />
+	ans = (ans + N) * 2;<br />
+	cout &lt;&lt; ans &lt;&lt; endl;<br />
+	fclose(stdin);<br />
+	fclose(stdout);<br />
+	return 0;<br />
+}<br />
+</pre></code>
+</div>
+        </div>
+        <div class="blogfile_showtag">
+          <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png">
+          In tag:
+<a href="../tags/DP-数据结构优化DP.html">DP-数据结构优化DP</a> 
+          <!--<a href="../tags/blog.html">blog</a>-->
+        </div>
+      </div>
+    </div>
+    <div id="middle_nav">
+      <div class="blog_host">
+        <div class="nav_avator">
+          <img src="http://pic.yupoo.com/wjh15101051/72c1aeab/f51d56e0.jpg" alt="avator">
+        </div>
+        <div class="nav_ID">
+          wjh15101051
+        </div>
+      </div>
+      <div class="nav_list">
+        <li class="tags">
+          <a href="../tags.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png" class="list_icon" id="tags_image">
+            Tags
+          </a>
+        </li>
+        <li class="categories">
+          <a href="../categories.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png" class="list_icon" id="categories_image">
+            Categories
+          </a>
+        </li>
+        <li class="timeline">
+          <a href="../timeline.html">
+            <img src="http://pic.yupoo.com/wjh15101051/30365cc7/c1a3be15.png" class="list_icon" id="timeline_image">
+            Timeline
+          </a>
+        </li>
+        <li class="about">
+          <a href="../about.html">
+            <img src="http://pic.yupoo.com/wjh15101051/24f1cb41/e239086e.png" class="list_icon" id="about_image">
+            About
+          </a>
+        </li>
+        <li class="toolbox">
+          <a href="../toolbox.html">
+            <img src="http://pic.yupoo.com/wjh15101051/dee9f673/d3cf682a.png" class="list_icon" id="toolbox_image">
+            Toolbox
+          </a>
+        </li>
+        <li class="friends">
+            <div class="friends_text">
+              <img src="http://pic.yupoo.com/wjh15101051/d291ebed/29f9c807.png" id="friends_image">
+              Friends
+            </div>
+            <div id="fp_friends_list">
+              <div id="SGcolin">
+                <a href="http://blog.gyx.me/" target="_blank">SGcolin</a>
+              </div>
+              <div id="Xingcy">
+                <a href="https://www.cnblogs.com/xcysblog/" target="_blank">Xingcy</a>
+              </div>
+              <div id="ZH_comld">
+                <a href="https://www.cnblogs.com/ZH-comld/" target="_blank">ZH_comld</a>
+              </div>
+            </div>
+            <br>
+          </div>
+        </li>
+      </div>
+    <div class="music_player">
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer@1.10.0/dist/APlayer.min.css">
+      <script src="https://blog-static.cnblogs.com/files/yjlaugus/APlayer.min.js"></script>
+      <div id="aplayer" class="aplayer"  data-id="5313691453" data-server="netease" data-type="playlist" data-fixed="true" data-listfolded="true" data-order="random" data-theme="#F58EA8"></div>
+      <script src="https://unpkg.com/meting@1.2/dist/Meting.min.js"></script>
+    </div>
+    <div class="bottom">
+      <div>
+        Copyright © 2020
+        <a id="copyright_user_a" href="index.html">
+          <span id="copyright_user">wjh15101051</span>
+        </a>
+      </div>
+      <div class="bottom_anime">ღゝ◡╹)ノ♡</div>
+    </div>
+  </div>
+</body>
+</html>

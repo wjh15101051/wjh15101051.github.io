@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>NOIP2013D2T3 华容道</title>
+  <link rel="stylesheet" type="text/css" id="frame_style" href="../css/frame_style1.css">
+  <link rel="stylesheet" type="text/css" id="Markdown_style" href="../css/Markdown_style.css">
+  <script type="text/javascript" src="../jscode/frame.js"></script>
+  <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+  <link rel="stylesheet" href="https://ziyuan.fenxianglu.cn/js/highlight/styles/default.css">
+  <script src="https://ziyuan.fenxianglu.cn/js/highlight/highlight.pack.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+        inlineMath: [['$','$']]
+      }
+    });
+  </script>
+</head>
+<body>
+  <div class="main">
+    <div class="head">
+      <div class="title1">
+        <a href="../index.html">wjh15101051's space</a>
+      </div>
+      <div class="title2">
+        卧薪尝胆，厚积薄发。
+      </div>
+    </div>
+    <div id="middle_blogfile">
+      <div class="blog_blogfile">
+        <div class="blogfile_title">
+            NOIP2013D2T3 华容道
+        </div>
+        <div class="blogfile_stitle">
+          <img src="http://pic.yupoo.com/wjh15101051/1e0e1b3a/118165c5.jpg">
+          Date: Tue Sep 11 00:45:23 CST 2018
+          <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png">
+          In Category:
+          <a href="../categories/NoCategory.html">NoCategory</a>
+        </div>
+        <div class="blogfile_content">
+<div class = "MarkdownCommonContent">
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Description：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+一个
+$n \times m$
+棋盘有一个格子是空的，其余
+$n \times m-1$
+个格子上每个格子上有一个棋子，有些棋子是固定的，有些棋子则是可以移动的；对于同样的一个棋盘，
+$q$
+给定起点、终点和空格子的位置，求把在起点的特殊棋子从起点移到终点的最少操作次数。
+</div>
+<div class = "MarkdownCommonContent">
+$1\le n,m\le 30,1\le q \le 500$
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Solution：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+一个显然的思路是直接
+$BFS$
+可以获得
+$70$
+分，然而每次棋盘是相同的，多次
+$BFS$
+显然存在大量冗余。
+</div>
+<div class = "MarkdownCommonContent">
+挖掘一下这道题本身的性质，会发现最终棋子的走向一定是空白格一步步走向特殊棋子，然后空白格就没有离开过特殊棋子周围的
+$8$
+个格子，先考虑后半部分，发现只有特殊棋子周围的四个位置才是有用的，棋子走到角上下一步也一定会回到周围的四个位置，所以他的状态量实际是
+$O(nm)$
+的，这时棋子只有两种走法，从周围四个格子中的一个走到另一个，或者和特殊格子交换位置，第二种当然很好说，状态间连边权为
+$1$
+的有向边，第一种的话，就要在询问前预处理每个格子从四周的一个位置走到另一个位置的步数，这个直接
+$BFS$
+就好了。
+</div>
+<div class = "MarkdownCommonContent">
+这时候我们如果能让空白格子走到特殊格子周围，那么就可以跑
+$SPFA$
+了，而这一步也可以直接
+$BFS$
+实现。
+</div>
+<div class = "MarkdownCommonContent">
+然后原点向起始状态连对应距离的边，结束状态向终点连边权为
+$0$
+的边，然后就是
+$SPFA$
+了。
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Code：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+<pre><code class="MarkdownParaCode">
+#include&lt;algorithm&gt;<br />
+#include&lt;iostream&gt;<br />
+#include&lt;cstdlib&gt;<br />
+#include&lt;cstdio&gt;<br />
+#include&lt;cmath&gt;<br />
+#include&lt;queue&gt;<br />
+#include&lt;cstring&gt;<br />
+using namespace std;<br />
+int n,m,q;<br />
+#define MAXN 32<br />
+#define INF 0x3f3f3f3f<br />
+int a[MAXN][MAXN];<br />
+int ex,ey,sx,sy,tx,ty;<br />
+int to(int i,int j,int k){return ((i - 1) * m + j) * 4 + k;}<br />
+int mx[4] = {0,0,1,-1};<br />
+int my[4] = {1,-1,0,0};<br />
+#define INF 0x3f3f3f3f<br />
+struct edge<br />
+{<br />
+	int to,nxt,v;<br />
+}e[MAXN * MAXN * 12];<br />
+int edgenum = 0;<br />
+int lin[MAXN * MAXN * 4] = {0};<br />
+void add(int a,int b,int c)<br />
+{//cout &lt;&lt; a &lt;&lt; " " &lt;&lt; b &lt;&lt; " " &lt;&lt; c &lt;&lt; endl;<br />
+	++edgenum;e[edgenum].to = b;e[edgenum].v = c;e[edgenum].nxt = lin[a];lin[a] = edgenum;<br />
+	return;<br />
+}<br />
+int dis[MAXN][MAXN];<br />
+#define fi first<br />
+#define se second<br />
+void BFS1(int x,int y,int d)<br />
+{<br />
+	a[x][y] = 0;<br />
+	memset(dis,-1,sizeof(dis));dis[x + mx[d]][y + my[d]] = 0;<br />
+	queue&lt; pair&lt;int,int&gt; &gt; q;q.push(make_pair(x + mx[d],y + my[d]));<br />
+	while(!q.empty())<br />
+	{<br />
+		pair&lt;int,int&gt; k = q.front();q.pop();<br />
+		for(int i = 0;i &lt; 4;++i)<br />
+		{<br />
+			if(a[k.fi + mx[i]][k.se + my[i]] && dis[k.fi + mx[i]][k.se + my[i]] == -1)<br />
+			{<br />
+				dis[k.fi + mx[i]][k.se + my[i]] = dis[k.fi][k.se] + 1;<br />
+				q.push(make_pair(k.fi + mx[i],k.se + my[i]));<br />
+			}<br />
+		}<br />
+	}<br />
+	for(int k = 0;k &lt; 4;++k)<br />
+		if(k != d && dis[x + mx[k]][y + my[k]] != -1)<br />
+			add(to(x,y,d),to(x,y,k),dis[x + mx[k]][y + my[k]]);<br />
+	if(a[x + mx[d]][y + my[d]])add(to(x,y,d),to(x + mx[d],y + my[d],d ^ 1),1);<br />
+	a[x][y] = 1;<br />
+	return;<br />
+}<br />
+int st,en;<br />
+void BFS2(int ex,int ey,int sx,int sy)<br />
+{<br />
+	a[sx][sy] = 0;<br />
+	memset(dis,-1,sizeof(dis));dis[ex][ey] = 0;<br />
+	queue&lt; pair&lt;int,int&gt; &gt; q;q.push(make_pair(ex,ey));<br />
+	while(!q.empty())<br />
+	{<br />
+		pair&lt;int,int&gt; k = q.front();q.pop();<br />
+		for(int i = 0;i &lt; 4;++i)<br />
+		{<br />
+			if(a[k.fi + mx[i]][k.se + my[i]] && dis[k.fi + mx[i]][k.se + my[i]] == -1)<br />
+			{<br />
+				dis[k.fi + mx[i]][k.se + my[i]] = dis[k.fi][k.se] + 1;<br />
+				q.push(make_pair(k.fi + mx[i],k.se + my[i]));<br />
+			}<br />
+		}<br />
+	}<br />
+	for(int i = 0;i &lt; 4;++i)<br />
+		if(a[sx + mx[i]][sy + my[i]] && dis[sx + mx[i]][sy + my[i]] != -1)<br />
+			add(st,to(sx,sy,i),dis[sx + mx[i]][sy + my[i]]);<br />
+	a[sx][sy] = 1;<br />
+	return;<br />
+}<br />
+int d[MAXN * MAXN * 4];<br />
+bool v[MAXN * MAXN * 4];<br />
+void SPFA()<br />
+{<br />
+	memset(d,0x3f,sizeof(d));d[st] = 0;<br />
+	queue&lt;int&gt; q;q.push(st);<br />
+	while(!q.empty())<br />
+	{<br />
+		int k = q.front();q.pop();<br />
+		v[k] = false;<br />
+		for(int i = lin[k];i != 0;i = e[i].nxt)<br />
+		{<br />
+			if(d[e[i].to] &gt; d[k] + e[i].v)<br />
+			{<br />
+				d[e[i].to] = d[k] + e[i].v;<br />
+				if(!v[e[i].to])<br />
+				{<br />
+					v[e[i].to] = true;<br />
+					q.push(e[i].to);<br />
+				}<br />
+			}<br />
+		}<br />
+	}<br />
+	return;<br />
+}<br />
+int cur[MAXN * MAXN * 4];<br />
+int main()<br />
+{<br />
+	scanf("%d%d%d",&n,&m,&q);<br />
+	for(int i = 1;i &lt;= n;++i)<br />
+		for(int j = 1;j &lt;= m;++j)<br />
+			scanf("%d",&a[i][j]);<br />
+	for(int i = 1;i &lt;= n;++i)<br />
+		for(int j = 1;j &lt;= m;++j)<br />
+			if(a[i][j])<br />
+				for(int k = 0;k &lt; 4;++k)<br />
+					if(a[i + mx[k]][j + my[k]])BFS1(i,j,k);<br />
+	st = n * m * 4 + 4;en = st + 1;<br />
+	int top = edgenum;<br />
+	memcpy(cur,lin,sizeof(lin));<br />
+	for(int i = 1;i &lt;= q;++i)<br />
+	{<br />
+		edgenum = top;<br />
+		memcpy(lin,cur,sizeof(lin));<br />
+		scanf("%d%d%d%d%d%d",&ex,&ey,&sx,&sy,&tx,&ty);<br />
+		if(sx == tx && sy == ty)<br />
+		{<br />
+			puts("0");<br />
+			continue;<br />
+		}<br />
+		BFS2(ex,ey,sx,sy);<br />
+		for(int k = 0;k &lt; 4;++k)if(a[tx + mx[k]][ty + my[k]])add(to(tx,ty,k),en,0);<br />
+		SPFA();<br />
+		if(d[en] == INF)puts("-1");<br />
+		else printf("%d\n",d[en]);<br />
+	}<br />
+	return 0;<br />
+}<br />
+</pre></code>
+</div>
+        </div>
+        <div class="blogfile_showtag">
+          <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png">
+          In tag:
+<a href="../tags/图论-BFS.html">图论-BFS</a> <a href="../tags/图论-SPFA.html">图论-SPFA</a> 
+          <!--<a href="../tags/blog.html">blog</a>-->
+        </div>
+      </div>
+    </div>
+    <div id="middle_nav">
+      <div class="blog_host">
+        <div class="nav_avator">
+          <img src="http://pic.yupoo.com/wjh15101051/72c1aeab/f51d56e0.jpg" alt="avator">
+        </div>
+        <div class="nav_ID">
+          wjh15101051
+        </div>
+      </div>
+      <div class="nav_list">
+        <li class="tags">
+          <a href="../tags.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png" class="list_icon" id="tags_image">
+            Tags
+          </a>
+        </li>
+        <li class="categories">
+          <a href="../categories.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png" class="list_icon" id="categories_image">
+            Categories
+          </a>
+        </li>
+        <li class="timeline">
+          <a href="../timeline.html">
+            <img src="http://pic.yupoo.com/wjh15101051/30365cc7/c1a3be15.png" class="list_icon" id="timeline_image">
+            Timeline
+          </a>
+        </li>
+        <li class="about">
+          <a href="../about.html">
+            <img src="http://pic.yupoo.com/wjh15101051/24f1cb41/e239086e.png" class="list_icon" id="about_image">
+            About
+          </a>
+        </li>
+        <li class="toolbox">
+          <a href="../toolbox.html">
+            <img src="http://pic.yupoo.com/wjh15101051/dee9f673/d3cf682a.png" class="list_icon" id="toolbox_image">
+            Toolbox
+          </a>
+        </li>
+        <li class="friends">
+            <div class="friends_text">
+              <img src="http://pic.yupoo.com/wjh15101051/d291ebed/29f9c807.png" id="friends_image">
+              Friends
+            </div>
+            <div id="fp_friends_list">
+              <div id="SGcolin">
+                <a href="http://blog.gyx.me/" target="_blank">SGcolin</a>
+              </div>
+              <div id="Xingcy">
+                <a href="https://www.cnblogs.com/xcysblog/" target="_blank">Xingcy</a>
+              </div>
+              <div id="ZH_comld">
+                <a href="https://www.cnblogs.com/ZH-comld/" target="_blank">ZH_comld</a>
+              </div>
+            </div>
+            <br>
+          </div>
+        </li>
+      </div>
+    <div class="music_player">
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer@1.10.0/dist/APlayer.min.css">
+      <script src="https://blog-static.cnblogs.com/files/yjlaugus/APlayer.min.js"></script>
+      <div id="aplayer" class="aplayer"  data-id="5313691453" data-server="netease" data-type="playlist" data-fixed="true" data-listfolded="true" data-order="random" data-theme="#F58EA8"></div>
+      <script src="https://unpkg.com/meting@1.2/dist/Meting.min.js"></script>
+    </div>
+    <div class="bottom">
+      <div>
+        Copyright © 2020
+        <a id="copyright_user_a" href="index.html">
+          <span id="copyright_user">wjh15101051</span>
+        </a>
+      </div>
+      <div class="bottom_anime">ღゝ◡╹)ノ♡</div>
+    </div>
+  </div>
+</body>
+</html>

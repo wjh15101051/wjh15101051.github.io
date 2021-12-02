@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>最大连通子块和</title>
+  <link rel="stylesheet" type="text/css" id="frame_style" href="../css/frame_style1.css">
+  <link rel="stylesheet" type="text/css" id="Markdown_style" href="../css/Markdown_style.css">
+  <script type="text/javascript" src="../jscode/frame.js"></script>
+  <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+  <link rel="stylesheet" href="https://ziyuan.fenxianglu.cn/js/highlight/styles/default.css">
+  <script src="https://ziyuan.fenxianglu.cn/js/highlight/highlight.pack.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+        inlineMath: [['$','$']]
+      }
+    });
+  </script>
+</head>
+<body>
+  <div class="main">
+    <div class="head">
+      <div class="title1">
+        <a href="../index.html">wjh15101051's space</a>
+      </div>
+      <div class="title2">
+        卧薪尝胆，厚积薄发。
+      </div>
+    </div>
+    <div id="middle_blogfile">
+      <div class="blog_blogfile">
+        <div class="blogfile_title">
+            最大连通子块和
+        </div>
+        <div class="blogfile_stitle">
+          <img src="http://pic.yupoo.com/wjh15101051/1e0e1b3a/118165c5.jpg">
+          Date: Sun Nov 25 20:24:10 CST 2018
+          <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png">
+          In Category:
+          <a href="../categories/NoCategory.html">NoCategory</a>
+        </div>
+        <div class="blogfile_content">
+<div class = "MarkdownCommonContent">
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Description：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+一棵
+$n$
+个点的有根树。支持如下操作：
+$M$
+ 
+$x$
+ 
+$y$
+：将点
+$x$
+的点权改为
+$y$
+；
+$Q$
+ 
+$x$
+：求以
+$x$
+为根的子树的最大连通子块和。
+</div>
+<div class = "MarkdownCommonContent">
+$1\leqslant n\leqslant 200000$
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Solution：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+肯定是动态
+$DP$
+，设
+$f[i]$
+表示以
+$i$
+为根的子树必须选
+$i$
+的最大权联通子块和，
+$g[i]$
+没有必须选根的限制，转移为：
+$$
+\begin{align}
+f[k]&=\max(val[k]+\sum_{i\in son[k]}f[i],0)\\
+g[k]&=\max(f[k],\max_{i\in son[k]}g[i])
+\end{align}
+$$
+但是要动态修改，树上动态
+$DP$
+的经典做法是链分治维护转移矩阵连乘积，但是这题显然不太可做。
+</div>
+<div class = "MarkdownCommonContent">
+但是动态
+$DP$
+还是有套路的，就是要定义一个量只与虚儿子有关，然后用线段树维护一整个重链的
+$DP$
+转移。
+</div>
+<div class = "MarkdownCommonContent">
+那我们这道题显然要设的就是：
+$$
+\begin{align}
+f'[k]&=\sum_{i是k的虚儿子}f[i]\\
+g'[k]&=\max(f[k],\max_{i是k的虚儿子}g[i])
+\end{align}
+$$
+改写一下转移就是：
+$$
+\begin{align}
+f[k]&=\max(val[k]+f'[k]+f[son[k]],0)\\
+g[k]&=\max(f[k],g'[k],g[son[k]])
+\end{align}
+$$
+然而发现还是不太可做，因为和
+$0$
+取
+$\max$
+这个操作太奇怪不好维护。
+</div>
+<div class = "MarkdownCommonContent">
+但是这时我们想到洪水那道题，仔细观察上面那个式子，考虑在重链上的选取情况，要么都不选，即选的是子树，要么就是选连续的一段，那么我们就可以用线段树维护最大子段和，然后再和所有虚儿子的值取个
+$\max$
+，现在的问题变成了怎么处理
+$g$
+，发现如果我们不考虑最后面那一个
+$g[son[k]]$
+的话询问就是一个区间最大值，这个也可以用线段树来方便维护，但是要支持删除，所以用一个可删堆就行了， 另一个要注意的是在用虚边更新的时候由于
+$f$
+是要求必须选根节点的，所以要用
+$state$
+的
+$ls$
+来向上更新祖先的
+$f$
+值，
+$g$
+就用最大值更新就好了。
+</div>
+<div class = "MarkdownCommonContent">
+总结一下动态
+$DP$
+：
+</div>
+<div class = "MarkdownCommonContent">
+$1$
+、判断题目是动态
+$DP$
+，树上问题，有修改点权的操作，可以用一个树形
+$DP$
+解决，转移方程一般都不太复杂。
+</div>
+<div class = "MarkdownCommonContent">
+$2$
+、定义一个只与虚儿子有关的量，可以快速修改，并且必须支持撤销贡献（如果是最大值就用个可删堆就可以了），用来维护虚边。
+</div>
+<div class = "MarkdownCommonContent">
+$3$
+、考虑
+$DP$
+在实边之间的转移，用线段树维护这个转移，常用的做法有用线段树维护转移矩阵连乘积或者用线段树维护前缀最大值。
+</div>
+<div class = "MarkdownCommonContent">
+$4$
+、修改时就不停向上跳，在虚边的时候特殊处理一下，先删掉他之前的贡献然后加上这次的。
+</div>
+<div class = "MarkdownCommonContent">
+$5$
+、查询时查询它所在重链从他到末尾这一段就是这个子树的答案。
+</div>
+<div class = "MarkdownCommonContent">
+感觉可以理解为以根节点所在的重链为主链，然后在这个主链的基础上
+$DP$
+。
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Code：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+<pre><code class="MarkdownParaCode">
+#include&lt;algorithm&gt;<br />
+#include&lt;iostream&gt;<br />
+#include&lt;cstdlib&gt;<br />
+#include&lt;cstdio&gt;<br />
+#include&lt;cmath&gt;<br />
+#include&lt;queue&gt;<br />
+#include&lt;cctype&gt;<br />
+#include&lt;cstring&gt;<br />
+using namespace std;<br />
+inline char getc()<br />
+{<br />
+	register char c = getchar();<br />
+	while(c != 'M' && c != 'Q')c = getchar();<br />
+	return c;<br />
+}<br />
+int n,m;<br />
+#define MAXN 200010<br />
+int val[MAXN];<br />
+struct edge<br />
+{<br />
+	int to,nxt;<br />
+}e[MAXN &lt;&lt; 1];<br />
+int edgenum = 0;<br />
+int lin[MAXN] = {0};<br />
+void add(int a,int b)<br />
+{<br />
+	e[++edgenum] = (edge){b,lin[a]};lin[a] = edgenum;<br />
+	e[++edgenum] = (edge){a,lin[b]};lin[b] = edgenum;<br />
+	return;<br />
+}<br />
+int fa[MAXN],siz[MAXN],son[MAXN],dep[MAXN],top[MAXN],bot[MAXN];<br />
+int rnk[MAXN],th[MAXN],tot = 0;<br />
+void dfs1(int k,int depth)<br />
+{<br />
+	dep[k] = depth;<br />
+	siz[k] = 1;<br />
+	for(int i = lin[k];i != 0;i = e[i].nxt)<br />
+	{<br />
+		if(e[i].to != fa[k])<br />
+		{<br />
+			fa[e[i].to] = k;<br />
+			dfs1(e[i].to,depth + 1);<br />
+			siz[k] += siz[e[i].to];<br />
+			if(son[k] == 0 || siz[e[i].to] &gt; siz[son[k]])<br />
+			{<br />
+				son[k] = e[i].to;<br />
+			}<br />
+		}<br />
+	}<br />
+	return;<br />
+}<br />
+void dfs2(int k,int tp)<br />
+{<br />
+	rnk[k] = ++tot;th[tot] = k;<br />
+	top[k] = tp;<br />
+	if(son[k] == 0){bot[k] = k;return;}<br />
+	dfs2(son[k],tp);bot[k] = bot[son[k]];<br />
+	for(int i = lin[k];i != 0;i = e[i].nxt)<br />
+	{<br />
+		if(e[i].to != fa[k] && e[i].to != son[k])<br />
+		{<br />
+			dfs2(e[i].to,e[i].to);<br />
+		}<br />
+	}<br />
+	return;<br />
+}<br />
+typedef long long ll;<br />
+ll f[MAXN],f_[MAXN];<br />
+struct heap<br />
+{<br />
+	priority_queue&lt;ll&gt; ad,dl;<br />
+	int siz;<br />
+	heap(){siz = 0;}<br />
+	void insert(ll k){++siz;ad.push(k);return;}<br />
+	void remove(ll k){--siz;dl.push(k);return;}<br />
+	ll top()<br />
+	{<br />
+		if(siz == 0)return 0;<br />
+		while(!dl.empty() && ad.top() == dl.top())<br />
+		{<br />
+			ad.pop();dl.pop();<br />
+		}<br />
+		return ad.top();<br />
+	}<br />
+};<br />
+heap g[MAXN],g_[MAXN];<br />
+bool vis[MAXN];<br />
+void dp(int k)<br />
+{<br />
+	vis[k] = true;<br />
+	f[k] = val[k];f_[k] = 0;<br />
+	for(int i = lin[k];i != 0;i = e[i].nxt)<br />
+	{<br />
+		if(vis[e[i].to])continue;<br />
+		dp(e[i].to);<br />
+		g[k].insert(g[e[i].to].top());<br />
+		if(e[i].to != son[k])g_[k].insert(g[e[i].to].top());<br />
+		f[k] += f[e[i].to];<br />
+		if(e[i].to != son[k])f_[k] += f[e[i].to];<br />
+	}<br />
+	f[k] = max(f[k],0ll);<br />
+	g[k].insert(f[k]);<br />
+	return;<br />
+}<br />
+struct state<br />
+{<br />
+	ll s,ms,ls,rs,maxg;<br />
+	state(){ls = rs = s = ms = 0;}<br />
+	friend state operator + (state a,state b)<br />
+	{<br />
+		state c;<br />
+		c.s = a.s + b.s;<br />
+		c.ls = max(a.ls,a.s + b.ls);<br />
+		c.rs = max(b.rs,b.s + a.rs);<br />
+		c.ms = max(a.rs + b.ls,max(a.ms,b.ms));<br />
+		c.maxg = max(a.maxg,b.maxg);<br />
+		return c;<br />
+	}<br />
+};<br />
+struct node<br />
+{<br />
+	int lc,rc;<br />
+	state s;<br />
+}t[MAXN &lt;&lt; 1];<br />
+int ptr = 0;<br />
+int newnode(){return ++ptr;}<br />
+int root;<br />
+#define mid ((l + r) &gt;&gt; 1)<br />
+void build(int &rt,int l,int r)<br />
+{<br />
+	rt = newnode();<br />
+	if(l == r)<br />
+	{<br />
+		t[rt].s.s = f_[th[l]] + val[th[l]];<br />
+		t[rt].s.ls = t[rt].s.rs = t[rt].s.ms = max(0ll,f_[th[l]] + val[th[l]]);<br />
+		t[rt].s.maxg = g_[th[l]].top();<br />
+		return;<br />
+	}<br />
+	build(t[rt].lc,l,mid);<br />
+	build(t[rt].rc,mid + 1,r);<br />
+	t[rt].s = t[t[rt].lc].s + t[t[rt].rc].s;<br />
+	return;<br />
+}<br />
+state query(int rt,int L,int R,int l,int r)<br />
+{<br />
+	if(L &lt;= l && r &lt;= R)return t[rt].s;<br />
+	if(R &lt;= mid)return query(t[rt].lc,L,R,l,mid);<br />
+	if(L &gt; mid)return query(t[rt].rc,L,R,mid + 1,r);<br />
+	return query(t[rt].lc,L,R,l,mid) + query(t[rt].rc,L,R,mid + 1,r);<br />
+}<br />
+void maintain(int rt,int p,int l,int r)<br />
+{<br />
+	if(l == r)<br />
+	{<br />
+		t[rt].s.s = f_[th[l]] + val[th[l]];<br />
+		t[rt].s.ls = t[rt].s.rs = t[rt].s.ms = max(0ll,f_[th[l]] + val[th[l]]);<br />
+		t[rt].s.maxg = g_[th[l]].top();<br />
+		return;<br />
+	}<br />
+	if(p &lt;= mid)maintain(t[rt].lc,p,l,mid);<br />
+	else maintain(t[rt].rc,p,mid + 1,r);<br />
+	t[rt].s = t[t[rt].lc].s + t[t[rt].rc].s;<br />
+	return;<br />
+}<br />
+void modify(int k,ll v)<br />
+{<br />
+	val[k] = v;<br />
+	while(k != 0)<br />
+	{<br />
+		state res1 = query(root,rnk[top[k]],rnk[bot[k]],1,n);<br />
+		maintain(root,rnk[k],1,n);<br />
+		state res2 = query(root,rnk[top[k]],rnk[bot[k]],1,n);<br />
+		ll x1 = max(res1.ms,res1.maxg);<br />
+		ll x2 = max(res2.ms,res2.maxg);<br />
+		int anc = fa[top[k]];<br />
+		f_[anc] -= res1.ls;f_[anc] += res2.ls;<br />
+		g_[anc].remove(x1);<br />
+		g_[anc].insert(x2);<br />
+		k = anc;<br />
+	}<br />
+	return;<br />
+}<br />
+ll query(int k)<br />
+{<br />
+	state res = query(root,rnk[k],rnk[bot[k]],1,n);<br />
+	return max(res.maxg,res.ms);<br />
+}<br />
+int main()<br />
+{<br />
+	scanf("%d%d",&n,&m);<br />
+	for(int i = 1;i &lt;= n;++i)scanf("%d",&val[i]);<br />
+	int a,b;<br />
+	for(int i = 1;i &lt; n;++i)<br />
+	{<br />
+		scanf("%d%d",&a,&b);<br />
+		add(a,b);<br />
+	}<br />
+	dfs1(1,1);dfs2(1,1);<br />
+	dp(1);<br />
+	build(root,1,n);<br />
+	char c;<br />
+	for(int i = 1;i &lt;= m;++i)<br />
+	{<br />
+		c = getc();<br />
+		if(c == 'M')<br />
+		{<br />
+			scanf("%d%d",&a,&b);<br />
+			modify(a,(ll)b);<br />
+		}<br />
+		else<br />
+		{<br />
+			scanf("%d",&a);<br />
+			printf("%lld\n",query(a));<br />
+		}<br />
+	}<br />
+	return 0;<br />
+}<br />
+</pre></code>
+</div>
+        </div>
+        <div class="blogfile_showtag">
+          <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png">
+          In tag:
+<a href="../tags/DP-动态DP.html">DP-动态DP</a> 
+          <!--<a href="../tags/blog.html">blog</a>-->
+        </div>
+      </div>
+    </div>
+    <div id="middle_nav">
+      <div class="blog_host">
+        <div class="nav_avator">
+          <img src="http://pic.yupoo.com/wjh15101051/72c1aeab/f51d56e0.jpg" alt="avator">
+        </div>
+        <div class="nav_ID">
+          wjh15101051
+        </div>
+      </div>
+      <div class="nav_list">
+        <li class="tags">
+          <a href="../tags.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png" class="list_icon" id="tags_image">
+            Tags
+          </a>
+        </li>
+        <li class="categories">
+          <a href="../categories.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png" class="list_icon" id="categories_image">
+            Categories
+          </a>
+        </li>
+        <li class="timeline">
+          <a href="../timeline.html">
+            <img src="http://pic.yupoo.com/wjh15101051/30365cc7/c1a3be15.png" class="list_icon" id="timeline_image">
+            Timeline
+          </a>
+        </li>
+        <li class="about">
+          <a href="../about.html">
+            <img src="http://pic.yupoo.com/wjh15101051/24f1cb41/e239086e.png" class="list_icon" id="about_image">
+            About
+          </a>
+        </li>
+        <li class="toolbox">
+          <a href="../toolbox.html">
+            <img src="http://pic.yupoo.com/wjh15101051/dee9f673/d3cf682a.png" class="list_icon" id="toolbox_image">
+            Toolbox
+          </a>
+        </li>
+        <li class="friends">
+            <div class="friends_text">
+              <img src="http://pic.yupoo.com/wjh15101051/d291ebed/29f9c807.png" id="friends_image">
+              Friends
+            </div>
+            <div id="fp_friends_list">
+              <div id="SGcolin">
+                <a href="http://blog.gyx.me/" target="_blank">SGcolin</a>
+              </div>
+              <div id="Xingcy">
+                <a href="https://www.cnblogs.com/xcysblog/" target="_blank">Xingcy</a>
+              </div>
+              <div id="ZH_comld">
+                <a href="https://www.cnblogs.com/ZH-comld/" target="_blank">ZH_comld</a>
+              </div>
+            </div>
+            <br>
+          </div>
+        </li>
+      </div>
+    <div class="music_player">
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer@1.10.0/dist/APlayer.min.css">
+      <script src="https://blog-static.cnblogs.com/files/yjlaugus/APlayer.min.js"></script>
+      <div id="aplayer" class="aplayer"  data-id="5313691453" data-server="netease" data-type="playlist" data-fixed="true" data-listfolded="true" data-order="random" data-theme="#F58EA8"></div>
+      <script src="https://unpkg.com/meting@1.2/dist/Meting.min.js"></script>
+    </div>
+    <div class="bottom">
+      <div>
+        Copyright © 2020
+        <a id="copyright_user_a" href="index.html">
+          <span id="copyright_user">wjh15101051</span>
+        </a>
+      </div>
+      <div class="bottom_anime">ღゝ◡╹)ノ♡</div>
+    </div>
+  </div>
+</body>
+</html>

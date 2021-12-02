@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>设计铁路</title>
+  <link rel="stylesheet" type="text/css" id="frame_style" href="../css/frame_style1.css">
+  <link rel="stylesheet" type="text/css" id="Markdown_style" href="../css/Markdown_style.css">
+  <script type="text/javascript" src="../jscode/frame.js"></script>
+  <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+  <link rel="stylesheet" href="https://ziyuan.fenxianglu.cn/js/highlight/styles/default.css">
+  <script src="https://ziyuan.fenxianglu.cn/js/highlight/highlight.pack.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+        inlineMath: [['$','$']]
+      }
+    });
+  </script>
+</head>
+<body>
+  <div class="main">
+    <div class="head">
+      <div class="title1">
+        <a href="../index.html">wjh15101051's space</a>
+      </div>
+      <div class="title2">
+        卧薪尝胆，厚积薄发。
+      </div>
+    </div>
+    <div id="middle_blogfile">
+      <div class="blog_blogfile">
+        <div class="blogfile_title">
+            设计铁路
+        </div>
+        <div class="blogfile_stitle">
+          <img src="http://pic.yupoo.com/wjh15101051/1e0e1b3a/118165c5.jpg">
+          Date: Sun Sep 16 14:38:34 CST 2018
+          <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png">
+          In Category:
+          <a href="../categories/NoCategory.html">NoCategory</a>
+        </div>
+        <div class="blogfile_content">
+<div class = "MarkdownCommonContent">
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Description：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+一条公路，每个点有一些人，每个点的人会走到右边第一个车站坐火车，最右边已经有了一个车站，最小化建车站代价
+$+$
+所有人步行距离和。
+</div>
+<div class = "MarkdownCommonContent">
+$1\le n \le 40000$
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Solution：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+感觉和
+<a class = "MarkdownA" href="http://localhost:4000/2018/09/09/bzoj3437/">小P的牧场</a>
+差不多，当时就不知道为什么没有这种做法。
+</div>
+<div class = "MarkdownCommonContent">
+设
+$f[i]$
+表示到
+$i$
+左边都已经有车站到，且
+$i$
+建了车站的最小费用，由于这题距离范围很小，所以设
+$t[i]$
+表示在位置
+$i$
+有多少人。设
+$\begin{align}c[i]=\sum_{k=1}^it[i],s[i]=\sum_{k=1}^it[i]\times i\end{align}$
+，那么转移方程为
+$f[i]=m+\min(f[j+1]+(s[j]-s[i])-i\times(c[j]-c[i]))(j &gt;i)$
+，变一下形就是
+$f[j+1]+s[j]=i\times c[j]+f[i]-i\times c[i]+s[i]-m$
+，可以斜率优化，
+$x=c[j],y=f[j+1]+s[j],k=i,b=f[i]-i\times c[i]+s[i]-m$
+，因为是倒序循环所以
+$x$
+单调递减，
+$k$
+单调递减，维护下凸壳，所以可以用单调队列维护。由于
+$x$
+坐标可能相等所以不能用斜率。
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Code：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+<pre><code class="MarkdownParaCode">
+#include&lt;algorithm&gt;<br />
+#include&lt;iostream&gt;<br />
+#include&lt;cstdlib&gt;<br />
+#include&lt;cstdio&gt;<br />
+#include&lt;cmath&gt;<br />
+#include&lt;cstring&gt;<br />
+using namespace std;<br />
+int n;<br />
+typedef long long ll;<br />
+ll m;<br />
+#define MAXN 1000010<br />
+ll t[MAXN];<br />
+ll c[MAXN],s[MAXN];<br />
+int q[MAXN],head,tail;<br />
+ll f[MAXN];<br />
+ll y[MAXN];<br />
+int main()<br />
+{<br />
+	scanf("%d%lld",&n,&m);<br />
+	int pos;<br />
+	int val;<br />
+	int mx = 0;<br />
+	for(int i = 1;i &lt;= n;++i)<br />
+	{<br />
+		scanf("%d%d",&pos,&val);<br />
+		t[pos] += val;<br />
+		mx = max(mx,pos);<br />
+	}<br />
+	for(ll i = 1;i &lt;= mx;++i)<br />
+	{<br />
+		c[i] = c[i - 1] + t[i];<br />
+		s[i] = s[i - 1] + t[i] * i; <br />
+	}<br />
+	f[mx] = m;y[mx] = s[mx];<br />
+	q[head = tail = 1] = mx;<br />
+	for(ll i = mx - 1;i &gt;= 0;--i)<br />
+	{<br />
+		while(head &lt; tail && (y[q[head + 1]] - y[q[head]]) &lt; (c[q[head + 1]] - c[q[head]]) * i)++head;<br />
+		f[i] = m + f[q[head] + 1] + (s[q[head]] - s[i]) - i * (c[q[head]] - c[i]);<br />
+		y[i] = f[i + 1] + s[i];//cout &lt;&lt; " " &lt;&lt; q[head] &lt;&lt; endl;cout &lt;&lt; " : " &lt;&lt; y[i] &lt;&lt; endl;<br />
+		while(head &lt; tail && (y[q[tail]] - y[q[tail - 1]]) * (c[i] - c[q[tail]]) &lt;= (y[i] - y[q[tail]]) * (c[q[tail]] - c[q[tail - 1]]))--tail;<br />
+		q[++tail] = i;//cout &lt;&lt; f[i] &lt;&lt; endl;<br />
+	}<br />
+	cout &lt;&lt; f[0] - m &lt;&lt; endl;<br />
+	return 0;<br />
+}<br />
+</pre></code>
+</div>
+        </div>
+        <div class="blogfile_showtag">
+          <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png">
+          In tag:
+<a href="../tags/DP-斜率优化DP.html">DP-斜率优化DP</a> 
+          <!--<a href="../tags/blog.html">blog</a>-->
+        </div>
+      </div>
+    </div>
+    <div id="middle_nav">
+      <div class="blog_host">
+        <div class="nav_avator">
+          <img src="http://pic.yupoo.com/wjh15101051/72c1aeab/f51d56e0.jpg" alt="avator">
+        </div>
+        <div class="nav_ID">
+          wjh15101051
+        </div>
+      </div>
+      <div class="nav_list">
+        <li class="tags">
+          <a href="../tags.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png" class="list_icon" id="tags_image">
+            Tags
+          </a>
+        </li>
+        <li class="categories">
+          <a href="../categories.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png" class="list_icon" id="categories_image">
+            Categories
+          </a>
+        </li>
+        <li class="timeline">
+          <a href="../timeline.html">
+            <img src="http://pic.yupoo.com/wjh15101051/30365cc7/c1a3be15.png" class="list_icon" id="timeline_image">
+            Timeline
+          </a>
+        </li>
+        <li class="about">
+          <a href="../about.html">
+            <img src="http://pic.yupoo.com/wjh15101051/24f1cb41/e239086e.png" class="list_icon" id="about_image">
+            About
+          </a>
+        </li>
+        <li class="toolbox">
+          <a href="../toolbox.html">
+            <img src="http://pic.yupoo.com/wjh15101051/dee9f673/d3cf682a.png" class="list_icon" id="toolbox_image">
+            Toolbox
+          </a>
+        </li>
+        <li class="friends">
+            <div class="friends_text">
+              <img src="http://pic.yupoo.com/wjh15101051/d291ebed/29f9c807.png" id="friends_image">
+              Friends
+            </div>
+            <div id="fp_friends_list">
+              <div id="SGcolin">
+                <a href="http://blog.gyx.me/" target="_blank">SGcolin</a>
+              </div>
+              <div id="Xingcy">
+                <a href="https://www.cnblogs.com/xcysblog/" target="_blank">Xingcy</a>
+              </div>
+              <div id="ZH_comld">
+                <a href="https://www.cnblogs.com/ZH-comld/" target="_blank">ZH_comld</a>
+              </div>
+            </div>
+            <br>
+          </div>
+        </li>
+      </div>
+    <div class="music_player">
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer@1.10.0/dist/APlayer.min.css">
+      <script src="https://blog-static.cnblogs.com/files/yjlaugus/APlayer.min.js"></script>
+      <div id="aplayer" class="aplayer"  data-id="5313691453" data-server="netease" data-type="playlist" data-fixed="true" data-listfolded="true" data-order="random" data-theme="#F58EA8"></div>
+      <script src="https://unpkg.com/meting@1.2/dist/Meting.min.js"></script>
+    </div>
+    <div class="bottom">
+      <div>
+        Copyright © 2020
+        <a id="copyright_user_a" href="index.html">
+          <span id="copyright_user">wjh15101051</span>
+        </a>
+      </div>
+      <div class="bottom_anime">ღゝ◡╹)ノ♡</div>
+    </div>
+  </div>
+</body>
+</html>

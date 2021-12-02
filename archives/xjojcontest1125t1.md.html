@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Tried</title>
+  <link rel="stylesheet" type="text/css" id="frame_style" href="../css/frame_style1.css">
+  <link rel="stylesheet" type="text/css" id="Markdown_style" href="../css/Markdown_style.css">
+  <script type="text/javascript" src="../jscode/frame.js"></script>
+  <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+  <link rel="stylesheet" href="https://ziyuan.fenxianglu.cn/js/highlight/styles/default.css">
+  <script src="https://ziyuan.fenxianglu.cn/js/highlight/highlight.pack.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+        inlineMath: [['$','$']]
+      }
+    });
+  </script>
+</head>
+<body>
+  <div class="main">
+    <div class="head">
+      <div class="title1">
+        <a href="../index.html">wjh15101051's space</a>
+      </div>
+      <div class="title2">
+        卧薪尝胆，厚积薄发。
+      </div>
+    </div>
+    <div id="middle_blogfile">
+      <div class="blog_blogfile">
+        <div class="blogfile_title">
+            Tried
+        </div>
+        <div class="blogfile_stitle">
+          <img src="http://pic.yupoo.com/wjh15101051/1e0e1b3a/118165c5.jpg">
+          Date: Sat Mar 16 16:23:42 CST 2019
+          <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png">
+          In Category:
+          <a href="../categories/NoCategory.html">NoCategory</a>
+        </div>
+        <div class="blogfile_content">
+<div class = "MarkdownCommonContent">
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Description：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+给一个有向图，每条边有边权
+$w$
+，走过第
+$i$
+条边代价为
+$w\times 10^{i-1}$
+，求最长路和最长路方案数。
+</div>
+<div class = "MarkdownCommonContent">
+$1\leqslant n\leqslant 10^5,0\leqslant w\leqslant 9$
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Solution：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+最长路很好求，先求出一个最后一位不是
+$0$
+的边数最多的路径，然后从后往前推每一位，因为满足按位贪心性质，然后就是一大堆特判了，具体就不说了。
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Code：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+<pre><code class="MarkdownParaCode">
+#include&lt;algorithm&gt;<br />
+#include&lt;iostream&gt;<br />
+#include&lt;cstdlib&gt;<br />
+#include&lt;cstdio&gt;<br />
+#include&lt;cmath&gt;<br />
+#include&lt;queue&gt;<br />
+#include&lt;vector&gt;<br />
+#include&lt;cctype&gt;<br />
+#include&lt;cstring&gt;<br />
+using namespace std;<br />
+int n,m;<br />
+#define MAXN 100010<br />
+#define MAXM 1000010<br />
+inline int rd()<br />
+{<br />
+	register int res = 0,f = 1;register char c = getchar();<br />
+	while(!isdigit(c)){if(c == '-')f = -1;c = getchar();}<br />
+	while(isdigit(c))res = (res &lt;&lt; 1) + (res &lt;&lt; 3) + c - '0',c = getchar();<br />
+	return res * f;<br />
+}<br />
+struct edges<br />
+{<br />
+	int u,v,w;<br />
+}es[MAXM];<br />
+struct edge<br />
+{<br />
+	int to,nxt,w;<br />
+}e[MAXM];<br />
+int edgenum = 0;<br />
+int lin[MAXN] = {0};<br />
+int ind[MAXN];<br />
+void add(int a,int b,int c)<br />
+{<br />
+	++ind[b];<br />
+	e[++edgenum] = (edge){b,lin[a],c};lin[a] = edgenum;<br />
+	return;<br />
+}<br />
+int topo[MAXN];<br />
+int d[MAXN],/*最长路*/d_[MAXN]/*最后一条边不为0的最长路*/;<br />
+vector&lt;int&gt; v[MAXN];<br />
+bool tag[MAXN];<br />
+int ans1[MAXN];<br />
+int cnt[MAXN];<br />
+#define MOD 998244353<br />
+#define iter vector&lt;int&gt;::iterator<br />
+int cnt2[MAXN];<br />
+int dfn[MAXN],low[MAXN],tot = 0;<br />
+int stack[MAXN],top = 0;<br />
+bool vis[MAXN];<br />
+int scc = 0,ins[MAXN],siz[MAXN];<br />
+void tarjan(int k)<br />
+{<br />
+	dfn[k] = low[k] = ++tot;<br />
+	stack[++top] = k;vis[k] = true;<br />
+	for(int i = lin[k];i != 0;i = e[i].nxt)<br />
+	{<br />
+		if(dfn[e[i].to] == 0)<br />
+		{<br />
+			tarjan(e[i].to);<br />
+			low[k] = min(low[k],low[e[i].to]);<br />
+		}<br />
+		else if(vis[e[i].to])<br />
+		{<br />
+			low[k] = min(low[k],dfn[e[i].to]);<br />
+		}<br />
+	}<br />
+	if(low[k] &gt;= dfn[k])<br />
+	{<br />
+		int t;++scc;<br />
+		do<br />
+		{<br />
+			t = stack[top--];<br />
+			ins[t] = scc;<br />
+			vis[t] = false;<br />
+			++siz[scc];<br />
+		}while(t != k);<br />
+	}<br />
+	return;<br />
+}<br />
+edge ve[MAXM];<br />
+int vedgenum = 0;<br />
+int vlin[MAXN] = {0};<br />
+void vadd(int a,int b,int c)<br />
+{//cout &lt;&lt; a &lt;&lt; " " &lt;&lt; b &lt;&lt; " " &lt;&lt; c &lt;&lt; endl;<br />
+	++ind[b];<br />
+	ve[++vedgenum] = (edge){b,vlin[a],c};vlin[a] = vedgenum;<br />
+	return;<br />
+}<br />
+int main()<br />
+{<br />
+	scanf("%d%d",&n,&m);<br />
+	bool flag = false;<br />
+	for(int i = 1;i &lt;= m;++i)<br />
+	{<br />
+		es[i].u = rd();es[i].v = rd();es[i].w = rd();<br />
+		flag |= (es[i].w != 0);<br />
+		add(es[i].v,es[i].u,es[i].w);<br />
+	}<br />
+	for(int i = 1;i &lt;= n;++i)if(dfn[i] == 0)tarjan(i);<br />
+	memset(ind,0,sizeof(ind));<br />
+	for(int k = 1;k &lt;= n;++k)<br />
+		for(int i = lin[k];i != 0;i = e[i].nxt)<br />
+			if(ins[k] != ins[e[i].to])vadd(ins[k],ins[e[i].to],e[i].w);<br />
+	for(int i = 1;i &lt;= m;++i)if(ins[es[i].u] == ins[es[i].v])++siz[ins[es[i].u]];<br />
+	if(!flag)<br />
+	{<br />
+		queue&lt;int&gt; q;<br />
+		for(int i = 1;i &lt;= scc;++i)if(siz[i] != 1)<br />
+		{<br />
+			puts("0");<br />
+			puts("inf");<br />
+			return 0;<br />
+		}<br />
+		for(int i = 1;i &lt;= scc;++i)cnt[i] = siz[i];<br />
+		for(int i = 1;i &lt;= scc;++i)if(ind[i] == 0)q.push(i);<br />
+		while(!q.empty())<br />
+		{<br />
+			int k = q.front();q.pop();<br />
+			for(int i = vlin[k];i != 0;i = ve[i].nxt)<br />
+			{<br />
+				cnt[ve[i].to] = (cnt[ve[i].to] + cnt[k]) % MOD;<br />
+				--ind[ve[i].to];<br />
+				if(ind[ve[i].to] == 0)q.push(ve[i].to);<br />
+			}<br />
+		}<br />
+		int ans = 0;<br />
+		for(int i = 1;i &lt;= scc;++i)ans = (ans + cnt[i]) % MOD;<br />
+		cout &lt;&lt; 0 &lt;&lt; endl &lt;&lt; ans &lt;&lt; endl;<br />
+		return 0;<br />
+	}<br />
+	for(int i = 1;i &lt;= m;++i)<br />
+	{<br />
+		if(es[i].w != 0 && ins[es[i].u] == ins[es[i].v])<br />
+		{<br />
+			puts("inf");<br />
+			puts("inf");<br />
+			return 0;<br />
+		}<br />
+		if(ins[es[i].u] == ins[es[i].v])siz[ins[es[i].u]]++;<br />
+	}<br />
+	queue&lt;int&gt; q;<br />
+	for(int i = 1;i &lt;= scc;++i)<br />
+	{<br />
+		if(ind[i] == 0)q.push(i);<br />
+	}<br />
+	topo[0] = scc;<br />
+	while(!q.empty())<br />
+	{<br />
+		int k = q.front();q.pop();<br />
+		topo[topo[0]--] = k;<br />
+		for(int i = vlin[k];i != 0;i = ve[i].nxt)<br />
+		{<br />
+			--ind[ve[i].to];<br />
+			if(ind[ve[i].to] == 0)q.push(ve[i].to);<br />
+		}<br />
+	}<br />
+	int maxlen = 0;<br />
+	for(int p = 1;p &lt;= scc;++p)<br />
+	{<br />
+		int k = topo[p];<br />
+		for(int i = vlin[k];i != 0;i = ve[i].nxt)<br />
+		{<br />
+			d[k] = max(d[k],d[ve[i].to] + 1);<br />
+			if(ve[i].w != 0)d_[k] = max(d_[k],d[ve[i].to] + 1);<br />
+		}<br />
+		v[d[k]].push_back(k);<br />
+		maxlen = max(maxlen,d_[k]);<br />
+	}<br />
+	for(int k = 1;k &lt;= scc;++k)<br />
+	{<br />
+		if(d_[k] != maxlen)continue;<br />
+		for(int i = vlin[k];i != 0;i = ve[i].nxt)<br />
+		{<br />
+			if(d[ve[i].to] + 1 == d_[k])ans1[maxlen] = max(ans1[maxlen],ve[i].w);<br />
+		}<br />
+	}<br />
+	for(int k = 1;k &lt;= scc;++k)<br />
+	{<br />
+		if(d_[k] != maxlen)continue;<br />
+		for(int i = vlin[k];i != 0;i = ve[i].nxt)<br />
+		{<br />
+			if(d[ve[i].to] + 1 == d_[k] && ve[i].w == ans1[maxlen])tag[ve[i].to] = true;<br />
+		}<br />
+	}<br />
+	for(int p = maxlen - 1;p &gt; 0;--p)<br />
+	{<br />
+		for(iter it = v[p].begin();it != v[p].end();++it)<br />
+		{<br />
+			int k = *it;<br />
+			if(!tag[k])continue;<br />
+			for(int i = vlin[k];i != 0;i = ve[i].nxt)<br />
+			{<br />
+				if(d[ve[i].to] + 1 == d[k])ans1[p] = max(ans1[p],ve[i].w);<br />
+			}<br />
+		}<br />
+		for(iter it = v[p].begin();it != v[p].end();++it)<br />
+		{<br />
+			int k = *it;<br />
+			if(!tag[k])continue;<br />
+			for(int i = vlin[k];i != 0;i = ve[i].nxt)<br />
+			{<br />
+				if(d[ve[i].to] + 1 == d[k] && ve[i].w == ans1[p])tag[ve[i].to] = true;<br />
+			}<br />
+		}<br />
+	}<br />
+	for(iter it = v[0].begin();it != v[0].end();++it)if(tag[*it])cnt[*it] = 1;<br />
+	for(int p = 1;p &lt; maxlen;++p)<br />
+	{<br />
+		for(iter it = v[p].begin();it != v[p].end();++it)<br />
+		{<br />
+			int k = *it;<br />
+			if(!tag[k])continue;<br />
+			for(int i = vlin[k];i != 0;i = ve[i].nxt)<br />
+			{<br />
+				if(d[ve[i].to] + 1 == d[k] && ve[i].w == ans1[p])cnt[k] = (cnt[k] + cnt[ve[i].to]) % MOD;<br />
+			}<br />
+		}<br />
+	}<br />
+	for(int k = 1;k &lt;= scc;++k)<br />
+	{<br />
+		if(d_[k] != maxlen)continue;<br />
+		for(int i = vlin[k];i != 0;i = ve[i].nxt)<br />
+		{<br />
+			if(d[ve[i].to] + 1 == d_[k] && ve[i].w == ans1[maxlen])cnt[k] = (cnt[k] + cnt[ve[i].to]) % MOD;<br />
+		}<br />
+		cnt2[k] = cnt[k];<br />
+	}<br />
+	for(int i = 1;i &lt;= scc;++i)<br />
+	{<br />
+		if(siz[i] != 1 && cnt[i] != 0 && cnt2[i] == 0)<br />
+		{<br />
+			cout &lt;&lt; "inf" &lt;&lt; endl &lt;&lt; "inf" &lt;&lt; endl;<br />
+			return 0;<br />
+		}<br />
+	}<br />
+	for(int p = 1;p &lt;= scc;++p)<br />
+	{<br />
+		int k = topo[p];<br />
+		for(int i = vlin[k];i != 0;i = ve[i].nxt)<br />
+		{<br />
+			cnt2[k] = (cnt2[k] + cnt2[ve[i].to]) % MOD;<br />
+		}<br />
+	}<br />
+	for(int i = maxlen;i &gt;= 1;--i)printf("%d",ans1[i]);cout &lt;&lt; endl;<br />
+	for(int i = 1;i &lt;= scc;++i)<br />
+	{<br />
+		if(siz[i] != 1 && (cnt[i] != 0 || cnt2[i] != 0))<br />
+		{<br />
+			cout &lt;&lt; "inf" &lt;&lt; endl;<br />
+			return 0;<br />
+		}<br />
+	}	<br />
+	int ans2 = 0;<br />
+	for(int i = 1;i &lt;= scc;++i)ans2 = (ans2 + cnt2[i]) % MOD;<br />
+	cout &lt;&lt; ans2 &lt;&lt; endl;<br />
+	return 0;<br />
+}<br />
+</pre></code>
+</div>
+        </div>
+        <div class="blogfile_showtag">
+          <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png">
+          In tag:
+<a href="../tags/图论-拓扑排序.html">图论-拓扑排序</a> 
+          <!--<a href="../tags/blog.html">blog</a>-->
+        </div>
+      </div>
+    </div>
+    <div id="middle_nav">
+      <div class="blog_host">
+        <div class="nav_avator">
+          <img src="http://pic.yupoo.com/wjh15101051/72c1aeab/f51d56e0.jpg" alt="avator">
+        </div>
+        <div class="nav_ID">
+          wjh15101051
+        </div>
+      </div>
+      <div class="nav_list">
+        <li class="tags">
+          <a href="../tags.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png" class="list_icon" id="tags_image">
+            Tags
+          </a>
+        </li>
+        <li class="categories">
+          <a href="../categories.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png" class="list_icon" id="categories_image">
+            Categories
+          </a>
+        </li>
+        <li class="timeline">
+          <a href="../timeline.html">
+            <img src="http://pic.yupoo.com/wjh15101051/30365cc7/c1a3be15.png" class="list_icon" id="timeline_image">
+            Timeline
+          </a>
+        </li>
+        <li class="about">
+          <a href="../about.html">
+            <img src="http://pic.yupoo.com/wjh15101051/24f1cb41/e239086e.png" class="list_icon" id="about_image">
+            About
+          </a>
+        </li>
+        <li class="toolbox">
+          <a href="../toolbox.html">
+            <img src="http://pic.yupoo.com/wjh15101051/dee9f673/d3cf682a.png" class="list_icon" id="toolbox_image">
+            Toolbox
+          </a>
+        </li>
+        <li class="friends">
+            <div class="friends_text">
+              <img src="http://pic.yupoo.com/wjh15101051/d291ebed/29f9c807.png" id="friends_image">
+              Friends
+            </div>
+            <div id="fp_friends_list">
+              <div id="SGcolin">
+                <a href="http://blog.gyx.me/" target="_blank">SGcolin</a>
+              </div>
+              <div id="Xingcy">
+                <a href="https://www.cnblogs.com/xcysblog/" target="_blank">Xingcy</a>
+              </div>
+              <div id="ZH_comld">
+                <a href="https://www.cnblogs.com/ZH-comld/" target="_blank">ZH_comld</a>
+              </div>
+            </div>
+            <br>
+          </div>
+        </li>
+      </div>
+    <div class="music_player">
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer@1.10.0/dist/APlayer.min.css">
+      <script src="https://blog-static.cnblogs.com/files/yjlaugus/APlayer.min.js"></script>
+      <div id="aplayer" class="aplayer"  data-id="5313691453" data-server="netease" data-type="playlist" data-fixed="true" data-listfolded="true" data-order="random" data-theme="#F58EA8"></div>
+      <script src="https://unpkg.com/meting@1.2/dist/Meting.min.js"></script>
+    </div>
+    <div class="bottom">
+      <div>
+        Copyright © 2020
+        <a id="copyright_user_a" href="index.html">
+          <span id="copyright_user">wjh15101051</span>
+        </a>
+      </div>
+      <div class="bottom_anime">ღゝ◡╹)ノ♡</div>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>SHOI2005 带限制的最长公共子序列</title>
+  <link rel="stylesheet" type="text/css" id="frame_style" href="../css/frame_style1.css">
+  <link rel="stylesheet" type="text/css" id="Markdown_style" href="../css/Markdown_style.css">
+  <script type="text/javascript" src="../jscode/frame.js"></script>
+  <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+  <link rel="stylesheet" href="https://ziyuan.fenxianglu.cn/js/highlight/styles/default.css">
+  <script src="https://ziyuan.fenxianglu.cn/js/highlight/highlight.pack.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+        inlineMath: [['$','$']]
+      }
+    });
+  </script>
+</head>
+<body>
+  <div class="main">
+    <div class="head">
+      <div class="title1">
+        <a href="../index.html">wjh15101051's space</a>
+      </div>
+      <div class="title2">
+        卧薪尝胆，厚积薄发。
+      </div>
+    </div>
+    <div id="middle_blogfile">
+      <div class="blog_blogfile">
+        <div class="blogfile_title">
+            SHOI2005 带限制的最长公共子序列
+        </div>
+        <div class="blogfile_stitle">
+          <img src="http://pic.yupoo.com/wjh15101051/1e0e1b3a/118165c5.jpg">
+          Date: Mon Sep 03 17:42:12 CST 2018
+          <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png">
+          In Category:
+          <a href="../categories/NoCategory.html">NoCategory</a>
+        </div>
+        <div class="blogfile_content">
+<div class = "MarkdownCommonContent">
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Description：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+给三个字符串
+$A,B,C$
+，求
+$A,B$
+的最长公共子序列，满足
+$C$
+是这个子序列的子序列。
+</div>
+<div class = "MarkdownCommonContent">
+$1\le len \le 500$
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Solution：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+记
+$f[i][j][k]$
+表示三个字符串分别到了
+$i,j,k$
+位置，初值是
+$A$
+和
+$B$
+的
+$LCS$
+数组，然后转移只是比普通
+$LCS$
+多加了一个
+$C$
+的转移，即如果加了新字符刚好和
+$C[k]$
+相同，那么
+$C$
+也可以有上一个转移过来，注意由于强制
+$C$
+跑满，所以
+$k&gt;0$
+的状态初值都要赋成
+$-INF$
+。
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Code：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+<pre><code class="MarkdownParaCode">
+#include&lt;algorithm&gt;<br />
+#include&lt;iostream&gt;<br />
+#include&lt;cstdlib&gt;<br />
+#include&lt;cstdio&gt;<br />
+#include&lt;cmath&gt;<br />
+#include&lt;cstring&gt;<br />
+using namespace std;<br />
+#define MAXL 510<br />
+char a[MAXL],b[MAXL],c[MAXL];<br />
+int la,lb,lc;<br />
+int f[MAXL][MAXL][2];<br />
+#define NEG 0xc0c0c0c0<br />
+int main()<br />
+{<br />
+    scanf("%s%s%s",a + 1,b + 1,c + 1);<br />
+    la = strlen(a + 1);lb = strlen(b + 1);lc = strlen(c + 1);<br />
+    int cur = 0;<br />
+    for(int i = 1;i &lt;= la;++i)<br />
+    {<br />
+        for(int j = 1;j &lt;= lb;++j)<br />
+        {<br />
+            f[i][j][cur] = max(f[i - 1][j][cur],f[i][j - 1][cur]);<br />
+            if(a[i] == b[j])f[i][j][cur] = max(f[i][j][cur],f[i - 1][j - 1][cur] + 1);<br />
+        }<br />
+    }<br />
+    for(int k = 1;k &lt;= lc;++k)<br />
+    {<br />
+        cur = cur ^ 1;<br />
+        for(int i = 0;i &lt;= la;++i)<br />
+            for(int j = 0;j &lt;= lb;++j)<br />
+                f[i][j][cur] = NEG;<br />
+        for(int i = 1;i &lt;= la;++i)<br />
+        {<br />
+            for(int j = 1;j &lt;= lb;++j)<br />
+            {<br />
+                if(a[i] == b[j])<br />
+                {<br />
+                    f[i][j][cur] = max(f[i][j][cur],f[i - 1][j - 1][cur] + 1);<br />
+                    if(a[i] == c[k])<br />
+                    {<br />
+                        f[i][j][cur] = max(f[i][j][cur],f[i - 1][j - 1][cur ^ 1] + 1);<br />
+                    }<br />
+                }<br />
+                f[i][j][cur] = max(f[i][j][cur],max(f[i - 1][j][cur],f[i][j - 1][cur]));<br />
+            }<br />
+        }<br />
+        <br />
+    }<br />
+    if(f[la][lb][cur] &gt; 0)cout &lt;&lt; f[la][lb][cur] &lt;&lt; endl;<br />
+    else puts("NO SOLUTION");<br />
+    return 0;<br />
+}<br />
+</pre></code>
+</div>
+        </div>
+        <div class="blogfile_showtag">
+          <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png">
+          In tag:
+<a href="../tags/DP-LCS.html">DP-LCS</a> 
+          <!--<a href="../tags/blog.html">blog</a>-->
+        </div>
+      </div>
+    </div>
+    <div id="middle_nav">
+      <div class="blog_host">
+        <div class="nav_avator">
+          <img src="http://pic.yupoo.com/wjh15101051/72c1aeab/f51d56e0.jpg" alt="avator">
+        </div>
+        <div class="nav_ID">
+          wjh15101051
+        </div>
+      </div>
+      <div class="nav_list">
+        <li class="tags">
+          <a href="../tags.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png" class="list_icon" id="tags_image">
+            Tags
+          </a>
+        </li>
+        <li class="categories">
+          <a href="../categories.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png" class="list_icon" id="categories_image">
+            Categories
+          </a>
+        </li>
+        <li class="timeline">
+          <a href="../timeline.html">
+            <img src="http://pic.yupoo.com/wjh15101051/30365cc7/c1a3be15.png" class="list_icon" id="timeline_image">
+            Timeline
+          </a>
+        </li>
+        <li class="about">
+          <a href="../about.html">
+            <img src="http://pic.yupoo.com/wjh15101051/24f1cb41/e239086e.png" class="list_icon" id="about_image">
+            About
+          </a>
+        </li>
+        <li class="toolbox">
+          <a href="../toolbox.html">
+            <img src="http://pic.yupoo.com/wjh15101051/dee9f673/d3cf682a.png" class="list_icon" id="toolbox_image">
+            Toolbox
+          </a>
+        </li>
+        <li class="friends">
+            <div class="friends_text">
+              <img src="http://pic.yupoo.com/wjh15101051/d291ebed/29f9c807.png" id="friends_image">
+              Friends
+            </div>
+            <div id="fp_friends_list">
+              <div id="SGcolin">
+                <a href="http://blog.gyx.me/" target="_blank">SGcolin</a>
+              </div>
+              <div id="Xingcy">
+                <a href="https://www.cnblogs.com/xcysblog/" target="_blank">Xingcy</a>
+              </div>
+              <div id="ZH_comld">
+                <a href="https://www.cnblogs.com/ZH-comld/" target="_blank">ZH_comld</a>
+              </div>
+            </div>
+            <br>
+          </div>
+        </li>
+      </div>
+    <div class="music_player">
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer@1.10.0/dist/APlayer.min.css">
+      <script src="https://blog-static.cnblogs.com/files/yjlaugus/APlayer.min.js"></script>
+      <div id="aplayer" class="aplayer"  data-id="5313691453" data-server="netease" data-type="playlist" data-fixed="true" data-listfolded="true" data-order="random" data-theme="#F58EA8"></div>
+      <script src="https://unpkg.com/meting@1.2/dist/Meting.min.js"></script>
+    </div>
+    <div class="bottom">
+      <div>
+        Copyright © 2020
+        <a id="copyright_user_a" href="index.html">
+          <span id="copyright_user">wjh15101051</span>
+        </a>
+      </div>
+      <div class="bottom_anime">ღゝ◡╹)ノ♡</div>
+    </div>
+  </div>
+</body>
+</html>

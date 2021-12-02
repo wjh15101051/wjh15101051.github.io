@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>整数分解为2的幂 V2</title>
+  <link rel="stylesheet" type="text/css" id="frame_style" href="../css/frame_style1.css">
+  <link rel="stylesheet" type="text/css" id="Markdown_style" href="../css/Markdown_style.css">
+  <script type="text/javascript" src="../jscode/frame.js"></script>
+  <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+  <link rel="stylesheet" href="https://ziyuan.fenxianglu.cn/js/highlight/styles/default.css">
+  <script src="https://ziyuan.fenxianglu.cn/js/highlight/highlight.pack.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+        inlineMath: [['$','$']]
+      }
+    });
+  </script>
+</head>
+<body>
+  <div class="main">
+    <div class="head">
+      <div class="title1">
+        <a href="../index.html">wjh15101051's space</a>
+      </div>
+      <div class="title2">
+        卧薪尝胆，厚积薄发。
+      </div>
+    </div>
+    <div id="middle_blogfile">
+      <div class="blog_blogfile">
+        <div class="blogfile_title">
+            整数分解为2的幂 V2
+        </div>
+        <div class="blogfile_stitle">
+          <img src="http://pic.yupoo.com/wjh15101051/1e0e1b3a/118165c5.jpg">
+          Date: Tue Aug 28 08:29:11 CST 2018
+          <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png">
+          In Category:
+          <a href="../categories/NoCategory.html">NoCategory</a>
+        </div>
+        <div class="blogfile_content">
+<div class = "MarkdownCommonContent">
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Description：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+求
+$n$
+划分成二的整次幂的方案数。
+</div>
+<div class = "MarkdownCommonContent">
+$1\le n \le 10^{30}$
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Solution：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+一个二的次幂分解成二的次幂，一定是把他拆成两个小一的二的次幂。
+</div>
+<div class = "MarkdownCommonContent">
+设
+$f[i][l][r]$
+表示把
+$2^i$
+分解成最大
+$2^l$
+，最小
+$2^r$
+的方案数。
+</div>
+<div class = "MarkdownCommonContent">
+$\begin{align}f[i][l][r]=\sum_{k=l}^r f[i-1][l][k]\times f[i-1][k][r]\end{align}$
+，因为相同拆分算同一种方案，所以假设左边的都比右边大。
+</div>
+<div class = "MarkdownCommonContent">
+但是由于有
+$f[i][l][r]=f[i-1][l-1][r-1]$
+，所以只用保存
+$f[i][l][0]$
+，于是
+$f[i][j]$
+表示把
+$2^i$
+分解为最大为
+$2^j$
+的方案数。即
+$\begin{align}f[i][l][0]=\sum_{k=l}^r f[i-1][l][k]\times f[i-1][k][0]\end{align}$
+，由于前半部分要求大于
+$k$
+，就整体除掉
+$k$
+，即
+$f[i-1][l][k]=f[i-k-1][l-k][0]$
+，于是
+$f$
+转移为
+$\begin{align}f[i][j]=\sum_{k=0}^jf[i-1][k]\times f[i-j-1][k-j]\end{align}$
+。
+</div>
+<div class = "MarkdownCommonContent">
+然后问题是怎么统计答案，先把
+$n$
+二进制分解，设
+$g[i][j]$
+表示做完了
+$n$
+的二进制的前
+$i$
+个一，最大数是
+$2^j$
+的方案数，有转移
+$\begin{align}g[i][j]=\sum_{k=0}^jg[i-1][k]\times f[w][j][k]\end{align}$
+，思路与之前相似，还是保证新产生的比之前分解的都大，
+$w$
+是
+$i$
+这位所代表的
+$2$
+的指数，先之前一样
+$f[w][j][k]=f[w-k][j-k][0]$
+。
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Code：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+<pre><code class="MarkdownParaCode">
+#include&lt;algorithm&gt;<br />
+#include&lt;iostream&gt;<br />
+#include&lt;cstdlib&gt;<br />
+#include&lt;cstdio&gt;<br />
+#include&lt;cmath&gt;<br />
+#include&lt;cstring&gt;<br />
+#pragma GCC optimize(3)<br />
+using namespace std;<br />
+#define BASE 1000000000<br />
+typedef long long ll;<br />
+#define MAXN 99<br />
+struct bigint<br />
+{<br />
+	int w,a[170];<br />
+	bigint(){w = 0;memset(a,0,sizeof(a));}<br />
+	friend bigint operator + (bigint a,bigint b)<br />
+	{<br />
+		register bigint t;<br />
+		t.w = max(a.w,b.w);<br />
+		for(register int i = 1;i &lt;= t.w;++i)<br />
+		{<br />
+			t.a[i] += a.a[i] + b.a[i];<br />
+			if(t.a[i] &gt;= BASE)<br />
+			{<br />
+				t.a[i + 1] = 1;<br />
+				t.a[i] -= BASE;<br />
+			}<br />
+		}<br />
+		if(t.a[t.w + 1] &gt; 0)++t.w;<br />
+		return t;<br />
+	}<br />
+	friend bigint operator * (bigint a,bigint b)<br />
+	{<br />
+		register bigint t;<br />
+		for(register int i = 1;i &lt;= a.w;++i)<br />
+		{<br />
+			for(register int j = 1;j &lt;= b.w;++j)<br />
+			{<br />
+				t.a[i + j] += ((ll)t.a[i + j - 1] + (ll)a.a[i] * (ll)b.a[j]) / BASE;<br />
+				t.a[i + j - 1] = ((ll)t.a[i + j - 1] + (ll)a.a[i] * (ll)b.a[j]) % BASE;<br />
+			}<br />
+		}<br />
+		for(t.w = a.w + b.w;t.w &gt; 1 && t.a[t.w] == 0;--t.w);<br />
+		return t;<br />
+	}<br />
+}f[MAXN + 5][MAXN + 5],ans,n,s[MAXN + 5],g[MAXN + 5][MAXN + 5];<br />
+char c[170];<br />
+int main()<br />
+{<br />
+	scanf("%s",c + 1);<br />
+	register int l = strlen(c + 1);<br />
+	n.w = l / 9 + 1;<br />
+	for(register int i = 1;i &lt;= l;++i)<br />
+	{<br />
+		register int j = (l - i) / 9;<br />
+		n.a[j + 1] = n.a[j + 1] * 10 + c[i] - '0';<br />
+	}<br />
+	f[0][0].w = f[0][0].a[1] = 1;<br />
+	for(register int i = 1;i &lt;= MAXN;++i)<br />
+	{<br />
+		for(register int j = 0;j &lt; i;++j)<br />
+		{<br />
+			for(register int k = 0;k &lt;= j;++k)<br />
+			{<br />
+				f[i][j] = f[i][j] + f[i - 1][k] * f[i - 1 - k][j - k];<br />
+			}<br />
+		}<br />
+		f[i][i].w = f[i][i].a[1] = 1;<br />
+	}<br />
+	register int tot = 0;<br />
+	for(register int i = 0;i &lt;= MAXN;++i)<br />
+	{<br />
+		if(n.a[1] & 1)<br />
+		{<br />
+			++tot;<br />
+			if(tot == 1)<br />
+			{<br />
+				for(register int j = 0;j &lt;= i;++j)g[1][j] = f[i][j];<br />
+			}<br />
+			else<br />
+			{<br />
+				for(register int j = 0;j &lt;= i;++j)<br />
+				{<br />
+					for(register int k = 0;k &lt;= j;++k)<br />
+					{<br />
+						g[tot][j] = g[tot][j] + g[tot - 1][k] * f[i - k][j - k];<br />
+					}<br />
+				}<br />
+			}<br />
+		}<br />
+		register int r = 0;<br />
+		for(register int j = n.w;j &gt;= 1;--j)<br />
+		{<br />
+			register int t = n.a[j];<br />
+			n.a[j] = ((ll)r * BASE + t) / 2;<br />
+			r = ((ll)r * BASE + t) % 2;<br />
+		}<br />
+	}<br />
+	for(register int i = 0;i &lt;= MAXN;++i)ans = ans + g[tot][i];<br />
+	printf("%d",ans.a[ans.w]);<br />
+	for(register int i = ans.w - 1;i;i--)<br />
+	{<br />
+		for(register int j = BASE / 10;j &gt;= 1;j /= 10)<br />
+		{<br />
+			putchar('0' + (ans.a[i] / j));<br />
+			ans.a[i] %= j;<br />
+		}<br />
+	}<br />
+	puts("");<br />
+	return 0;<br />
+}<br />
+</pre></code>
+</div>
+        </div>
+        <div class="blogfile_showtag">
+          <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png">
+          In tag:
+<a href="../tags/DP-DP.html">DP-DP</a> 
+          <!--<a href="../tags/blog.html">blog</a>-->
+        </div>
+      </div>
+    </div>
+    <div id="middle_nav">
+      <div class="blog_host">
+        <div class="nav_avator">
+          <img src="http://pic.yupoo.com/wjh15101051/72c1aeab/f51d56e0.jpg" alt="avator">
+        </div>
+        <div class="nav_ID">
+          wjh15101051
+        </div>
+      </div>
+      <div class="nav_list">
+        <li class="tags">
+          <a href="../tags.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png" class="list_icon" id="tags_image">
+            Tags
+          </a>
+        </li>
+        <li class="categories">
+          <a href="../categories.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png" class="list_icon" id="categories_image">
+            Categories
+          </a>
+        </li>
+        <li class="timeline">
+          <a href="../timeline.html">
+            <img src="http://pic.yupoo.com/wjh15101051/30365cc7/c1a3be15.png" class="list_icon" id="timeline_image">
+            Timeline
+          </a>
+        </li>
+        <li class="about">
+          <a href="../about.html">
+            <img src="http://pic.yupoo.com/wjh15101051/24f1cb41/e239086e.png" class="list_icon" id="about_image">
+            About
+          </a>
+        </li>
+        <li class="toolbox">
+          <a href="../toolbox.html">
+            <img src="http://pic.yupoo.com/wjh15101051/dee9f673/d3cf682a.png" class="list_icon" id="toolbox_image">
+            Toolbox
+          </a>
+        </li>
+        <li class="friends">
+            <div class="friends_text">
+              <img src="http://pic.yupoo.com/wjh15101051/d291ebed/29f9c807.png" id="friends_image">
+              Friends
+            </div>
+            <div id="fp_friends_list">
+              <div id="SGcolin">
+                <a href="http://blog.gyx.me/" target="_blank">SGcolin</a>
+              </div>
+              <div id="Xingcy">
+                <a href="https://www.cnblogs.com/xcysblog/" target="_blank">Xingcy</a>
+              </div>
+              <div id="ZH_comld">
+                <a href="https://www.cnblogs.com/ZH-comld/" target="_blank">ZH_comld</a>
+              </div>
+            </div>
+            <br>
+          </div>
+        </li>
+      </div>
+    <div class="music_player">
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer@1.10.0/dist/APlayer.min.css">
+      <script src="https://blog-static.cnblogs.com/files/yjlaugus/APlayer.min.js"></script>
+      <div id="aplayer" class="aplayer"  data-id="5313691453" data-server="netease" data-type="playlist" data-fixed="true" data-listfolded="true" data-order="random" data-theme="#F58EA8"></div>
+      <script src="https://unpkg.com/meting@1.2/dist/Meting.min.js"></script>
+    </div>
+    <div class="bottom">
+      <div>
+        Copyright © 2020
+        <a id="copyright_user_a" href="index.html">
+          <span id="copyright_user">wjh15101051</span>
+        </a>
+      </div>
+      <div class="bottom_anime">ღゝ◡╹)ノ♡</div>
+    </div>
+  </div>
+</body>
+</html>

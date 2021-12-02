@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>WORLDFINAL2017 Mission Improbable</title>
+  <link rel="stylesheet" type="text/css" id="frame_style" href="../css/frame_style1.css">
+  <link rel="stylesheet" type="text/css" id="Markdown_style" href="../css/Markdown_style.css">
+  <script type="text/javascript" src="../jscode/frame.js"></script>
+  <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+  <link rel="stylesheet" href="https://ziyuan.fenxianglu.cn/js/highlight/styles/default.css">
+  <script src="https://ziyuan.fenxianglu.cn/js/highlight/highlight.pack.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+        inlineMath: [['$','$']]
+      }
+    });
+  </script>
+</head>
+<body>
+  <div class="main">
+    <div class="head">
+      <div class="title1">
+        <a href="../index.html">wjh15101051's space</a>
+      </div>
+      <div class="title2">
+        卧薪尝胆，厚积薄发。
+      </div>
+    </div>
+    <div id="middle_blogfile">
+      <div class="blog_blogfile">
+        <div class="blogfile_title">
+            WORLDFINAL2017 Mission Improbable
+        </div>
+        <div class="blogfile_stitle">
+          <img src="http://pic.yupoo.com/wjh15101051/1e0e1b3a/118165c5.jpg">
+          Date: Mon Oct 29 13:22:20 CST 2018
+          <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png">
+          In Category:
+          <a href="../categories/NoCategory.html">NoCategory</a>
+        </div>
+        <div class="blogfile_content">
+<div class = "MarkdownCommonContent">
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Description：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+给一个
+$n\times m$
+的矩阵，每个位置堆了一些正方体，给出当前摆放情况，问在主视图，左视图，俯视图都不变的情况下，最多能拿走多少个正方体。
+</div>
+<div class = "MarkdownCommonContent">
+$1\leqslant n\leqslant 100$
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Solution：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+首先把所有刚开始不为空的位置先放一个，把所有其他的都拿走，然后发现每一行只要最大值在就好了，于是把这些加回去，但是这样显然不是最优的，因为可以有一行和一列共用一个最大值，即如果有一行和一列最大值相同，他们就可以拿走这么多的正方体，但是一行只能和一个列对应，这让我们联想到行和列的匹配，于是根据棋盘问题的常见处理方法，对于行和列相同的一组，把它们之间连边，这样跑最大匹配即可，这样做的原因是不同的最大值不会互相干预，也就是说一个联通块内的边权值一定是相同的，即不同的权值不会相互影响，所以最大匹配乘上对应高度就是答案，注意一些细节，比如本来就没有的不能放东西，也就不能连边。
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Code：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+<pre><code class="MarkdownParaCode">
+#include&lt;algorithm&gt;<br />
+#include&lt;iostream&gt;<br />
+#include&lt;cstdlib&gt;<br />
+#include&lt;cstdio&gt;<br />
+#include&lt;cmath&gt;<br />
+#include&lt;cctype&gt;<br />
+#include&lt;cstring&gt;<br />
+using namespace std;<br />
+int n,m;<br />
+#define MAXN 110<br />
+int h[MAXN][MAXN];<br />
+int maxn[MAXN],maxm[MAXN];<br />
+struct edge<br />
+{<br />
+	int to,nxt;<br />
+}e[MAXN * MAXN];<br />
+int edgenum = 0;<br />
+int lin[MAXN] = {0};<br />
+void add(int a,int b)<br />
+{<br />
+	++edgenum;e[edgenum].to = b;e[edgenum].nxt = lin[a];lin[a] = edgenum;<br />
+	return;<br />
+}<br />
+int match[MAXN];<br />
+bool v[MAXN];<br />
+bool find(int k)<br />
+{<br />
+	for(int i = lin[k];i != 0;i = e[i].nxt)<br />
+	{<br />
+		if(!v[e[i].to])<br />
+		{<br />
+			v[e[i].to] = true;<br />
+			if(match[e[i].to] == -1 || find(match[e[i].to]))<br />
+			{<br />
+				match[e[i].to] = k;<br />
+				return true;<br />
+			}<br />
+		}<br />
+	}<br />
+	return false;<br />
+}<br />
+int main()<br />
+{<br />
+	scanf("%d%d",&n,&m);<br />
+	for(int i = 1;i &lt;= n;++i)<br />
+		for(int j = 1;j &lt;= m;++j)<br />
+			scanf("%d",&h[i][j]);<br />
+	long long ans = 0;<br />
+	for(int i = 1;i &lt;= n;++i)<br />
+	{<br />
+		for(int j = 1;j &lt;= m;++j)<br />
+		{<br />
+			if(h[i][j] != 0)<br />
+			{<br />
+				ans += h[i][j] - 1;<br />
+				maxn[i] = max(maxn[i],h[i][j]);<br />
+				maxm[j] = max(maxm[j],h[i][j]);<br />
+			}<br />
+		}<br />
+	}<br />
+	for(int i = 1;i &lt;= n;++i)if(maxn[i])ans -= maxn[i] - 1;<br />
+	for(int j = 1;j &lt;= m;++j)if(maxm[j])ans -= maxm[j] - 1;<br />
+	for(int i = 1;i &lt;= n;++i)<br />
+		for(int j = 1;j &lt;= m;++j)<br />
+			if(maxn[i] == maxm[j] && h[i][j])add(i,j);<br />
+	memset(match,-1,sizeof(match));<br />
+	for(int i = 1;i &lt;= n;++i)<br />
+	{<br />
+		memset(v,false,sizeof(v));<br />
+		if(find(i))ans += maxn[i] - 1;<br />
+	}<br />
+	cout &lt;&lt; ans &lt;&lt; endl;<br />
+	return 0;<br />
+}<br />
+</pre></code>
+</div>
+        </div>
+        <div class="blogfile_showtag">
+          <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png">
+          In tag:
+<a href="../tags/图论-匈牙利算法.html">图论-匈牙利算法</a> 
+          <!--<a href="../tags/blog.html">blog</a>-->
+        </div>
+      </div>
+    </div>
+    <div id="middle_nav">
+      <div class="blog_host">
+        <div class="nav_avator">
+          <img src="http://pic.yupoo.com/wjh15101051/72c1aeab/f51d56e0.jpg" alt="avator">
+        </div>
+        <div class="nav_ID">
+          wjh15101051
+        </div>
+      </div>
+      <div class="nav_list">
+        <li class="tags">
+          <a href="../tags.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png" class="list_icon" id="tags_image">
+            Tags
+          </a>
+        </li>
+        <li class="categories">
+          <a href="../categories.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png" class="list_icon" id="categories_image">
+            Categories
+          </a>
+        </li>
+        <li class="timeline">
+          <a href="../timeline.html">
+            <img src="http://pic.yupoo.com/wjh15101051/30365cc7/c1a3be15.png" class="list_icon" id="timeline_image">
+            Timeline
+          </a>
+        </li>
+        <li class="about">
+          <a href="../about.html">
+            <img src="http://pic.yupoo.com/wjh15101051/24f1cb41/e239086e.png" class="list_icon" id="about_image">
+            About
+          </a>
+        </li>
+        <li class="toolbox">
+          <a href="../toolbox.html">
+            <img src="http://pic.yupoo.com/wjh15101051/dee9f673/d3cf682a.png" class="list_icon" id="toolbox_image">
+            Toolbox
+          </a>
+        </li>
+        <li class="friends">
+            <div class="friends_text">
+              <img src="http://pic.yupoo.com/wjh15101051/d291ebed/29f9c807.png" id="friends_image">
+              Friends
+            </div>
+            <div id="fp_friends_list">
+              <div id="SGcolin">
+                <a href="http://blog.gyx.me/" target="_blank">SGcolin</a>
+              </div>
+              <div id="Xingcy">
+                <a href="https://www.cnblogs.com/xcysblog/" target="_blank">Xingcy</a>
+              </div>
+              <div id="ZH_comld">
+                <a href="https://www.cnblogs.com/ZH-comld/" target="_blank">ZH_comld</a>
+              </div>
+            </div>
+            <br>
+          </div>
+        </li>
+      </div>
+    <div class="music_player">
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer@1.10.0/dist/APlayer.min.css">
+      <script src="https://blog-static.cnblogs.com/files/yjlaugus/APlayer.min.js"></script>
+      <div id="aplayer" class="aplayer"  data-id="5313691453" data-server="netease" data-type="playlist" data-fixed="true" data-listfolded="true" data-order="random" data-theme="#F58EA8"></div>
+      <script src="https://unpkg.com/meting@1.2/dist/Meting.min.js"></script>
+    </div>
+    <div class="bottom">
+      <div>
+        Copyright © 2020
+        <a id="copyright_user_a" href="index.html">
+          <span id="copyright_user">wjh15101051</span>
+        </a>
+      </div>
+      <div class="bottom_anime">ღゝ◡╹)ノ♡</div>
+    </div>
+  </div>
+</body>
+</html>

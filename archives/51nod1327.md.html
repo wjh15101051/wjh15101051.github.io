@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>棋盘游戏</title>
+  <link rel="stylesheet" type="text/css" id="frame_style" href="../css/frame_style1.css">
+  <link rel="stylesheet" type="text/css" id="Markdown_style" href="../css/Markdown_style.css">
+  <script type="text/javascript" src="../jscode/frame.js"></script>
+  <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+  <link rel="stylesheet" href="https://ziyuan.fenxianglu.cn/js/highlight/styles/default.css">
+  <script src="https://ziyuan.fenxianglu.cn/js/highlight/highlight.pack.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+        inlineMath: [['$','$']]
+      }
+    });
+  </script>
+</head>
+<body>
+  <div class="main">
+    <div class="head">
+      <div class="title1">
+        <a href="../index.html">wjh15101051's space</a>
+      </div>
+      <div class="title2">
+        卧薪尝胆，厚积薄发。
+      </div>
+    </div>
+    <div id="middle_blogfile">
+      <div class="blog_blogfile">
+        <div class="blogfile_title">
+            棋盘游戏
+        </div>
+        <div class="blogfile_stitle">
+          <img src="http://pic.yupoo.com/wjh15101051/1e0e1b3a/118165c5.jpg">
+          Date: Mon Aug 27 08:25:31 CST 2018
+          <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png">
+          In Category:
+          <a href="../categories/NoCategory.html">NoCategory</a>
+        </div>
+        <div class="blogfile_content">
+<div class = "MarkdownCommonContent">
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Description：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+$N\times M$
+的棋盘，每列最多放一个棋子，每行前
+$left[i]$
+个格子恰好有一枚棋子，每行后
+$right[i]$
+个格子恰好有一枚棋子，问方案数。
+</div>
+<div class = "MarkdownCommonContent">
+$1\le N\le 50,1\le M \le 200$
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Solution：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+因为每列最多放一枚棋子，所以一般是以列为阶段划分状态，设
+$f[i][j][k]$
+表示做到了第
+$i$
+列，已经放了
+$j$
+枚棋子，还有
+$k$
+个右区间没放。然后到每一个列时，如果有
+$l$
+个左区间到这里截止，那么就为这
+$l$
+个左区间分配棋子，对于当前这一列，可以满足一个左区间，满足一个右区间，放在一个空白区域和不放，这里不放的含义并不是真的不放，而是等以后有左区间时再考虑这一列的摆放，设有
+$l$
+个左区间从这里开始，
+$r$
+同理，如果满足左区间，那么就强制把一个棋子放在左区间，再在
+$i-j$
+个棋子中选
+$l-1$
+个，注意这里行交换后是另一种状态，所以应该是乘一个排列数，还应再乘
+$l$
+，代表这一列有
+$l$
+个可以选。如果满足右区间，就在
+$i-j$
+个棋子里选
+$l$
+个，并且
+$k'=k+r-1$
+，排列数可以预处理阶乘及阶乘逆元求。如果放在中间位置，那么还是
+$P_{i-j}^l$
+，右边
+$k'=k+r$
+，
+$j'=j+1$
+，不放和放在中间只有
+$j'=j$
+的差距。在最后把所有棋子个数的答案累加。
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Code：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+<pre><code class="MarkdownParaCode">
+#include&lt;algorithm&gt;<br />
+#include&lt;iostream&gt;<br />
+#include&lt;cstdlib&gt;<br />
+#include&lt;cstdio&gt;<br />
+#include&lt;cmath&gt;<br />
+#include&lt;cstring&gt;<br />
+using namespace std;<br />
+typedef long long ll;<br />
+ll n,m;<br />
+#define MAXN 51<br />
+#define MAXM 201<br />
+ll lef[MAXN],rig[MAXN];<br />
+ll f[MAXM][MAXM][MAXN];<br />
+ll fac[MAXM],inv[MAXM];<br />
+#define MOD 1000000007<br />
+ll power(ll a,ll b)<br />
+{<br />
+	ll res = 1;<br />
+	while(b &gt; 0)<br />
+	{<br />
+		if(b & 1)res = res * a % MOD;<br />
+		a = a * a % MOD;<br />
+		b = b &gt;&gt; 1;<br />
+	}<br />
+	return res;<br />
+}<br />
+ll P(ll n,ll m)<br />
+{<br />
+	if(n &lt; 0 || m &lt; 0)return 0ll;<br />
+	if(m &gt; n)return 0ll;<br />
+	return fac[n] * inv[n - m] % MOD;<br />
+}<br />
+int main()<br />
+{<br />
+	scanf("%lld%lld",&n,&m);<br />
+	for(ll i = 1;i &lt;= n;++i)scanf("%lld%lld",&lef[i],&rig[i]);<br />
+	fac[0] = 1;<br />
+	for(ll i = 1;i &lt;= m;++i)fac[i] = fac[i - 1] * i % MOD;<br />
+	inv[m] = power(fac[m],MOD - 2);<br />
+	for(ll i = m - 1;i &gt;= 0;--i)inv[i] = inv[i + 1] * (i + 1) % MOD;<br />
+	f[0][0][0] = 1;<br />
+	for(ll i = 1;i &lt;= m;++i)<br />
+	{<br />
+		ll l = 0,r = 0,b = 0;<br />
+		for(ll j = 1;j &lt;= n;++j)<br />
+		{<br />
+			if(lef[j] == i)++l;<br />
+			if(m - rig[j] + 1 == i)++r;<br />
+			if(lef[j] &lt; i && m - rig[j] + 1 &gt; i)++b;<br />
+		}<br />
+		for(ll j = 0;j &lt; i;++j)<br />
+		{<br />
+			for(ll k = 0;k &lt;= n;++k)<br />
+			{<br />
+				f[i][j + l][k + r] = (f[i][j + l][k + r] + f[i - 1][j][k] * P((i - 1) - j,l - 1) % MOD * l % MOD) % MOD;<br />
+				f[i][j + l + 1][k + r - 1] = (f[i][j + l + 1][k + r - 1] + f[i - 1][j][k] * P((i - 1) - j,l) % MOD * (k + r) % MOD) % MOD;<br />
+				f[i][j + l + 1][k + r] = (f[i][j + l + 1][k + r] + f[i - 1][j][k] * P((i - 1) - j,l) % MOD * b % MOD) % MOD;<br />
+				f[i][j + l][k + r] = (f[i][j + l][k + r] + f[i - 1][j][k] * P((i - 1) - j,l) % MOD) % MOD;<br />
+			}<br />
+		}<br />
+	}<br />
+	ll ans = 0;<br />
+	for(int i = 0;i &lt;= m;++i)ans = (ans + f[m][i][0]) % MOD;<br />
+	cout &lt;&lt; ans &lt;&lt; endl;<br />
+	return 0;<br />
+}<br />
+</pre></code>
+</div>
+        </div>
+        <div class="blogfile_showtag">
+          <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png">
+          In tag:
+<a href="../tags/DP-DP.html">DP-DP</a> 
+          <!--<a href="../tags/blog.html">blog</a>-->
+        </div>
+      </div>
+    </div>
+    <div id="middle_nav">
+      <div class="blog_host">
+        <div class="nav_avator">
+          <img src="http://pic.yupoo.com/wjh15101051/72c1aeab/f51d56e0.jpg" alt="avator">
+        </div>
+        <div class="nav_ID">
+          wjh15101051
+        </div>
+      </div>
+      <div class="nav_list">
+        <li class="tags">
+          <a href="../tags.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png" class="list_icon" id="tags_image">
+            Tags
+          </a>
+        </li>
+        <li class="categories">
+          <a href="../categories.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png" class="list_icon" id="categories_image">
+            Categories
+          </a>
+        </li>
+        <li class="timeline">
+          <a href="../timeline.html">
+            <img src="http://pic.yupoo.com/wjh15101051/30365cc7/c1a3be15.png" class="list_icon" id="timeline_image">
+            Timeline
+          </a>
+        </li>
+        <li class="about">
+          <a href="../about.html">
+            <img src="http://pic.yupoo.com/wjh15101051/24f1cb41/e239086e.png" class="list_icon" id="about_image">
+            About
+          </a>
+        </li>
+        <li class="toolbox">
+          <a href="../toolbox.html">
+            <img src="http://pic.yupoo.com/wjh15101051/dee9f673/d3cf682a.png" class="list_icon" id="toolbox_image">
+            Toolbox
+          </a>
+        </li>
+        <li class="friends">
+            <div class="friends_text">
+              <img src="http://pic.yupoo.com/wjh15101051/d291ebed/29f9c807.png" id="friends_image">
+              Friends
+            </div>
+            <div id="fp_friends_list">
+              <div id="SGcolin">
+                <a href="http://blog.gyx.me/" target="_blank">SGcolin</a>
+              </div>
+              <div id="Xingcy">
+                <a href="https://www.cnblogs.com/xcysblog/" target="_blank">Xingcy</a>
+              </div>
+              <div id="ZH_comld">
+                <a href="https://www.cnblogs.com/ZH-comld/" target="_blank">ZH_comld</a>
+              </div>
+            </div>
+            <br>
+          </div>
+        </li>
+      </div>
+    <div class="music_player">
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer@1.10.0/dist/APlayer.min.css">
+      <script src="https://blog-static.cnblogs.com/files/yjlaugus/APlayer.min.js"></script>
+      <div id="aplayer" class="aplayer"  data-id="5313691453" data-server="netease" data-type="playlist" data-fixed="true" data-listfolded="true" data-order="random" data-theme="#F58EA8"></div>
+      <script src="https://unpkg.com/meting@1.2/dist/Meting.min.js"></script>
+    </div>
+    <div class="bottom">
+      <div>
+        Copyright © 2020
+        <a id="copyright_user_a" href="index.html">
+          <span id="copyright_user">wjh15101051</span>
+        </a>
+      </div>
+      <div class="bottom_anime">ღゝ◡╹)ノ♡</div>
+    </div>
+  </div>
+</body>
+</html>

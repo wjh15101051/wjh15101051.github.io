@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>NOI2013 书法家</title>
+  <link rel="stylesheet" type="text/css" id="frame_style" href="../css/frame_style1.css">
+  <link rel="stylesheet" type="text/css" id="Markdown_style" href="../css/Markdown_style.css">
+  <script type="text/javascript" src="../jscode/frame.js"></script>
+  <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+  <link rel="stylesheet" href="https://ziyuan.fenxianglu.cn/js/highlight/styles/default.css">
+  <script src="https://ziyuan.fenxianglu.cn/js/highlight/highlight.pack.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+        inlineMath: [['$','$']]
+      }
+    });
+  </script>
+</head>
+<body>
+  <div class="main">
+    <div class="head">
+      <div class="title1">
+        <a href="../index.html">wjh15101051's space</a>
+      </div>
+      <div class="title2">
+        卧薪尝胆，厚积薄发。
+      </div>
+    </div>
+    <div id="middle_blogfile">
+      <div class="blog_blogfile">
+        <div class="blogfile_title">
+            NOI2013 书法家
+        </div>
+        <div class="blogfile_stitle">
+          <img src="http://pic.yupoo.com/wjh15101051/1e0e1b3a/118165c5.jpg">
+          Date: Sat May 26 18:15:31 CST 2018
+          <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png">
+          In Category:
+          <a href="../categories/NoCategory.html">NoCategory</a>
+        </div>
+        <div class="blogfile_content">
+<div class = "MarkdownCommonContent">
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Description:
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+在一张每个点有价值纸上写
+$NOI$
+，最大化价值。
+</div>
+<div class = "MarkdownCommonContent">
+$1 \le N \le 150$
+  
+$1 \le M \le 500$
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Solution:
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+先将
+$NOI$
+分成十一个部分。
+</div>
+<div class = "MarkdownCommonContent">
+$DP$
+，
+$O$
+和
+$I$
+都比较好搞，对于
+$N$
+，将他分成三部分，第一个竖矩形直接转移，从一个矩形转移到下一个矩形只要预处理一下
+$g[i][j]$
+表示
+$max(f[k][1][i][j],f[k][1][i-1][j],\cdots,f[k][1][1][j])$
+，即
+$f[k][1]$
+的前缀最大值，
+$f[k][1][i][j]$
+从
+$max(max(g[i][j+1],g[i][j],\cdots,g[i][i]),g[i-1][i-1])$
+，从第一个矩形转移到第二个矩形就求
+$f[k][1][i][j]=max(f[k][0][i][j+1],f[k][0][i][j+2],\cdots,f[k][0][i][N])$
+，也处理一个前缀最大值即可，最后一个矩形也类似，最后要开滚动数组。
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Code:
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+<pre><code class="MarkdownParaCode">
+#include&lt;algorithm&gt;<br />
+#include&lt;iostream&gt;<br />
+#include&lt;cstdlib&gt;<br />
+#include&lt;cstdio&gt;<br />
+#include&lt;cmath&gt;<br />
+#include&lt;cstring&gt;<br />
+#define INF 0x3f3f3f3f<br />
+using namespace std;<br />
+int n,m;<br />
+#define MAXN 152<br />
+#define MAXM 502<br />
+int map[MAXM][MAXN];<br />
+int f[2][11][MAXN][MAXN];<br />
+int g[MAXM][MAXN]; <br />
+int sum[MAXM][MAXM];<br />
+int ans = 0;<br />
+int main()<br />
+{<br />
+	scanf("%d%d",&n,&m);<br />
+	for(int i = 1;i &lt;= n;++i)<br />
+	{<br />
+		for(int j = 1;j &lt;= m;++j)<br />
+		{<br />
+			scanf("%d",&map[j][i]);<br />
+		}<br />
+	}<br />
+	for(int i = 1;i &lt;= m;++i)<br />
+	{<br />
+		for(int j = 1;j &lt;= n;++j)<br />
+		{<br />
+			sum[i][j] = sum[i][j - 1] + map[i][j];<br />
+		}<br />
+	}<br />
+	memset(f,0xc0,sizeof(f));<br />
+	ans = -INF;<br />
+	int cur = 0,pre = 1;<br />
+	for(int k = 1;k &lt;= m;++k)<br />
+	{<br />
+		cur = cur ^ 1;pre = pre ^ 1;<br />
+		memset(f[cur],0xc0,sizeof(f[cur]));<br />
+		//N的第一部分<br />
+		for(int i = 1;i &lt;= n;++i)for(int j = i;j &lt;= n;++j)f[cur][0][i][j] = max(f[pre][0][i][j],0) + sum[k][j] - sum[k][i - 1];<br />
+		//N的第二部分<br />
+		memset(g,0xc0,sizeof(g));<br />
+		for(int i = 1;i &lt;= n;++i)for(int j = i;j &lt;= n;++j)g[i][j] = max(f[pre][1][i][j],g[i - 1][j]);<br />
+		int t; <br />
+		for(int i = 1;i &lt;= n;++i)<br />
+		{<br />
+			t = g[i - 1][i - 1];<br />
+			for(int j = i;j &lt;= n;++j)<br />
+			{<br />
+				t = max(t,g[i][j]);<br />
+				f[cur][1][i][j] = max(f[cur][1][i][j],t + sum[k][j] - sum[k][i - 1]);<br />
+			}<br />
+			t = -INF;<br />
+			for(int j = n;j &gt;= i;--j)<br />
+			{<br />
+				t = max(t,f[pre][0][i][j + 1]);<br />
+				f[cur][1][i][j] = max(t + sum[k][j] - sum[k][i - 1],f[cur][1][i][j]);<br />
+			}<br />
+		}<br />
+		//N第三个部分<br />
+		memset(g,0xc0,sizeof(g));<br />
+		for(int i = n;i &gt;= 1;--i)for(int j = i;j &lt;= n;++j)g[i][j] = max(f[pre][1][i][j],g[i + 1][j]);<br />
+		for(int i = 1;i &lt;= n;++i)for(int j = i;j &lt;= n;++j)f[cur][2][i][j] = max(g[i + 1][j],f[pre][2][i][j]) + sum[k][j] - sum[k][i - 1];<br />
+		//N和O之间的空列<br />
+		t = -INF;<br />
+		for(int i = 1;i &lt;= n;++i)for(int j = i;j &lt;= n;++j)t = max(t,f[pre][2][i][j]);<br />
+		f[cur][3][1][n] = max(t,f[pre][3][1][n]);<br />
+		//O的第一部分<br />
+		for(int i = 1;i &lt;= n;++i)for(int j = i + 2;j &lt;= n;++j)f[cur][4][i][j] = f[pre][3][1][n] + sum[k][j] - sum[k][i - 1];<br />
+		//O的第二部分<br />
+		for(int i = 1;i &lt;= n;++i)for(int j = i + 2;j &lt;= n;++j)f[cur][5][i][j] = max(f[pre][5][i][j],f[pre][4][i][j]) + map[k][i] + map[k][j];<br />
+		//O的第三部分<br />
+		for(int i = 1;i &lt;= n;++i)for(int j = i + 2;j &lt;= n;++j)f[cur][6][i][j] = f[pre][5][i][j] + sum[k][j] - sum[k][i - 1]; <br />
+		//O和I之间的空列<br />
+		t = -INF;<br />
+		for(int i = 1;i &lt;= n;++i)for(int j = i;j &lt;= n;++j)t = max(t,f[pre][6][i][j]);<br />
+		f[cur][7][1][n] = max(t,f[pre][7][1][n]);<br />
+		//I的第一部分<br />
+		for(int i = 1;i &lt;= n;++i)for(int j = i + 2;j &lt;= n;++j)f[cur][8][i][j] = max(f[pre][8][i][j],f[pre][7][1][n]) + map[k][i] + map[k][j];<br />
+		//I的第二部分<br />
+		for(int i = 1;i &lt;= n;++i)for(int j = i + 2;j &lt;= n;++j)f[cur][9][i][j] = max(f[pre][9][i][j],f[pre][8][i][j]) + sum[k][j] - sum[k][i - 1];<br />
+		//I的第三部分<br />
+		for(int i = 1;i &lt;= n;++i)for(int j = i + 2;j &lt;= n;++j)f[cur][10][i][j] = max(f[pre][10][i][j],f[pre][9][i][j]) + map[k][i] + map[k][j]; <br />
+		for(int i = 1;i &lt;= n;++i)for(int j = i + 2;j &lt;= n;++j)ans = max(ans,f[cur][10][i][j]);<br />
+	}<br />
+	cout &lt;&lt; ans &lt;&lt; endl;<br />
+	return 0;<br />
+}<br />
+</pre></code>
+</div>
+        </div>
+        <div class="blogfile_showtag">
+          <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png">
+          In tag:
+<a href="../tags/DP-DP.html">DP-DP</a> 
+          <!--<a href="../tags/blog.html">blog</a>-->
+        </div>
+      </div>
+    </div>
+    <div id="middle_nav">
+      <div class="blog_host">
+        <div class="nav_avator">
+          <img src="http://pic.yupoo.com/wjh15101051/72c1aeab/f51d56e0.jpg" alt="avator">
+        </div>
+        <div class="nav_ID">
+          wjh15101051
+        </div>
+      </div>
+      <div class="nav_list">
+        <li class="tags">
+          <a href="../tags.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png" class="list_icon" id="tags_image">
+            Tags
+          </a>
+        </li>
+        <li class="categories">
+          <a href="../categories.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png" class="list_icon" id="categories_image">
+            Categories
+          </a>
+        </li>
+        <li class="timeline">
+          <a href="../timeline.html">
+            <img src="http://pic.yupoo.com/wjh15101051/30365cc7/c1a3be15.png" class="list_icon" id="timeline_image">
+            Timeline
+          </a>
+        </li>
+        <li class="about">
+          <a href="../about.html">
+            <img src="http://pic.yupoo.com/wjh15101051/24f1cb41/e239086e.png" class="list_icon" id="about_image">
+            About
+          </a>
+        </li>
+        <li class="toolbox">
+          <a href="../toolbox.html">
+            <img src="http://pic.yupoo.com/wjh15101051/dee9f673/d3cf682a.png" class="list_icon" id="toolbox_image">
+            Toolbox
+          </a>
+        </li>
+        <li class="friends">
+            <div class="friends_text">
+              <img src="http://pic.yupoo.com/wjh15101051/d291ebed/29f9c807.png" id="friends_image">
+              Friends
+            </div>
+            <div id="fp_friends_list">
+              <div id="SGcolin">
+                <a href="http://blog.gyx.me/" target="_blank">SGcolin</a>
+              </div>
+              <div id="Xingcy">
+                <a href="https://www.cnblogs.com/xcysblog/" target="_blank">Xingcy</a>
+              </div>
+              <div id="ZH_comld">
+                <a href="https://www.cnblogs.com/ZH-comld/" target="_blank">ZH_comld</a>
+              </div>
+            </div>
+            <br>
+          </div>
+        </li>
+      </div>
+    <div class="music_player">
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer@1.10.0/dist/APlayer.min.css">
+      <script src="https://blog-static.cnblogs.com/files/yjlaugus/APlayer.min.js"></script>
+      <div id="aplayer" class="aplayer"  data-id="5313691453" data-server="netease" data-type="playlist" data-fixed="true" data-listfolded="true" data-order="random" data-theme="#F58EA8"></div>
+      <script src="https://unpkg.com/meting@1.2/dist/Meting.min.js"></script>
+    </div>
+    <div class="bottom">
+      <div>
+        Copyright © 2020
+        <a id="copyright_user_a" href="index.html">
+          <span id="copyright_user">wjh15101051</span>
+        </a>
+      </div>
+      <div class="bottom_anime">ღゝ◡╹)ノ♡</div>
+    </div>
+  </div>
+</body>
+</html>

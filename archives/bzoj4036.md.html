@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>HAOI2015 按位或</title>
+  <link rel="stylesheet" type="text/css" id="frame_style" href="../css/frame_style1.css">
+  <link rel="stylesheet" type="text/css" id="Markdown_style" href="../css/Markdown_style.css">
+  <script type="text/javascript" src="../jscode/frame.js"></script>
+  <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+  <link rel="stylesheet" href="https://ziyuan.fenxianglu.cn/js/highlight/styles/default.css">
+  <script src="https://ziyuan.fenxianglu.cn/js/highlight/highlight.pack.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+        inlineMath: [['$','$']]
+      }
+    });
+  </script>
+</head>
+<body>
+  <div class="main">
+    <div class="head">
+      <div class="title1">
+        <a href="../index.html">wjh15101051's space</a>
+      </div>
+      <div class="title2">
+        卧薪尝胆，厚积薄发。
+      </div>
+    </div>
+    <div id="middle_blogfile">
+      <div class="blog_blogfile">
+        <div class="blogfile_title">
+            HAOI2015 按位或
+        </div>
+        <div class="blogfile_stitle">
+          <img src="http://pic.yupoo.com/wjh15101051/1e0e1b3a/118165c5.jpg">
+          Date: Thu Nov 29 15:42:08 CST 2018
+          <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png">
+          In Category:
+          <a href="../categories/NoCategory.html">NoCategory</a>
+        </div>
+        <div class="blogfile_content">
+<div class = "MarkdownCommonContent">
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Description：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+一个数字刚开始为
+$0$
+，每次选择一个
+$[0,2^n-1]$
+的数字，与当前的数字进行或操作。选择
+$i$
+的概率是
+$p[i]$
+。问期望多少次后，数字变成
+$2^n-1$
+。
+</div>
+<div class = "MarkdownCommonContent">
+$1\leqslant n\leqslant 20$
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Solution：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+首先我们发现这一位一位之间是不独立的。
+</div>
+<div class = "MarkdownCommonContent">
+如果我们把这个二进制每一位分开来看，记每个数的权值为他变成一的期望次数，那么
+$ans=E(\max(S))$
+，即
+$S$
+中最大值的期望。
+</div>
+<div class = "MarkdownCommonContent">
+有一个叫做
+$\min-\max$
+容斥的东西，也叫做最值反演，大概形式是：
+$$
+\max(S)=\sum_{T\subseteq S}(-1)^{|T|+1}\min(S)\\
+\min(S)=\sum_{T\subseteq S}(-1)^{|T|+1}\max(S)
+$$
+</div>
+<div class = "MarkdownCommonContent">
+它的重要性在于可以把
+$\max(或\min)$
+不好求的转化为
+$\min(或\max)$
+，最重要的是，这个公式在期望下也成立，即：
+$$
+E(\max(S))=\sum_{T\subseteq S}(-1)^{|T|+1}E(\min(T))
+$$
+那么我们只要求出
+$E(\min(T))$
+即可，也就是
+$T$
+中有一位变成
+$1$
+的最期望时间。
+</div>
+<div class = "MarkdownCommonContent">
+有一个东西叫做离散型随机变量的几何分布，含义是在
+$n$
+次伯努利试验中，前
+$k$
+次均失败，最后一次成功的概率，公式是：
+$P(x=k)=(1-p)^{k-1}p$
+，他的期望
+$E(x)=\frac 1 p$
+。
+</div>
+<div class = "MarkdownCommonContent">
+那么对于这个显然是可以套这个模型的，
+$p=1-$
+选择了一个所有
+$1$
+的位置都不在这个集合的概率，即：
+$$
+p=\sum_{S'\subseteq\complement_ST}p[S']
+$$
+这时我们发现只要求出了某个集合的所有子集的概率和，就可以套用
+$\min-\max$
+容斥，求子集和可以用
+$FMT$
+来
+$O(n2^n)$
+做。
+</div>
+<div class = "MarkdownCommonContent">
+无解就是
+$p[\complement_ST]=1$
+，即这个位置永远不会被选中。
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Code：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+<pre><code class="MarkdownParaCode">
+#include&lt;algorithm&gt;<br />
+#include&lt;iostream&gt;<br />
+#include&lt;cstdlib&gt;<br />
+#include&lt;cstdio&gt;<br />
+#include&lt;cmath&gt;<br />
+#include&lt;cctype&gt;<br />
+#include&lt;cstring&gt;<br />
+using namespace std;<br />
+int n;<br />
+#define MAXN 21<br />
+double p[1 &lt;&lt; MAXN];<br />
+int cnt[1 &lt;&lt; MAXN];<br />
+void FMT(double f[],int l)<br />
+{<br />
+	for(int i = 0;i &lt; l;++i)<br />
+		for(int k = 0;k &lt; (1 &lt;&lt; l);++k)<br />
+			if((k &gt;&gt; i) & 1)f[k] += f[k ^ (1 &lt;&lt; i)];<br />
+	return;<br />
+}<br />
+int main()<br />
+{<br />
+	scanf("%d",&n);<br />
+	for(int i = 0;i &lt; (1 &lt;&lt; n);++i)scanf("%lf",&p[i]);<br />
+	for(int i = 0;i &lt; n;++i)cnt[1 &lt;&lt; i] = 1;<br />
+	FMT(p,n);<br />
+	for(int i = 0;i &lt; (1 &lt;&lt; n);++i)cnt[i] = cnt[i &gt;&gt; 1] + (i & 1);<br />
+	double ans = 0.0;<br />
+	int tot = (1 &lt;&lt; n) - 1;<br />
+	for(int i = 1;i &lt; (1 &lt;&lt; n);++i)<br />
+	{<br />
+		if(fabs(1.0 - p[tot ^ i]) &lt; 1e-6)<br />
+		{<br />
+			puts("INF");<br />
+			return 0;<br />
+		}<br />
+		ans += (1 / (1.0 - p[tot ^ i])) * ((cnt[i] & 1) ? 1 : -1);<br />
+	}<br />
+	printf("%.10lf\n",ans);<br />
+	return 0;<br />
+}<br />
+</pre></code>
+</div>
+        </div>
+        <div class="blogfile_showtag">
+          <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png">
+          In tag:
+<a href="../tags/数学-min-max容斥.html">数学-min-max容斥</a> <a href="../tags/数学-连通性-快速莫比乌斯变换.html">数学-连通性-快速莫比乌斯变换</a> 
+          <!--<a href="../tags/blog.html">blog</a>-->
+        </div>
+      </div>
+    </div>
+    <div id="middle_nav">
+      <div class="blog_host">
+        <div class="nav_avator">
+          <img src="http://pic.yupoo.com/wjh15101051/72c1aeab/f51d56e0.jpg" alt="avator">
+        </div>
+        <div class="nav_ID">
+          wjh15101051
+        </div>
+      </div>
+      <div class="nav_list">
+        <li class="tags">
+          <a href="../tags.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png" class="list_icon" id="tags_image">
+            Tags
+          </a>
+        </li>
+        <li class="categories">
+          <a href="../categories.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png" class="list_icon" id="categories_image">
+            Categories
+          </a>
+        </li>
+        <li class="timeline">
+          <a href="../timeline.html">
+            <img src="http://pic.yupoo.com/wjh15101051/30365cc7/c1a3be15.png" class="list_icon" id="timeline_image">
+            Timeline
+          </a>
+        </li>
+        <li class="about">
+          <a href="../about.html">
+            <img src="http://pic.yupoo.com/wjh15101051/24f1cb41/e239086e.png" class="list_icon" id="about_image">
+            About
+          </a>
+        </li>
+        <li class="toolbox">
+          <a href="../toolbox.html">
+            <img src="http://pic.yupoo.com/wjh15101051/dee9f673/d3cf682a.png" class="list_icon" id="toolbox_image">
+            Toolbox
+          </a>
+        </li>
+        <li class="friends">
+            <div class="friends_text">
+              <img src="http://pic.yupoo.com/wjh15101051/d291ebed/29f9c807.png" id="friends_image">
+              Friends
+            </div>
+            <div id="fp_friends_list">
+              <div id="SGcolin">
+                <a href="http://blog.gyx.me/" target="_blank">SGcolin</a>
+              </div>
+              <div id="Xingcy">
+                <a href="https://www.cnblogs.com/xcysblog/" target="_blank">Xingcy</a>
+              </div>
+              <div id="ZH_comld">
+                <a href="https://www.cnblogs.com/ZH-comld/" target="_blank">ZH_comld</a>
+              </div>
+            </div>
+            <br>
+          </div>
+        </li>
+      </div>
+    <div class="music_player">
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer@1.10.0/dist/APlayer.min.css">
+      <script src="https://blog-static.cnblogs.com/files/yjlaugus/APlayer.min.js"></script>
+      <div id="aplayer" class="aplayer"  data-id="5313691453" data-server="netease" data-type="playlist" data-fixed="true" data-listfolded="true" data-order="random" data-theme="#F58EA8"></div>
+      <script src="https://unpkg.com/meting@1.2/dist/Meting.min.js"></script>
+    </div>
+    <div class="bottom">
+      <div>
+        Copyright © 2020
+        <a id="copyright_user_a" href="index.html">
+          <span id="copyright_user">wjh15101051</span>
+        </a>
+      </div>
+      <div class="bottom_anime">ღゝ◡╹)ノ♡</div>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>SDOI2016 游戏</title>
+  <link rel="stylesheet" type="text/css" id="frame_style" href="../css/frame_style1.css">
+  <link rel="stylesheet" type="text/css" id="Markdown_style" href="../css/Markdown_style.css">
+  <script type="text/javascript" src="../jscode/frame.js"></script>
+  <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+  <link rel="stylesheet" href="https://ziyuan.fenxianglu.cn/js/highlight/styles/default.css">
+  <script src="https://ziyuan.fenxianglu.cn/js/highlight/highlight.pack.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+        inlineMath: [['$','$']]
+      }
+    });
+  </script>
+</head>
+<body>
+  <div class="main">
+    <div class="head">
+      <div class="title1">
+        <a href="../index.html">wjh15101051's space</a>
+      </div>
+      <div class="title2">
+        卧薪尝胆，厚积薄发。
+      </div>
+    </div>
+    <div id="middle_blogfile">
+      <div class="blog_blogfile">
+        <div class="blogfile_title">
+            SDOI2016 游戏
+        </div>
+        <div class="blogfile_stitle">
+          <img src="http://pic.yupoo.com/wjh15101051/1e0e1b3a/118165c5.jpg">
+          Date: Sat Jul 21 20:25:31 CST 2018
+          <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png">
+          In Category:
+          <a href="../categories/NoCategory.html">NoCategory</a>
+        </div>
+        <div class="blogfile_content">
+<div class = "MarkdownCommonContent">
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Description：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+在一棵有边权的树上，进行两种操作：
+</div>
+<div class = "MarkdownCommonContent">
+$1$
+、选择一条从
+$s$
+到
+$t$
+的路径，在这条路径上的每一个点上都添加一个数字。对于路径上的一个点
+$r$
+，若
+$r$
+与
+$ s $
+的距离是
+$ dis$
+，那么在点
+$ r $
+上添加的数字是
+$ a\times dis+b$
+。
+</div>
+<div class = "MarkdownCommonContent">
+$2$
+、选择一条从 s 到 t 的路径，询问这条路径上最小的数字。
+</div>
+<div class = "MarkdownCommonContent">
+$1\le n \le 10^5$
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Solution：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+先树链剖分，然后发现每次是插入一条线段并询问区间最低点，用李超线段树维护：
+</div>
+<div class = "MarkdownCommonContent">
+如果覆盖，取下面那个；如果交叉，取中点较靠上的那条线段，并将线段分成两半，将较低的那部分下放到子节点。
+</div>
+<div class = "MarkdownCommonContent">
+维护一个区间最小值，每次询问时直接查询即可，注意由于维护了区间最小值，所以和
+$HEOI\ segment$
+不同的是每一次对根节点的操作都要和两个儿子节点取
+$min$
+。
+</div>
+<div class = "MarkdownCommonContent">
+还发现树边有边权，于是记下每个点的深度，由于树剖时更新的部分一定是树上的一条连续的链，于是计算一下得到一个以
+$deep[i]$
+为下标的一次函数把这个函数插进去即可。
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Code：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+<pre><code class="MarkdownParaCode">
+#include&lt;algorithm&gt;<br />
+#include&lt;iostream&gt;<br />
+#include&lt;cstdlib&gt;<br />
+#include&lt;cstdio&gt;<br />
+#include&lt;cmath&gt;<br />
+#include&lt;cstring&gt;<br />
+using namespace std;<br />
+int n,m;<br />
+#define MAXN 100010<br />
+typedef long long ll;<br />
+struct edge<br />
+{<br />
+	int to,nxt;<br />
+	ll v;<br />
+}e[MAXN &lt;&lt; 1];<br />
+int edgenum = 0;<br />
+int lin[MAXN] = {0};<br />
+void add(int a,int b,ll c)<br />
+{<br />
+	++edgenum;e[edgenum].to = b;e[edgenum].v = c;e[edgenum].nxt = lin[a];lin[a] = edgenum;<br />
+	++edgenum;e[edgenum].to = a;e[edgenum].v = c;e[edgenum].nxt = lin[b];lin[b] = edgenum;<br />
+	return;<br />
+}<br />
+ll deep[MAXN];<br />
+int top[MAXN],siz[MAXN],son[MAXN],dep[MAXN],fa[MAXN],rank[MAXN],th[MAXN],tot = 0;<br />
+void dfs1(int k,int depth)<br />
+{<br />
+	dep[k] = depth;<br />
+	siz[k] = 1;<br />
+	for(int i = lin[k];i != 0;i = e[i].nxt)<br />
+	{<br />
+		if(e[i].to != fa[k])<br />
+		{<br />
+			deep[e[i].to] = deep[k] + e[i].v;<br />
+			fa[e[i].to] = k;<br />
+			dfs1(e[i].to,depth + 1);<br />
+			siz[k] += siz[e[i].to];<br />
+			if(son[k] == 0 || siz[e[i].to] &gt; siz[son[k]])<br />
+			{<br />
+				son[k] = e[i].to;<br />
+			}<br />
+		}<br />
+	}<br />
+	return;<br />
+}<br />
+void dfs2(int k,int tp)<br />
+{<br />
+	top[k] = tp;<br />
+	rank[k] = ++tot;<br />
+	th[tot] = k;<br />
+	if(son[k] == 0)return;<br />
+	dfs2(son[k],tp);<br />
+	for(int i = lin[k];i != 0;i = e[i].nxt)<br />
+	{<br />
+		if(e[i].to != fa[k] && e[i].to != son[k])<br />
+		{<br />
+			dfs2(e[i].to,e[i].to);<br />
+		}<br />
+	}<br />
+	return;<br />
+}<br />
+struct line<br />
+{<br />
+	ll k,b;<br />
+	ll f(ll x){return k * x + b;}<br />
+};<br />
+struct node<br />
+{<br />
+	int lc,rc;<br />
+	line l;<br />
+	ll minn;<br />
+	node(){l.b = minn = 123456789123456789ll;l.k = 0ll;}<br />
+}t[MAXN &lt;&lt; 1];<br />
+int ptr = 0;<br />
+int newnode(){return ++ptr;}<br />
+int root;<br />
+#define mid ((l + r) &gt;&gt; 1)<br />
+void build(int &rt,int l,int r)<br />
+{<br />
+	rt = newnode();<br />
+	if(l == r)return;<br />
+	build(t[rt].lc,l,mid);<br />
+	build(t[rt].rc,mid + 1,r);<br />
+	return;<br />
+}<br />
+int LCA(int a,int b)<br />
+{<br />
+	while(top[a] != top[b])<br />
+	{<br />
+		if(dep[top[a]] &lt; dep[top[b]])swap(a,b);<br />
+		a = fa[top[a]];<br />
+	}<br />
+	return (dep[a] &lt; dep[b] ? a : b);<br />
+}<br />
+bool cover(line a,line b,ll l,ll r){if(a.f(l) &gt;= b.f(l) && a.f(r) &gt;= b.f(r))return true;else return false;}<br />
+void add(int rt,int L,int R,line k,int l,int r)<br />
+{<br />
+	if(L &lt;= l && r &lt;= R)<br />
+	{<br />
+		if(cover(t[rt].l,k,deep[th[l]],deep[th[r]])){t[rt].l = k;t[rt].minn = min(t[rt].minn,min(k.f(deep[th[l]]),k.f(deep[th[r]])));return;}<br />
+		if(cover(k,t[rt].l,deep[th[l]],deep[th[r]]))return;<br />
+		if(k.f(deep[th[mid]]) &lt; t[rt].l.f(deep[th[mid]]))<br />
+		{<br />
+			swap(k,t[rt].l);<br />
+			t[rt].minn = min(t[rt].minn,min(t[rt].l.f(deep[th[l]]),t[rt].l.f(deep[th[r]])));<br />
+		}<br />
+		if(l == r)<br />
+		{<br />
+			t[rt].minn = min(t[rt].minn,t[rt].l.f(deep[th[mid]]));<br />
+			return;<br />
+		}<br />
+		if(k.f(deep[th[l]]) &lt; t[rt].l.f(deep[th[l]]))add(t[rt].lc,L,R,k,l,mid);<br />
+		if(k.f(deep[th[r]]) &lt; t[rt].l.f(deep[th[r]]))add(t[rt].rc,L,R,k,mid + 1,r);<br />
+	}<br />
+	else<br />
+	{<br />
+		if(L &lt;= mid)add(t[rt].lc,L,R,k,l,mid);<br />
+		if(R &gt; mid)add(t[rt].rc,L,R,k,mid + 1,r);<br />
+	}<br />
+	t[rt].minn = min(t[rt].minn,min(t[t[rt].lc].minn,t[t[rt].rc].minn));<br />
+	t[rt].minn = min(t[rt].minn,min(t[rt].l.f(deep[th[l]]),t[rt].l.f(deep[th[r]])));<br />
+	return;<br />
+}<br />
+void change(int s,int t,ll a,ll b)<br />
+{<br />
+	int lca = LCA(s,t);<br />
+	int ss = s,tt = t;<br />
+	while(top[ss] != top[lca])<br />
+	{<br />
+		add(root,rank[top[ss]],rank[ss],(line){-a,b + a * deep[s]},1,n);<br />
+		ss = fa[top[ss]];<br />
+	}<br />
+	while(top[tt] != top[lca])<br />
+	{<br />
+		add(root,rank[top[tt]],rank[tt],(line){a,b + a * (deep[s] - 2 * deep[lca])},1,n);<br />
+		tt = fa[top[tt]];<br />
+	}<br />
+	if(ss != lca)add(root,rank[tt],rank[ss],(line){-a,b + a * deep[s]},1,n);<br />
+	else add(root,rank[ss],rank[tt],(line){a,b + a * (deep[s] - 2 * deep[lca])},1,n);<br />
+	return;<br />
+}<br />
+ll query(int rt,int L,int R,int l,int r)<br />
+{<br />
+	if(L &lt;= l && r &lt;= R)<br />
+	{<br />
+		return t[rt].minn;<br />
+	}<br />
+	ll res = 0x3f3f3f3f3f3f3f3f;<br />
+	if(L &lt;= mid)res = min(res,query(t[rt].lc,L,R,l,mid));<br />
+	if(R &gt; mid)res = min(res,query(t[rt].rc,L,R,mid + 1,r));<br />
+	res = min(res,min(t[rt].l.f(deep[th[max(l,L)]]),t[rt].l.f(deep[th[min(r,R)]])));<br />
+	return res;<br />
+}<br />
+ll ask(int s,int t)<br />
+{<br />
+	ll res = 0x3f3f3f3f3f3f3f3f;<br />
+	while(top[s] != top[t])<br />
+	{<br />
+		if(dep[top[s]] &lt; dep[top[t]])swap(s,t);<br />
+		res = min(res,query(root,rank[top[s]],rank[s],1,n));<br />
+		s = fa[top[s]];<br />
+	}<br />
+	if(dep[s] &gt; dep[t])swap(s,t);<br />
+	res = min(res,query(root,rank[s],rank[t],1,n));<br />
+	return res;<br />
+}<br />
+int main()<br />
+{<br />
+	scanf("%d%d",&n,&m);<br />
+	int u,v;<br />
+	ll w;<br />
+	for(int i = 1;i &lt; n;++i)<br />
+	{<br />
+		scanf("%d%d%lld",&u,&v,&w);<br />
+		add(u,v,w);<br />
+	}<br />
+	dfs1(1,1);<br />
+	dfs2(1,1);<br />
+	build(root,1,n);<br />
+	int type,s,t;<br />
+	ll a,b;<br />
+	for(int i = 1;i &lt;= m;++i)<br />
+	{<br />
+		scanf("%d",&type);<br />
+		if(type == 1)<br />
+		{<br />
+			scanf("%d%d%lld%lld",&s,&t,&a,&b);<br />
+			change(s,t,a,b);<br />
+		}<br />
+		else<br />
+		{<br />
+			scanf("%d%d",&s,&t);<br />
+			printf("%lld\n",ask(s,t));<br />
+		}<br />
+	}<br />
+	return 0;<br />
+}<br />
+</pre></code>
+</div>
+        </div>
+        <div class="blogfile_showtag">
+          <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png">
+          In tag:
+<a href="../tags/树-树链剖分.html">树-树链剖分</a> <a href="../tags/数据结构-李超线段树.html">数据结构-李超线段树</a> 
+          <!--<a href="../tags/blog.html">blog</a>-->
+        </div>
+      </div>
+    </div>
+    <div id="middle_nav">
+      <div class="blog_host">
+        <div class="nav_avator">
+          <img src="http://pic.yupoo.com/wjh15101051/72c1aeab/f51d56e0.jpg" alt="avator">
+        </div>
+        <div class="nav_ID">
+          wjh15101051
+        </div>
+      </div>
+      <div class="nav_list">
+        <li class="tags">
+          <a href="../tags.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png" class="list_icon" id="tags_image">
+            Tags
+          </a>
+        </li>
+        <li class="categories">
+          <a href="../categories.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png" class="list_icon" id="categories_image">
+            Categories
+          </a>
+        </li>
+        <li class="timeline">
+          <a href="../timeline.html">
+            <img src="http://pic.yupoo.com/wjh15101051/30365cc7/c1a3be15.png" class="list_icon" id="timeline_image">
+            Timeline
+          </a>
+        </li>
+        <li class="about">
+          <a href="../about.html">
+            <img src="http://pic.yupoo.com/wjh15101051/24f1cb41/e239086e.png" class="list_icon" id="about_image">
+            About
+          </a>
+        </li>
+        <li class="toolbox">
+          <a href="../toolbox.html">
+            <img src="http://pic.yupoo.com/wjh15101051/dee9f673/d3cf682a.png" class="list_icon" id="toolbox_image">
+            Toolbox
+          </a>
+        </li>
+        <li class="friends">
+            <div class="friends_text">
+              <img src="http://pic.yupoo.com/wjh15101051/d291ebed/29f9c807.png" id="friends_image">
+              Friends
+            </div>
+            <div id="fp_friends_list">
+              <div id="SGcolin">
+                <a href="http://blog.gyx.me/" target="_blank">SGcolin</a>
+              </div>
+              <div id="Xingcy">
+                <a href="https://www.cnblogs.com/xcysblog/" target="_blank">Xingcy</a>
+              </div>
+              <div id="ZH_comld">
+                <a href="https://www.cnblogs.com/ZH-comld/" target="_blank">ZH_comld</a>
+              </div>
+            </div>
+            <br>
+          </div>
+        </li>
+      </div>
+    <div class="music_player">
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer@1.10.0/dist/APlayer.min.css">
+      <script src="https://blog-static.cnblogs.com/files/yjlaugus/APlayer.min.js"></script>
+      <div id="aplayer" class="aplayer"  data-id="5313691453" data-server="netease" data-type="playlist" data-fixed="true" data-listfolded="true" data-order="random" data-theme="#F58EA8"></div>
+      <script src="https://unpkg.com/meting@1.2/dist/Meting.min.js"></script>
+    </div>
+    <div class="bottom">
+      <div>
+        Copyright © 2020
+        <a id="copyright_user_a" href="index.html">
+          <span id="copyright_user">wjh15101051</span>
+        </a>
+      </div>
+      <div class="bottom_anime">ღゝ◡╹)ノ♡</div>
+    </div>
+  </div>
+</body>
+</html>

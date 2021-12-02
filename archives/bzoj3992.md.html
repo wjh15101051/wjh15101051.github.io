@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>SDOI2015 序列统计</title>
+  <link rel="stylesheet" type="text/css" id="frame_style" href="../css/frame_style1.css">
+  <link rel="stylesheet" type="text/css" id="Markdown_style" href="../css/Markdown_style.css">
+  <script type="text/javascript" src="../jscode/frame.js"></script>
+  <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+  <link rel="stylesheet" href="https://ziyuan.fenxianglu.cn/js/highlight/styles/default.css">
+  <script src="https://ziyuan.fenxianglu.cn/js/highlight/highlight.pack.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+        inlineMath: [['$','$']]
+      }
+    });
+  </script>
+</head>
+<body>
+  <div class="main">
+    <div class="head">
+      <div class="title1">
+        <a href="../index.html">wjh15101051's space</a>
+      </div>
+      <div class="title2">
+        卧薪尝胆，厚积薄发。
+      </div>
+    </div>
+    <div id="middle_blogfile">
+      <div class="blog_blogfile">
+        <div class="blogfile_title">
+            SDOI2015 序列统计
+        </div>
+        <div class="blogfile_stitle">
+          <img src="http://pic.yupoo.com/wjh15101051/1e0e1b3a/118165c5.jpg">
+          Date: Tue Nov 27 19:28:25 CST 2018
+          <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png">
+          In Category:
+          <a href="../categories/NoCategory.html">NoCategory</a>
+        </div>
+        <div class="blogfile_content">
+<div class = "MarkdownCommonContent">
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Description：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+求用所有小于
+$M$
+的非负整数构成长为
+$N$
+的数列乘积
+$\text{mod }M=x$
+的数列的个数
+$\text{mod }1004535809$
+。
+</div>
+<div class = "MarkdownCommonContent">
+$1\leqslant N\leqslant10^9,3\leqslant M\leqslant 8000,M$
+为质数
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Solution：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+首先乘积这个东西不是很可做，如果不是模意义下我们可以两边取对数，然后统计和，而模意义下我们就可以使用原根来求模意义下的离散对数，由于
+$M$
+是质数所以一定存在原根，且原根一定是
+$\varphi(M)=M-1$
+的约数，证明：
+$$
+\begin{align}
+&由欧拉定理可知：g^{\varphi(m)}\equiv1(\text{mod M})\\
+&用反证法：设g^b\equiv1(\text{mod M})\\
+&设b的最小值为c_1，g^{c_1}\equiv(\text{mod M})\\
+&设c_2=\varphi(\text{M})-c_1，那么g^{c_2}\equiv1(\text{mod M})\\
+&c_1\not|c_2，否则就会有c_1|\varphi(\text{M})\\
+&因为c_2&gt;c_1，所以设k=c_2-c_1，一定有g^k\equiv1(\text{mod M})\\
+&而k&lt;c_1，与原命题矛盾
+\end{align}
+$$
+<a class = "MarkdownA" href="https://blog.csdn.net/zhouyuheng2003/article/details/80163139">参考</a>
+</div>
+<div class = "MarkdownCommonContent">
+所以我们只要枚举
+$M-1$
+的所有约数，然后暴力判断对于所有
+$i\in[1,\varphi(\text{M}))$
+，
+$g^i$
+是否都不为
+$1$
+即可。
+</div>
+<div class = "MarkdownCommonContent">
+这样每个
+$k$
+都会对应一个
+$g^i$
+，那么我们就成功地把乘积变成了求和，
+</div>
+<div class = "MarkdownCommonContent">
+然后问题就变成了给出很多数他们的和是某个值的方案数，生成函数还是比较显然的，答案是某个多项式的
+$N$
+次方，于是多项式
+$+$
+快速幂即可，注意处理取模，这个可以在每次计算完一次后从高往低加。
+</div>
+<div class = "MarkdownCommonContent">
+注意所有值都是在指数上计算的，每个值还有模数都会改变，当用这个方法的时候要特别小心。
+</div>
+<div class = "MarkdownCommonContent">
+还要注意必须要跳过
+$0$
+。
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Code：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+<pre><code class="MarkdownParaCode">
+#include&lt;algorithm&gt;<br />
+#include&lt;iostream&gt;<br />
+#include&lt;cstdlib&gt;<br />
+#include&lt;cstdio&gt;<br />
+#include&lt;cmath&gt;<br />
+#include&lt;cctype&gt;<br />
+#include&lt;cstring&gt;<br />
+using namespace std;<br />
+typedef long long ll;<br />
+ll n,m,x,s;<br />
+#define MAXN 32010<br />
+ll val[MAXN];<br />
+ll gcd(ll a,ll b){return (b == 0 ? a : gcd(b,a % b));}<br />
+bool check(ll k)<br />
+{<br />
+	if(gcd(k,m) != 1)return false;<br />
+	for(ll i = 1,v = k;i &lt; m - 1;++i,v = v * k % m)<br />
+	{<br />
+		if(v == 1)return false;<br />
+	}<br />
+	return true;<br />
+}<br />
+ll G()<br />
+{<br />
+	for(ll i = 1;i &lt;= m - 1;++i)<br />
+	{<br />
+		if(check(i))return i;<br />
+	}<br />
+}<br />
+ll my_lg[MAXN],my_pow[MAXN];<br />
+const ll P = 1004535809;<br />
+int rev[MAXN];<br />
+ll ww[MAXN &lt;&lt; 1],*g = ww + MAXN;<br />
+ll power(ll a,ll b)<br />
+{<br />
+	ll res = 1;<br />
+	while(b &gt; 0)<br />
+	{<br />
+		if(b & 1)res = res * a % P;<br />
+		a = a * a % P;<br />
+		b = b &gt;&gt; 1;<br />
+	}<br />
+	return res;<br />
+}<br />
+ll res[MAXN],a[MAXN];<br />
+ll inv;<br />
+void NTT(ll f[],int l,int type)<br />
+{<br />
+	for(int i = 0;i &lt; l;++i)<br />
+	{<br />
+		if(i &lt; rev[i])swap(f[i],f[rev[i]]);<br />
+	}<br />
+	for(int i = 2;i &lt;= l;i = i &lt;&lt; 1)<br />
+	{<br />
+		ll wn = g[type * l / i];<br />
+		for(int j = 0;j &lt; l;j += i)<br />
+		{<br />
+			ll w = 1;<br />
+			for(int k = j;k &lt; j + i / 2;++k)<br />
+			{<br />
+				ll u = f[k],t = w * f[k + i / 2] % P;<br />
+				f[k] = (u + t) % P;<br />
+				f[k + i / 2] = (u - t + P) % P;<br />
+				w = w * wn % P;<br />
+			}<br />
+		}<br />
+	}<br />
+	if(type == -1)<br />
+	{<br />
+		for(int i = 0;i &lt; l;++i)<br />
+		{<br />
+			f[i] = f[i] * inv % P;<br />
+		}<br />
+	}<br />
+	return;<br />
+}<br />
+void KSM(int len)<br />
+{<br />
+	res[0] = 1;<br />
+	while(n &gt; 0)<br />
+	{<br />
+		if(n & 1)<br />
+		{<br />
+			NTT(res,len,1);NTT(a,len,1);<br />
+			for(int i = 0;i &lt; len;++i)res[i] = res[i] * a[i] % P;<br />
+			NTT(res,len,-1);NTT(a,len,-1);<br />
+			for(int i = len - 1;i &gt;= m - 1;--i)<br />
+			{<br />
+				res[i - m + 1] = (res[i - m + 1] + res[i]) % P;<br />
+				res[i] = 0;<br />
+			}<br />
+		}<br />
+		NTT(a,len,1);<br />
+		for(int i = 0;i &lt; len;++i)a[i] = a[i] * a[i] % P;<br />
+		NTT(a,len,-1);<br />
+		for(int i = len - 1;i &gt;= m - 1;--i)<br />
+		{<br />
+			a[i - m + 1] = (a[i - m + 1] + a[i]) % P;<br />
+			a[i] = 0;<br />
+		}<br />
+		n = n &gt;&gt; 1;<br />
+	}<br />
+	return;<br />
+}<br />
+int main()<br />
+{<br />
+	scanf("%lld%lld%lld%lld",&n,&m,&x,&s);<br />
+	for(int i = 1;i &lt;= s;++i)scanf("%lld",&val[i]);<br />
+	ll m_g = G();<br />
+	for(ll i = 0,cur = 1;i &lt; m - 1;++i,cur = cur * m_g % m)<br />
+	{<br />
+		my_lg[cur] = i;my_pow[i] = cur;<br />
+	}<br />
+	int l = 0,len = 1;<br />
+	for(;len &lt;= 2 * m;++l,len = len &lt;&lt; 1);<br />
+	for(int i = 0;i &lt; len;++i)rev[i] = (rev[i &gt;&gt; 1] &gt;&gt; 1) | ((i & 1) &lt;&lt; (l - 1));<br />
+	g[0] = g[-len] = 1;g[1] = g[1 - len] = power(3,(P - 1) / len);<br />
+	for(int i = 2;i &lt; len;++i)g[i] = g[i - len] = g[i - 1] * g[1] % P;<br />
+	for(int i = 1;i &lt;= s;++i)<br />
+	{<br />
+		if(val[i] == 0)continue;<br />
+		a[my_lg[val[i]]] = 1;<br />
+	}<br />
+	inv = power(len,P - 2);<br />
+	KSM(len);<br />
+	printf("%lld\n",res[my_lg[x]]);<br />
+	return 0;<br />
+}<br />
+</pre></code>
+</div>
+        </div>
+        <div class="blogfile_showtag">
+          <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png">
+          In tag:
+<a href="../tags/数学-多项式-快速数论变换.html">数学-多项式-快速数论变换</a> <a href="../tags/数学-原根与指标.html">数学-原根与指标</a> <a href="../tags/数学-组合数学-生成函数.html">数学-组合数学-生成函数</a> 
+          <!--<a href="../tags/blog.html">blog</a>-->
+        </div>
+      </div>
+    </div>
+    <div id="middle_nav">
+      <div class="blog_host">
+        <div class="nav_avator">
+          <img src="http://pic.yupoo.com/wjh15101051/72c1aeab/f51d56e0.jpg" alt="avator">
+        </div>
+        <div class="nav_ID">
+          wjh15101051
+        </div>
+      </div>
+      <div class="nav_list">
+        <li class="tags">
+          <a href="../tags.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png" class="list_icon" id="tags_image">
+            Tags
+          </a>
+        </li>
+        <li class="categories">
+          <a href="../categories.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png" class="list_icon" id="categories_image">
+            Categories
+          </a>
+        </li>
+        <li class="timeline">
+          <a href="../timeline.html">
+            <img src="http://pic.yupoo.com/wjh15101051/30365cc7/c1a3be15.png" class="list_icon" id="timeline_image">
+            Timeline
+          </a>
+        </li>
+        <li class="about">
+          <a href="../about.html">
+            <img src="http://pic.yupoo.com/wjh15101051/24f1cb41/e239086e.png" class="list_icon" id="about_image">
+            About
+          </a>
+        </li>
+        <li class="toolbox">
+          <a href="../toolbox.html">
+            <img src="http://pic.yupoo.com/wjh15101051/dee9f673/d3cf682a.png" class="list_icon" id="toolbox_image">
+            Toolbox
+          </a>
+        </li>
+        <li class="friends">
+            <div class="friends_text">
+              <img src="http://pic.yupoo.com/wjh15101051/d291ebed/29f9c807.png" id="friends_image">
+              Friends
+            </div>
+            <div id="fp_friends_list">
+              <div id="SGcolin">
+                <a href="http://blog.gyx.me/" target="_blank">SGcolin</a>
+              </div>
+              <div id="Xingcy">
+                <a href="https://www.cnblogs.com/xcysblog/" target="_blank">Xingcy</a>
+              </div>
+              <div id="ZH_comld">
+                <a href="https://www.cnblogs.com/ZH-comld/" target="_blank">ZH_comld</a>
+              </div>
+            </div>
+            <br>
+          </div>
+        </li>
+      </div>
+    <div class="music_player">
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer@1.10.0/dist/APlayer.min.css">
+      <script src="https://blog-static.cnblogs.com/files/yjlaugus/APlayer.min.js"></script>
+      <div id="aplayer" class="aplayer"  data-id="5313691453" data-server="netease" data-type="playlist" data-fixed="true" data-listfolded="true" data-order="random" data-theme="#F58EA8"></div>
+      <script src="https://unpkg.com/meting@1.2/dist/Meting.min.js"></script>
+    </div>
+    <div class="bottom">
+      <div>
+        Copyright © 2020
+        <a id="copyright_user_a" href="index.html">
+          <span id="copyright_user">wjh15101051</span>
+        </a>
+      </div>
+      <div class="bottom_anime">ღゝ◡╹)ノ♡</div>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>APIO2018 New Home 新家</title>
+  <link rel="stylesheet" type="text/css" id="frame_style" href="../css/frame_style1.css">
+  <link rel="stylesheet" type="text/css" id="Markdown_style" href="../css/Markdown_style.css">
+  <script type="text/javascript" src="../jscode/frame.js"></script>
+  <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+  <link rel="stylesheet" href="https://ziyuan.fenxianglu.cn/js/highlight/styles/default.css">
+  <script src="https://ziyuan.fenxianglu.cn/js/highlight/highlight.pack.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+        inlineMath: [['$','$']]
+      }
+    });
+  </script>
+</head>
+<body>
+  <div class="main">
+    <div class="head">
+      <div class="title1">
+        <a href="../index.html">wjh15101051's space</a>
+      </div>
+      <div class="title2">
+        卧薪尝胆，厚积薄发。
+      </div>
+    </div>
+    <div id="middle_blogfile">
+      <div class="blog_blogfile">
+        <div class="blogfile_title">
+            APIO2018 New Home 新家
+        </div>
+        <div class="blogfile_stitle">
+          <img src="http://pic.yupoo.com/wjh15101051/1e0e1b3a/118165c5.jpg">
+          Date: Wed Feb 27 09:07:14 CST 2019
+          <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png">
+          In Category:
+          <a href="../categories/NoCategory.html">NoCategory</a>
+        </div>
+        <div class="blogfile_content">
+<div class = "MarkdownCommonContent">
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Description：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+给出所有商户的坐标，类型，开业时间，关闭时间，求对于某个时间某个位置求出距离它最远的某类商铺的距离。
+</div>
+<div class = "MarkdownCommonContent">
+$1\leqslant n\leqslant 3\times 10^5$
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Solution：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+首先把所有操作分成添加商铺和删除商铺，然后和询问一起按时间排序，然后我们得到了在当前这个事件所有商铺的类型和位置，然后我们每个商户维护一个
+$pre$
+表示上一个同种商户的位置，然后二分区间大小，如果在这个区间之后有一个点的
+$pre$
+在这个区间之前，就不合法，插入删除就修改一下后继的
+$pre$
+什么的。
+</div>
+<div class = "MarkdownCommonContent">
+注意每个叶子要维护一个可删堆因为同一个坐标可以有好多询问。
+</div>
+<div class = "MarkdownCommonContent">
+当然也可以写平衡树。
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Code：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+<pre><code class="MarkdownParaCode">
+#include&lt;algorithm&gt;<br />
+#include&lt;iostream&gt;<br />
+#include&lt;cstdlib&gt;<br />
+#include&lt;cstdio&gt;<br />
+#include&lt;cmath&gt;<br />
+#include&lt;set&gt;<br />
+#include&lt;cctype&gt;<br />
+#include&lt;cstring&gt;<br />
+using namespace std;<br />
+inline int rd()<br />
+{<br />
+	register int res = 0,f = 1;register char c = getchar();<br />
+	while(!isdigit(c)){if(c == '-')f = -1;c = getchar();}<br />
+	while(isdigit(c))res = (res &lt;&lt; 1) + (res &lt;&lt; 3) + c - '0',c = getchar();<br />
+	return res * f;<br />
+}<br />
+int n,k,q;<br />
+#define MAXN 300010<br />
+#define MAXP 600010<br />
+int v[MAXP];<br />
+multiset&lt;int&gt; s[MAXN];<br />
+#define iter set&lt;int&gt;::iterator<br />
+multiset&lt;int&gt; val[MAXP];<br />
+struct node<br />
+{<br />
+	int lc,rc;<br />
+	int mind;<br />
+}t[MAXP &lt;&lt; 1];<br />
+int ptr = 0;<br />
+int newnode(){return ++ptr;}<br />
+int root;<br />
+#define mid ((l + r) &gt;&gt; 1)<br />
+void build(int &rt,int l,int r)<br />
+{<br />
+	rt = newnode();<br />
+	t[rt].mind = 0x3f3f3f3f;<br />
+	if(l == r)return;<br />
+	build(t[rt].lc,l,mid);<br />
+	build(t[rt].rc,mid + 1,r);<br />
+	return;<br />
+}<br />
+void update(int rt,int p,int v,int tp,int l,int r)<br />
+{<br />
+	if(l == r)<br />
+	{<br />
+		if(tp == -1)val[l].erase(val[l].find(v));<br />
+		else val[l].insert(v);<br />
+		t[rt].mind = (val[l].empty() ? 0x3f3f3f3f : *val[l].begin());<br />
+		return;<br />
+	}<br />
+	if(p &lt;= mid)update(t[rt].lc,p,v,tp,l,mid);<br />
+	else update(t[rt].rc,p,v,tp,mid + 1,r);<br />
+	t[rt].mind = min(t[t[rt].lc].mind,t[t[rt].rc].mind);<br />
+	return;<br />
+}<br />
+int query(int rt,int L,int R,int l,int r)<br />
+{<br />
+	if(L &lt;= l && r &lt;= R)return t[rt].mind;<br />
+	int res = 0x3f3f3f3f;<br />
+	if(L &lt;= mid)res = min(res,query(t[rt].lc,L,R,l,mid));<br />
+	if(R &gt; mid)res = min(res,query(t[rt].rc,L,R,mid + 1,r));<br />
+	return res;<br />
+}<br />
+struct opt<br />
+{<br />
+	int type,tim,pos,val;<br />
+}o[MAXN * 3];<br />
+int tot = 0;<br />
+bool cmp_opt(opt a,opt b)<br />
+{<br />
+	if(a.tim != b.tim)return a.tim &lt; b.tim;<br />
+	else return abs(a.type) &gt; abs(b.type);<br />
+}<br />
+int ans[MAXN];<br />
+int main()<br />
+{<br />
+	scanf("%d%d%d",&n,&k,&q);<br />
+	int x,y,a,b;<br />
+	for(int i = 1;i &lt;= n;++i)<br />
+	{<br />
+		x = rd();y = rd();a = rd();b = rd();<br />
+		o[++tot] = (opt){1,a,x,y};<br />
+		o[++tot] = (opt){-1,b + 1,x,y};<br />
+		v[++v[0]] = x;<br />
+	}<br />
+	for(int i = 1;i &lt;= q;++i)<br />
+	{<br />
+		x = rd();y = rd();<br />
+		o[++tot] = (opt){0,y,x,i};<br />
+	}<br />
+	sort(v + 1,v + 1 + v[0]);v[++v[0]] = 0x3f3f3f3f;<br />
+	v[0] = unique(v + 1,v + 1 + v[0]) - v - 1;<br />
+	build(root,1,v[0]);<br />
+	sort(o + 1,o + 1 + tot,cmp_opt);<br />
+	for(int i = 1;i &lt;= k;++i)<br />
+	{<br />
+		update(root,v[0],0,1,1,v[0]);<br />
+		s[i].insert(v[0]);<br />
+	}<br />
+	for(int i = 1;i &lt;= tot;++i)<br />
+	{<br />
+		if(o[i].type == 1)<br />
+		{<br />
+			int p = lower_bound(v + 1,v + 1 + v[0],o[i].pos) - v;<br />
+			s[o[i].val].insert(p);<br />
+			int pre = 0;<br />
+			iter it = s[o[i].val].find(p);<br />
+			if(it == s[o[i].val].begin())pre = 0;<br />
+			else pre = *(--it);<br />
+			it = s[o[i].val].find(p);++it;<br />
+			if(it != s[o[i].val].end())<br />
+			{<br />
+				update(root,*it,pre,-1,1,v[0]);<br />
+				update(root,*it,p,1,1,v[0]);<br />
+			}<br />
+			update(root,p,pre,1,1,v[0]);<br />
+		}<br />
+		if(o[i].type == -1)<br />
+		{<br />
+			int p = lower_bound(v + 1,v + 1 + v[0],o[i].pos) - v;<br />
+			int pre = 0;<br />
+			iter it = s[o[i].val].find(p);<br />
+			if(it == s[o[i].val].begin())pre = 0;<br />
+			else pre = *(--it);<br />
+			it = s[o[i].val].find(p);++it;<br />
+			if(it != s[o[i].val].end())<br />
+			{<br />
+				update(root,*it,pre,1,1,v[0]);<br />
+				update(root,*it,p,-1,1,v[0]);<br />
+			}<br />
+			s[o[i].val].erase(s[o[i].val].find(p));<br />
+			update(root,p,pre,-1,1,v[0]);<br />
+		}<br />
+		if(o[i].type == 0)<br />
+		{<br />
+			int l = 0,r = 100000001,mi;<br />
+			while(l &lt; r)<br />
+			{<br />
+				mi = ((l + r) &gt;&gt; 1);<br />
+				int rig = lower_bound(v + 1,v + 1 + v[0],o[i].pos + mi + 1) - v;<br />
+				int minpre = query(root,rig,v[0],1,v[0]);<br />
+				minpre = (minpre == 0 ? -0x3f3f3f3f : v[minpre]);<br />
+				if(minpre &lt; o[i].pos - mi)l = mi + 1;<br />
+				else r = mi;<br />
+			}<br />
+			if(l == 100000001)l = -1;<br />
+			ans[o[i].val] = l;<br />
+		}<br />
+	}<br />
+	for(int i = 1;i &lt;= q;++i)printf("%d\n",ans[i]);<br />
+	return 0;<br />
+}<br />
+</pre></code>
+</div>
+        </div>
+        <div class="blogfile_showtag">
+          <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png">
+          In tag:
+<a href="../tags/数据结构-平衡树.html">数据结构-平衡树</a> 
+          <!--<a href="../tags/blog.html">blog</a>-->
+        </div>
+      </div>
+    </div>
+    <div id="middle_nav">
+      <div class="blog_host">
+        <div class="nav_avator">
+          <img src="http://pic.yupoo.com/wjh15101051/72c1aeab/f51d56e0.jpg" alt="avator">
+        </div>
+        <div class="nav_ID">
+          wjh15101051
+        </div>
+      </div>
+      <div class="nav_list">
+        <li class="tags">
+          <a href="../tags.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png" class="list_icon" id="tags_image">
+            Tags
+          </a>
+        </li>
+        <li class="categories">
+          <a href="../categories.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png" class="list_icon" id="categories_image">
+            Categories
+          </a>
+        </li>
+        <li class="timeline">
+          <a href="../timeline.html">
+            <img src="http://pic.yupoo.com/wjh15101051/30365cc7/c1a3be15.png" class="list_icon" id="timeline_image">
+            Timeline
+          </a>
+        </li>
+        <li class="about">
+          <a href="../about.html">
+            <img src="http://pic.yupoo.com/wjh15101051/24f1cb41/e239086e.png" class="list_icon" id="about_image">
+            About
+          </a>
+        </li>
+        <li class="toolbox">
+          <a href="../toolbox.html">
+            <img src="http://pic.yupoo.com/wjh15101051/dee9f673/d3cf682a.png" class="list_icon" id="toolbox_image">
+            Toolbox
+          </a>
+        </li>
+        <li class="friends">
+            <div class="friends_text">
+              <img src="http://pic.yupoo.com/wjh15101051/d291ebed/29f9c807.png" id="friends_image">
+              Friends
+            </div>
+            <div id="fp_friends_list">
+              <div id="SGcolin">
+                <a href="http://blog.gyx.me/" target="_blank">SGcolin</a>
+              </div>
+              <div id="Xingcy">
+                <a href="https://www.cnblogs.com/xcysblog/" target="_blank">Xingcy</a>
+              </div>
+              <div id="ZH_comld">
+                <a href="https://www.cnblogs.com/ZH-comld/" target="_blank">ZH_comld</a>
+              </div>
+            </div>
+            <br>
+          </div>
+        </li>
+      </div>
+    <div class="music_player">
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer@1.10.0/dist/APlayer.min.css">
+      <script src="https://blog-static.cnblogs.com/files/yjlaugus/APlayer.min.js"></script>
+      <div id="aplayer" class="aplayer"  data-id="5313691453" data-server="netease" data-type="playlist" data-fixed="true" data-listfolded="true" data-order="random" data-theme="#F58EA8"></div>
+      <script src="https://unpkg.com/meting@1.2/dist/Meting.min.js"></script>
+    </div>
+    <div class="bottom">
+      <div>
+        Copyright © 2020
+        <a id="copyright_user_a" href="index.html">
+          <span id="copyright_user">wjh15101051</span>
+        </a>
+      </div>
+      <div class="bottom_anime">ღゝ◡╹)ノ♡</div>
+    </div>
+  </div>
+</body>
+</html>

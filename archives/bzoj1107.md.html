@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>POI2007 EGZ-Driving Exam</title>
+  <link rel="stylesheet" type="text/css" id="frame_style" href="../css/frame_style1.css">
+  <link rel="stylesheet" type="text/css" id="Markdown_style" href="../css/Markdown_style.css">
+  <script type="text/javascript" src="../jscode/frame.js"></script>
+  <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+  <link rel="stylesheet" href="https://ziyuan.fenxianglu.cn/js/highlight/styles/default.css">
+  <script src="https://ziyuan.fenxianglu.cn/js/highlight/highlight.pack.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+        inlineMath: [['$','$']]
+      }
+    });
+  </script>
+</head>
+<body>
+  <div class="main">
+    <div class="head">
+      <div class="title1">
+        <a href="../index.html">wjh15101051's space</a>
+      </div>
+      <div class="title2">
+        卧薪尝胆，厚积薄发。
+      </div>
+    </div>
+    <div id="middle_blogfile">
+      <div class="blog_blogfile">
+        <div class="blogfile_title">
+            POI2007 EGZ-Driving Exam
+        </div>
+        <div class="blogfile_stitle">
+          <img src="http://pic.yupoo.com/wjh15101051/1e0e1b3a/118165c5.jpg">
+          Date: Wed Oct 17 11:28:03 CST 2018
+          <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png">
+          In Category:
+          <a href="../categories/NoCategory.html">NoCategory</a>
+        </div>
+        <div class="blogfile_content">
+<div class = "MarkdownCommonContent">
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Description：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+$n$
+条从南往北的道路，在某两条道路之间的某个位置有一条从东向西或从西向东的单向道路，现在最多可以增加
+$k$
+条道路，问最多能有多少道路从起点能到达其他所有道路。
+</div>
+<div class = "MarkdownCommonContent">
+$1\leqslant n\leqslant 10^5$
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Solution：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+首先发现，如果某个位置能到
+$1$
+和
+$n$
+，那么所有位置就都能到达了，如果
+$i$
+用了
+$a$
+条边能到
+$n$
+，那么
+$i+1$
+也一定能到，向左同理，如果设
+$lef[i]$
+表示添加
+$i$
+条向左的边能满足
+$[1,lef[i]]$
+的点都能到
+$1$
+，
+$rig[i]$
+类似但方向相反，那么我们可以枚举向左的边建了多少个，可以发现最后满足条件的位置一定是一个区间，但是这种状态定义不是很好求解，既然是一个区间，那么我就保证区间右端点能到
+$1$
+，左端点能到
+$n$
+即可，设
+$fl[i]$
+表示从
+$i$
+到
+$1$
+最少需要加几条边，
+$fr[i]$
+类似但方向相反，那么有
+$fl[i]=i-1-LIS$
+，求
+$LIS$
+可以用树状数组，注意同一个位置的要先处理较高的不然高的会把低的算进去，然后发现
+$fl[i]$
+非严格单调递增，
+$fr[i]$
+非严格单调递减，于是用双指针求出满足
+$fr[l]+fl[r]\leqslant k$
+的最长区间即可。
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Code：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+<pre><code class="MarkdownParaCode">
+#include&lt;algorithm&gt;<br />
+#include&lt;iostream&gt;<br />
+#include&lt;cstdlib&gt;<br />
+#include&lt;cstdio&gt;<br />
+#include&lt;cmath&gt;<br />
+#include&lt;queue&gt;<br />
+#include&lt;cctype&gt;<br />
+#include&lt;cstring&gt;<br />
+using namespace std;<br />
+int n,m,p,k;<br />
+#define MAXN 100010<br />
+vector&lt;int&gt; el[MAXN],er[MAXN];<br />
+bool cmp(int a,int b){return a &gt; b;}<br />
+int lowbit(int x){return x & (-x);}<br />
+int c[MAXN];<br />
+void add(int p,int x){for(int i = p;i &lt;= m;i += lowbit(i))c[i] = max(c[i],x);return;}<br />
+int query(int p){int res = 0;for(int i = p;i &gt;= 1;i -= lowbit(i))res = max(res,c[i]);return res;}<br />
+int fl[MAXN],fr[MAXN];<br />
+int main()<br />
+{<br />
+	scanf("%d%d%d%d",&n,&m,&p,&k);<br />
+	++m;<br />
+	int pos,hei,dir;<br />
+	for(int i = 1;i &lt;= p;++i)<br />
+	{<br />
+		scanf("%d%d%d",&pos,&hei,&dir);<br />
+		hei = m - hei;<br />
+		if(dir == 0)er[pos].push_back(hei);<br />
+		else el[pos + 1].push_back(hei);<br />
+	}<br />
+	for(int i = 1;i &lt;= n;++i)<br />
+	{<br />
+		sort(el[i].begin(),el[i].end(),cmp);<br />
+		sort(er[i].begin(),er[i].end(),cmp);<br />
+	}<br />
+	memset(fl,0,sizeof(fl));<br />
+	memset(fr,0,sizeof(fr));<br />
+	memset(c,0,sizeof(c));<br />
+	for(int w = 1;w &lt;= n;++w)<br />
+	{<br />
+		for(vector&lt;int&gt;::iterator i = el[w].begin();i != el[w].end();++i)<br />
+		{<br />
+			int s = query(*i) + 1;<br />
+			fl[w] = max(fl[w],s);<br />
+			add(*i,s);<br />
+		}<br />
+		fl[w] = max(fl[w],fl[w - 1]);<br />
+	}<br />
+	for(int w = 1;w &lt;= n;++w)fl[w] = w - 1 - fl[w];<br />
+	memset(c,0,sizeof(c));<br />
+	for(int w = n;w &gt;= 1;--w)<br />
+	{<br />
+		for(vector&lt;int&gt;::iterator i = er[w].begin();i != er[w].end();++i)<br />
+		{<br />
+			int s = query(*i) + 1;<br />
+			fr[w] = max(fr[w],s);<br />
+			add(*i,s);<br />
+		}<br />
+		fr[w] = max(fr[w],fr[w + 1]);<br />
+	}<br />
+	for(int w = n;w &gt;= 1;--w)fr[w] = n - w - fr[w];<br />
+	int cnt = 0;<br />
+	for(int i = 1;i &lt;= n;++i)if(fl[i] == 0 && fr[i] == 0)++cnt;<br />
+	int ans = 0;<br />
+	for(int i = 1,j = 0;i &lt;= n;++i)<br />
+	{<br />
+		while(j &lt; n && fl[j + 1] + fr[i] &lt;= k)++j;<br />
+		ans = max(ans,j - i + 1);<br />
+	}<br />
+	cout &lt;&lt; ans - cnt &lt;&lt; endl;<br />
+	return 0;<br />
+}<br />
+</pre></code>
+</div>
+        </div>
+        <div class="blogfile_showtag">
+          <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png">
+          In tag:
+<a href="../tags/DP-LIS.html">DP-LIS</a> <a href="../tags/技巧-双指针.html">技巧-双指针</a> 
+          <!--<a href="../tags/blog.html">blog</a>-->
+        </div>
+      </div>
+    </div>
+    <div id="middle_nav">
+      <div class="blog_host">
+        <div class="nav_avator">
+          <img src="http://pic.yupoo.com/wjh15101051/72c1aeab/f51d56e0.jpg" alt="avator">
+        </div>
+        <div class="nav_ID">
+          wjh15101051
+        </div>
+      </div>
+      <div class="nav_list">
+        <li class="tags">
+          <a href="../tags.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png" class="list_icon" id="tags_image">
+            Tags
+          </a>
+        </li>
+        <li class="categories">
+          <a href="../categories.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png" class="list_icon" id="categories_image">
+            Categories
+          </a>
+        </li>
+        <li class="timeline">
+          <a href="../timeline.html">
+            <img src="http://pic.yupoo.com/wjh15101051/30365cc7/c1a3be15.png" class="list_icon" id="timeline_image">
+            Timeline
+          </a>
+        </li>
+        <li class="about">
+          <a href="../about.html">
+            <img src="http://pic.yupoo.com/wjh15101051/24f1cb41/e239086e.png" class="list_icon" id="about_image">
+            About
+          </a>
+        </li>
+        <li class="toolbox">
+          <a href="../toolbox.html">
+            <img src="http://pic.yupoo.com/wjh15101051/dee9f673/d3cf682a.png" class="list_icon" id="toolbox_image">
+            Toolbox
+          </a>
+        </li>
+        <li class="friends">
+            <div class="friends_text">
+              <img src="http://pic.yupoo.com/wjh15101051/d291ebed/29f9c807.png" id="friends_image">
+              Friends
+            </div>
+            <div id="fp_friends_list">
+              <div id="SGcolin">
+                <a href="http://blog.gyx.me/" target="_blank">SGcolin</a>
+              </div>
+              <div id="Xingcy">
+                <a href="https://www.cnblogs.com/xcysblog/" target="_blank">Xingcy</a>
+              </div>
+              <div id="ZH_comld">
+                <a href="https://www.cnblogs.com/ZH-comld/" target="_blank">ZH_comld</a>
+              </div>
+            </div>
+            <br>
+          </div>
+        </li>
+      </div>
+    <div class="music_player">
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer@1.10.0/dist/APlayer.min.css">
+      <script src="https://blog-static.cnblogs.com/files/yjlaugus/APlayer.min.js"></script>
+      <div id="aplayer" class="aplayer"  data-id="5313691453" data-server="netease" data-type="playlist" data-fixed="true" data-listfolded="true" data-order="random" data-theme="#F58EA8"></div>
+      <script src="https://unpkg.com/meting@1.2/dist/Meting.min.js"></script>
+    </div>
+    <div class="bottom">
+      <div>
+        Copyright © 2020
+        <a id="copyright_user_a" href="index.html">
+          <span id="copyright_user">wjh15101051</span>
+        </a>
+      </div>
+      <div class="bottom_anime">ღゝ◡╹)ノ♡</div>
+    </div>
+  </div>
+</body>
+</html>

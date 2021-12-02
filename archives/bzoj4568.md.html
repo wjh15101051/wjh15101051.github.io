@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>SCOI2016 幸运数字</title>
+  <link rel="stylesheet" type="text/css" id="frame_style" href="../css/frame_style1.css">
+  <link rel="stylesheet" type="text/css" id="Markdown_style" href="../css/Markdown_style.css">
+  <script type="text/javascript" src="../jscode/frame.js"></script>
+  <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+  <link rel="stylesheet" href="https://ziyuan.fenxianglu.cn/js/highlight/styles/default.css">
+  <script src="https://ziyuan.fenxianglu.cn/js/highlight/highlight.pack.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+        inlineMath: [['$','$']]
+      }
+    });
+  </script>
+</head>
+<body>
+  <div class="main">
+    <div class="head">
+      <div class="title1">
+        <a href="../index.html">wjh15101051's space</a>
+      </div>
+      <div class="title2">
+        卧薪尝胆，厚积薄发。
+      </div>
+    </div>
+    <div id="middle_blogfile">
+      <div class="blog_blogfile">
+        <div class="blogfile_title">
+            SCOI2016 幸运数字
+        </div>
+        <div class="blogfile_stitle">
+          <img src="http://pic.yupoo.com/wjh15101051/1e0e1b3a/118165c5.jpg">
+          Date: Fri Aug 10 22:25:42 CST 2018
+          <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png">
+          In Category:
+          <a href="../categories/NoCategory.html">NoCategory</a>
+        </div>
+        <div class="blogfile_content">
+<div class = "MarkdownCommonContent">
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Description：
+</h2>
+给一棵树，每个点有权，给出一些路径，问在路径上选出一些点的异或最大值。
+</div>
+<div class = "MarkdownCommonContent">
+$n\le 20000$
+ 
+$m \le 200000$
+<h2 class = "MarkdownH2">
+Solution：
+</h2>
+异或最大值维护线性基，树上的路径问题还是离线无修改多组询问可以点分治，先把点分树建出来，然后把每个询问放在点分树
+$LCA$
+上，求
+$LCA$
+可以在点分树上暴力标记一个点的祖先，另一个点再暴力跳，由于点分树深度
+$logn$
+，所以能保证复杂度。然后就可以点分治了，到每个点时求出来这个点到子树所有点的线性基，
+$dfs$
+时插入即可，然后枚举当前点的所有询问，合并两个线性基就可以求异或最大值了。
+</div>
+复杂度
+$O(nlog^2n)$
+<h2 class = "MarkdownH2">
+Code：
+</h2>
+<pre><code class="MarkdownParaCode">
+#include&lt;algorithm&gt;<br />
+#include&lt;iostream&gt;<br />
+#include&lt;cstdlib&gt;<br />
+#include&lt;cstdio&gt;<br />
+#include&lt;cmath&gt;<br />
+#include&lt;vector&gt;<br />
+#include&lt;cstring&gt;<br />
+#define INF 0x3f3f3f3f<br />
+using namespace std;<br />
+int n,m;<br />
+#define MAXN 20010<br />
+typedef long long ll;<br />
+ll val[MAXN];<br />
+struct edge<br />
+{<br />
+	int to,nxt;<br />
+}e[MAXN &lt;&lt; 1];<br />
+int edgenum = 0;<br />
+int lin[MAXN] = {0};<br />
+void add(int a,int b)<br />
+{<br />
+	++edgenum;e[edgenum].to = b;e[edgenum].nxt = lin[a];lin[a] = edgenum;<br />
+	++edgenum;e[edgenum].to = a;e[edgenum].nxt = lin[b];lin[b] = edgenum;<br />
+	return;<br />
+}<br />
+#define MAXQ 200010<br />
+struct query<br />
+{<br />
+	int a,b,nxt;<br />
+	ll ans;<br />
+}q[MAXQ];<br />
+int querynum = 0;<br />
+int head[MAXN] = {0};<br />
+void addq(int a,int b,int lca)<br />
+{<br />
+	++querynum;q[querynum].a = a;q[querynum].b = b;q[querynum].nxt = head[lca];head[lca] = querynum;<br />
+	return;<br />
+}<br />
+#define MAXB 61<br />
+struct linear_base<br />
+{<br />
+	ll d[MAXB];<br />
+	linear_base(){memset(d,0,sizeof(d));}<br />
+	void clear(){memset(d,0,sizeof(d));}<br />
+	void insert(ll x)<br />
+	{<br />
+		for(int i = 60;i &gt;= 0;--i)<br />
+		{<br />
+			if(x & (1ll &lt;&lt; i))<br />
+			{<br />
+				if(d[i] == 0)<br />
+				{<br />
+					d[i] = x;<br />
+					break;<br />
+				}<br />
+				else x ^= d[i];<br />
+			}<br />
+		}<br />
+		return;<br />
+	}<br />
+	ll query()<br />
+	{<br />
+		ll res = 0;<br />
+		for(int i = 60;i &gt;= 0;--i)<br />
+		{<br />
+			if((res ^ d[i]) &gt; res)<br />
+			{<br />
+				res ^= d[i];<br />
+			}<br />
+		}<br />
+		return res;<br />
+	}<br />
+}b[MAXN];<br />
+linear_base merge(linear_base a,linear_base b)<br />
+{<br />
+	linear_base res = a;<br />
+	for(int i = 0;i &lt;= 60;++i)<br />
+	{<br />
+		if(b.d[i] != 0)<br />
+			res.insert(b.d[i]);<br />
+	}<br />
+	return res;<br />
+}<br />
+int s,root;<br />
+int size[MAXN],d[MAXN];<br />
+bool v[MAXN];<br />
+void getroot(int k,int f)<br />
+{<br />
+	size[k] = 1;d[k] = 0;<br />
+	for(int i = lin[k];i != 0;i = e[i].nxt)<br />
+	{<br />
+		if(v[e[i].to] || e[i].to == f)continue;<br />
+		getroot(e[i].to,k);<br />
+		size[k] += size[e[i].to];<br />
+		if(size[e[i].to] &gt; d[k])<br />
+		{<br />
+			d[k] = size[e[i].to];<br />
+		}<br />
+	}<br />
+	d[k] = max(d[k],s - d[k]);<br />
+	if(d[k] &lt; d[root])root = k;<br />
+	return;<br />
+}<br />
+void getbase(int k,int f,linear_base res)<br />
+{<br />
+	res.insert(val[k]);<br />
+	b[k] = res;<br />
+	for(int i = lin[k];i != 0;i = e[i].nxt)<br />
+	{<br />
+		if(v[e[i].to] || e[i].to == f)continue;<br />
+		getbase(e[i].to,k,res);<br />
+	}<br />
+	return;<br />
+}<br />
+void calc(int k)<br />
+{<br />
+	linear_base res;<br />
+	getbase(k,0,res);<br />
+	linear_base ans;<br />
+	for(int i = head[k];i != 0;i = q[i].nxt)<br />
+	{<br />
+		ans = merge(b[q[i].a],b[q[i].b]);<br />
+		q[i].ans = ans.query();<br />
+	}<br />
+	return;<br />
+}<br />
+int fa[MAXN];<br />
+vector&lt;int&gt; g[MAXN];<br />
+void divide(int k)<br />
+{<br />
+	v[k] = true;<br />
+	for(int i = lin[k];i != 0;i = e[i].nxt)<br />
+	{<br />
+		if(v[e[i].to])continue;<br />
+		root = 0;s = size[e[i].to];<br />
+		getroot(e[i].to,k);<br />
+		fa[root] = k;g[k].push_back(root);<br />
+		divide(root);<br />
+	}<br />
+	return;<br />
+}<br />
+bool vis[MAXN];<br />
+int LCA(int a,int b)<br />
+{<br />
+	vis[a] = true;<br />
+	for(int i = a;fa[i] != 0;i = fa[i])vis[fa[i]] = true;<br />
+	int ans;<br />
+	if(vis[b])ans = b;<br />
+	else for(int i = b;fa[i] != 0;i = fa[i])if(vis[fa[i]]){ans = fa[i];break;}<br />
+	vis[a] = false;<br />
+	for(int i = a;fa[i] != 0;i = fa[i])vis[fa[i]] = false;<br />
+	return ans;<br />
+}<br />
+void work(int k)<br />
+{<br />
+	v[k] = true;<br />
+	calc(k);<br />
+	for(int i = 0;i &lt; g[k].size();++i)<br />
+	{<br />
+		work(g[k][i]);<br />
+	}<br />
+	return;<br />
+}<br />
+int main()<br />
+{<br />
+	scanf("%d%d",&n,&m);<br />
+	for(int i = 1;i &lt;= n;++i)scanf("%lld",&val[i]);<br />
+	int a,b; <br />
+	for(int i = 1;i &lt; n;++i)<br />
+	{<br />
+		scanf("%d%d",&a,&b);<br />
+		add(a,b);<br />
+	}<br />
+	int rt;root = 0;d[0] = INF;s = n;<br />
+	getroot(1,0);rt = root;<br />
+	divide(root);<br />
+	for(int i = 1;i &lt;= m;++i)<br />
+	{<br />
+		scanf("%d%d",&a,&b);<br />
+		addq(a,b,LCA(a,b));<br />
+	}<br />
+	memset(v,false,sizeof(v));<br />
+	work(rt);<br />
+	for(int i = 1;i &lt;= m;++i)printf("%lld\n",q[i].ans);<br />
+	return 0;<br />
+}<br />
+</pre></code>
+        </div>
+        <div class="blogfile_showtag">
+          <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png">
+          In tag:
+<a href="../tags/树-动态点分治.html">树-动态点分治</a> 
+          <!--<a href="../tags/blog.html">blog</a>-->
+        </div>
+      </div>
+    </div>
+    <div id="middle_nav">
+      <div class="blog_host">
+        <div class="nav_avator">
+          <img src="http://pic.yupoo.com/wjh15101051/72c1aeab/f51d56e0.jpg" alt="avator">
+        </div>
+        <div class="nav_ID">
+          wjh15101051
+        </div>
+      </div>
+      <div class="nav_list">
+        <li class="tags">
+          <a href="../tags.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png" class="list_icon" id="tags_image">
+            Tags
+          </a>
+        </li>
+        <li class="categories">
+          <a href="../categories.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png" class="list_icon" id="categories_image">
+            Categories
+          </a>
+        </li>
+        <li class="timeline">
+          <a href="../timeline.html">
+            <img src="http://pic.yupoo.com/wjh15101051/30365cc7/c1a3be15.png" class="list_icon" id="timeline_image">
+            Timeline
+          </a>
+        </li>
+        <li class="about">
+          <a href="../about.html">
+            <img src="http://pic.yupoo.com/wjh15101051/24f1cb41/e239086e.png" class="list_icon" id="about_image">
+            About
+          </a>
+        </li>
+        <li class="toolbox">
+          <a href="../toolbox.html">
+            <img src="http://pic.yupoo.com/wjh15101051/dee9f673/d3cf682a.png" class="list_icon" id="toolbox_image">
+            Toolbox
+          </a>
+        </li>
+        <li class="friends">
+            <div class="friends_text">
+              <img src="http://pic.yupoo.com/wjh15101051/d291ebed/29f9c807.png" id="friends_image">
+              Friends
+            </div>
+            <div id="fp_friends_list">
+              <div id="SGcolin">
+                <a href="http://blog.gyx.me/" target="_blank">SGcolin</a>
+              </div>
+              <div id="Xingcy">
+                <a href="https://www.cnblogs.com/xcysblog/" target="_blank">Xingcy</a>
+              </div>
+              <div id="ZH_comld">
+                <a href="https://www.cnblogs.com/ZH-comld/" target="_blank">ZH_comld</a>
+              </div>
+            </div>
+            <br>
+          </div>
+        </li>
+      </div>
+    <div class="music_player">
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer@1.10.0/dist/APlayer.min.css">
+      <script src="https://blog-static.cnblogs.com/files/yjlaugus/APlayer.min.js"></script>
+      <div id="aplayer" class="aplayer"  data-id="5313691453" data-server="netease" data-type="playlist" data-fixed="true" data-listfolded="true" data-order="random" data-theme="#F58EA8"></div>
+      <script src="https://unpkg.com/meting@1.2/dist/Meting.min.js"></script>
+    </div>
+    <div class="bottom">
+      <div>
+        Copyright © 2020
+        <a id="copyright_user_a" href="index.html">
+          <span id="copyright_user">wjh15101051</span>
+        </a>
+      </div>
+      <div class="bottom_anime">ღゝ◡╹)ノ♡</div>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>POI2004 SZN</title>
+  <link rel="stylesheet" type="text/css" id="frame_style" href="../css/frame_style1.css">
+  <link rel="stylesheet" type="text/css" id="Markdown_style" href="../css/Markdown_style.css">
+  <script type="text/javascript" src="../jscode/frame.js"></script>
+  <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+  <link rel="stylesheet" href="https://ziyuan.fenxianglu.cn/js/highlight/styles/default.css">
+  <script src="https://ziyuan.fenxianglu.cn/js/highlight/highlight.pack.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+        inlineMath: [['$','$']]
+      }
+    });
+  </script>
+</head>
+<body>
+  <div class="main">
+    <div class="head">
+      <div class="title1">
+        <a href="../index.html">wjh15101051's space</a>
+      </div>
+      <div class="title2">
+        卧薪尝胆，厚积薄发。
+      </div>
+    </div>
+    <div id="middle_blogfile">
+      <div class="blog_blogfile">
+        <div class="blogfile_title">
+            POI2004 SZN
+        </div>
+        <div class="blogfile_stitle">
+          <img src="http://pic.yupoo.com/wjh15101051/1e0e1b3a/118165c5.jpg">
+          Date: Sat Oct 13 22:05:22 CST 2018
+          <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png">
+          In Category:
+          <a href="../categories/NoCategory.html">NoCategory</a>
+        </div>
+        <div class="blogfile_content">
+<div class = "MarkdownCommonContent">
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Description：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+求一棵树的最小不相交路径覆盖和最小路径覆盖的最小的最长路径长度。
+</div>
+<div class = "MarkdownCommonContent">
+$1\leqslant n\leqslant 10^4$
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Solution：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+第一问比较简单，如果有奇数个子树，就两两合并，留一个向上走，否则新开一个。
+</div>
+<div class = "MarkdownCommonContent">
+对于第二问，可以先二分最小路径长度，然后对每一个子树求
+$f[i]$
+表示这个子树在路径覆盖最小的前提下向上延伸的那个最短是多少，每次把所有子节点的
+$f$
+值拿出来排序，如果有偶数个就加一个
+$0$
+表示开始的，那么如果能两两配对最后剩一个，且每个配对长度和都不大于限制，那么就可以把最后剩的那个向上传递，根据贪心的思路我们肯定要把一个尽量小的留给上面我们可以把所有子树的
+$f[i]+1$
+拿出来排序，然后二分最后向上传递的那个，之所以可以二分是因为如果存在一种方案大的能向上传递那么小的一定也能，然后判断一下就好了，注意如果有一个
+$f+1\geqslant \text{limit}$
+应直接返回
+$\text{false}$
+。
+</div>
+<div class = "MarkdownCommonContent">
+注意根节点的特殊情况。
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Code：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+<pre><code class="MarkdownParaCode">
+#include&lt;algorithm&gt;<br />
+#include&lt;iostream&gt;<br />
+#include&lt;cstdlib&gt;<br />
+#include&lt;cstdio&gt;<br />
+#include&lt;cmath&gt;<br />
+#include&lt;cctype&gt;<br />
+#include&lt;cstring&gt;<br />
+using namespace std;<br />
+int n;<br />
+#define MAXN 10010<br />
+struct edge<br />
+{<br />
+	int to,nxt;<br />
+}e[MAXN &lt;&lt; 1];<br />
+int edgenum = 0;<br />
+int lin[MAXN] = {0};<br />
+void add(int a,int b)<br />
+{<br />
+	++edgenum;e[edgenum].to = b;e[edgenum].nxt = lin[a];lin[a] = edgenum;<br />
+	++edgenum;e[edgenum].to = a;e[edgenum].nxt = lin[b];lin[b] = edgenum;<br />
+	return;<br />
+}<br />
+bool v[MAXN];<br />
+int dp1(int k)<br />
+{<br />
+	v[k] = true;<br />
+	int s = 0,sum = 0;<br />
+	for(int i = lin[k];i != 0;i = e[i].nxt)<br />
+	{<br />
+		if(v[e[i].to])continue;<br />
+		sum += dp1(e[i].to);<br />
+		++s;<br />
+	}<br />
+	sum -= s / 2;<br />
+	if(s % 2 == 0 && k != 1)++sum;<br />
+	return sum;<br />
+}<br />
+int f[MAXN];<br />
+int s[MAXN],top = 0;<br />
+#define INF 0x3f3f3f3f<br />
+int g[MAXN],tot = 0;<br />
+bool check(int k,int lim)<br />
+{<br />
+	tot = 0;<br />
+	for(int i = 1;i &lt;= top;++i)<br />
+	{<br />
+		if(i == k)continue;<br />
+		g[++tot] = s[i];<br />
+	}<br />
+	for(int i = 1,j = tot;i &lt; j;++i,--j)<br />
+	{<br />
+		if(g[i] + g[j] &gt; lim)return false;<br />
+	}<br />
+	return true;<br />
+}<br />
+bool dp2(int k,int lim)<br />
+{<br />
+	v[k] = true;<br />
+	for(int i = lin[k];i != 0;i = e[i].nxt)<br />
+	{<br />
+		if(v[e[i].to])continue;<br />
+		if(!dp2(e[i].to,lim))return false;<br />
+	}<br />
+	top = 0;<br />
+	for(int i = lin[k];i != 0;i = e[i].nxt)<br />
+	{<br />
+		if(v[e[i].to])continue;<br />
+		s[++top] = f[e[i].to] + 1;<br />
+	}<br />
+	v[k] = false;<br />
+	if(top % 2 == 0 && k != 1)s[++top] = 0;<br />
+	sort(s + 1,s + 1 + top);<br />
+	if(s[top] &gt; lim)return false;<br />
+	if(k == 1)return check(0,lim);<br />
+	int l = 1,r = top,mid;<br />
+	while(l &lt; r)<br />
+	{<br />
+		mid = ((l + r) &gt;&gt; 1);<br />
+		if(check(mid,lim))r = mid;<br />
+		else l = mid + 1;<br />
+	}<br />
+	if(!check(l,lim))return false;<br />
+	f[k] = s[l];<br />
+	return true;<br />
+}<br />
+int main()<br />
+{<br />
+	scanf("%d",&n);<br />
+	int a,b;<br />
+	for(int i = 1;i &lt; n;++i)<br />
+	{<br />
+		scanf("%d%d",&a,&b);<br />
+		add(a,b);<br />
+	}<br />
+	int ans = dp1(1);<br />
+	int l = 1,r = n,mid;<br />
+	memset(v,false,sizeof(v));<br />
+	while(l &lt; r)<br />
+	{<br />
+		memset(v,false,sizeof(v));<br />
+		mid = ((l + r) &gt;&gt; 1);<br />
+		if(dp2(1,mid))r = mid;<br />
+		else l = mid + 1;<br />
+	}<br />
+	cout &lt;&lt; ans &lt;&lt; " " &lt;&lt; l &lt;&lt; endl;<br />
+	return 0;<br />
+}<br />
+</pre></code>
+</div>
+        </div>
+        <div class="blogfile_showtag">
+          <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png">
+          In tag:
+<a href="../tags/DP-树形DP.html">DP-树形DP</a> <a href="../tags/算法-贪心.html">算法-贪心</a> <a href="../tags/算法-二分.html">算法-二分</a> 
+          <!--<a href="../tags/blog.html">blog</a>-->
+        </div>
+      </div>
+    </div>
+    <div id="middle_nav">
+      <div class="blog_host">
+        <div class="nav_avator">
+          <img src="http://pic.yupoo.com/wjh15101051/72c1aeab/f51d56e0.jpg" alt="avator">
+        </div>
+        <div class="nav_ID">
+          wjh15101051
+        </div>
+      </div>
+      <div class="nav_list">
+        <li class="tags">
+          <a href="../tags.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png" class="list_icon" id="tags_image">
+            Tags
+          </a>
+        </li>
+        <li class="categories">
+          <a href="../categories.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png" class="list_icon" id="categories_image">
+            Categories
+          </a>
+        </li>
+        <li class="timeline">
+          <a href="../timeline.html">
+            <img src="http://pic.yupoo.com/wjh15101051/30365cc7/c1a3be15.png" class="list_icon" id="timeline_image">
+            Timeline
+          </a>
+        </li>
+        <li class="about">
+          <a href="../about.html">
+            <img src="http://pic.yupoo.com/wjh15101051/24f1cb41/e239086e.png" class="list_icon" id="about_image">
+            About
+          </a>
+        </li>
+        <li class="toolbox">
+          <a href="../toolbox.html">
+            <img src="http://pic.yupoo.com/wjh15101051/dee9f673/d3cf682a.png" class="list_icon" id="toolbox_image">
+            Toolbox
+          </a>
+        </li>
+        <li class="friends">
+            <div class="friends_text">
+              <img src="http://pic.yupoo.com/wjh15101051/d291ebed/29f9c807.png" id="friends_image">
+              Friends
+            </div>
+            <div id="fp_friends_list">
+              <div id="SGcolin">
+                <a href="http://blog.gyx.me/" target="_blank">SGcolin</a>
+              </div>
+              <div id="Xingcy">
+                <a href="https://www.cnblogs.com/xcysblog/" target="_blank">Xingcy</a>
+              </div>
+              <div id="ZH_comld">
+                <a href="https://www.cnblogs.com/ZH-comld/" target="_blank">ZH_comld</a>
+              </div>
+            </div>
+            <br>
+          </div>
+        </li>
+      </div>
+    <div class="music_player">
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer@1.10.0/dist/APlayer.min.css">
+      <script src="https://blog-static.cnblogs.com/files/yjlaugus/APlayer.min.js"></script>
+      <div id="aplayer" class="aplayer"  data-id="5313691453" data-server="netease" data-type="playlist" data-fixed="true" data-listfolded="true" data-order="random" data-theme="#F58EA8"></div>
+      <script src="https://unpkg.com/meting@1.2/dist/Meting.min.js"></script>
+    </div>
+    <div class="bottom">
+      <div>
+        Copyright © 2020
+        <a id="copyright_user_a" href="index.html">
+          <span id="copyright_user">wjh15101051</span>
+        </a>
+      </div>
+      <div class="bottom_anime">ღゝ◡╹)ノ♡</div>
+    </div>
+  </div>
+</body>
+</html>

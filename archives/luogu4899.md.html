@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>IOI2018 werewolf狼人</title>
+  <link rel="stylesheet" type="text/css" id="frame_style" href="../css/frame_style1.css">
+  <link rel="stylesheet" type="text/css" id="Markdown_style" href="../css/Markdown_style.css">
+  <script type="text/javascript" src="../jscode/frame.js"></script>
+  <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+  <link rel="stylesheet" href="https://ziyuan.fenxianglu.cn/js/highlight/styles/default.css">
+  <script src="https://ziyuan.fenxianglu.cn/js/highlight/highlight.pack.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+        inlineMath: [['$','$']]
+      }
+    });
+  </script>
+</head>
+<body>
+  <div class="main">
+    <div class="head">
+      <div class="title1">
+        <a href="../index.html">wjh15101051's space</a>
+      </div>
+      <div class="title2">
+        卧薪尝胆，厚积薄发。
+      </div>
+    </div>
+    <div id="middle_blogfile">
+      <div class="blog_blogfile">
+        <div class="blogfile_title">
+            IOI2018 werewolf狼人
+        </div>
+        <div class="blogfile_stitle">
+          <img src="http://pic.yupoo.com/wjh15101051/1e0e1b3a/118165c5.jpg">
+          Date: Tue Nov 20 13:17:09 CST 2018
+          <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png">
+          In Category:
+          <a href="../categories/NoCategory.html">NoCategory</a>
+        </div>
+        <div class="blogfile_content">
+<div class = "MarkdownCommonContent">
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Description：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+一个无向连通图，多次询问是否存在一条从
+$s$
+到
+$t$
+的路径从
+$s$
+到
+$k\geqslant l$
+，
+$k$
+到
+$t\leqslant r$
+。
+</div>
+<div class = "MarkdownCommonContent">
+$1\leqslant n\leqslant 200000$
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Solution：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+点的
+$Kruskal$
+重构树，就是按顺序每次加入一个点，把他和已经加入的但是不在一个联通块里的连起来，这样从
+$k$
+出发只经过满足某一条件的点就是这个树的一个子树，于是就变成了判断两组数中是否存在相同的，可以把两个的
+$dfs$
+序分别求出来，然后按第二个
+$dfs$
+序建主席树，把这个点在第一个
+$dfs$
+序的位置插进去，询问的时候就看这个区间和是否大于零即可，其实就是二维数点。
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Code：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+<pre><code class="MarkdownParaCode">
+#include&lt;algorithm&gt;<br />
+#include&lt;iostream&gt;<br />
+#include&lt;cstdlib&gt;<br />
+#include&lt;cstdio&gt;<br />
+#include&lt;cmath&gt;<br />
+#include&lt;vector&gt;<br />
+#include&lt;cctype&gt;<br />
+#include&lt;cstring&gt;<br />
+using namespace std;<br />
+inline int rd()<br />
+{<br />
+	register int res = 0,f = 1;<br />
+	register char c = getchar();<br />
+	while(!isdigit(c))<br />
+	{<br />
+		if(c == '-')f = -1;<br />
+		c = getchar();<br />
+	}<br />
+	while(isdigit(c))<br />
+	{<br />
+		res = (res &lt;&lt; 1) + (res &lt;&lt; 3) + c - '0';<br />
+		c = getchar();<br />
+	}<br />
+	return res * f;<br />
+}<br />
+int n,m,q;<br />
+#define MAXN 400010<br />
+vector&lt;int&gt; g[MAXN];<br />
+void add(int a,int b)<br />
+{<br />
+	g[a].push_back(b);g[b].push_back(a);<br />
+	return;<br />
+}<br />
+struct Tree<br />
+{<br />
+	int root;<br />
+	int fa[MAXN];<br />
+	int find(int x){return (x == fa[x] ? x : fa[x] = find(fa[x]));}<br />
+	struct edge<br />
+	{<br />
+		int to,nxt;<br />
+	}e[MAXN &lt;&lt; 1];<br />
+	int edgenum;<br />
+	int lin[MAXN];<br />
+	int rnk[MAXN],siz[MAXN],th[MAXN],tot;<br />
+	Tree(){edgenum = tot = 0;memset(lin,0,sizeof(lin));}<br />
+	void add(int a,int b)<br />
+	{<br />
+		e[++edgenum] = (edge){b,lin[a]};lin[a] = edgenum;<br />
+		e[++edgenum] = (edge){a,lin[b]};lin[b] = edgenum;<br />
+		return;<br />
+	}<br />
+	bool vis[MAXN];<br />
+	void insert(int k)<br />
+	{<br />
+	    vis[k] = true;<br />
+		for(vector&lt;int&gt;::iterator i = g[k].begin();i != g[k].end();++i)<br />
+		{<br />
+		    if(!vis[*i])continue;<br />
+			int v = find(*i);<br />
+			if(v != k)<br />
+			{<br />
+				add(k,v);<br />
+				fa[v] = k;<br />
+			} <br />
+		}<br />
+		return;<br />
+	}<br />
+	int f[MAXN][20];<br />
+	void dfs(int k)<br />
+	{<br />
+		rnk[k] = ++tot;th[tot] = k;<br />
+		siz[k] = 1;<br />
+		for(int i = lin[k];i != 0;i = e[i].nxt)<br />
+		{<br />
+			if(siz[e[i].to] != 0)continue;<br />
+			dfs(e[i].to);<br />
+			siz[k] += siz[e[i].to];<br />
+			f[e[i].to][0] = k;<br />
+		}<br />
+	}<br />
+	void build()<br />
+	{<br />
+		dfs(root);<br />
+		for(int k = 1;k &lt;= 19;++k)<br />
+			for(int i = 1;i &lt;= n;++i)<br />
+				f[i][k] = f[f[i][k - 1]][k - 1];<br />
+		return;<br />
+	}<br />
+}t1,t2;<br />
+struct node<br />
+{<br />
+	int lc,rc;<br />
+	int sum;<br />
+	node(){sum = 0;}<br />
+}t[MAXN * 30];<br />
+int ptr = 0;<br />
+int newnode(){return ++ptr;}<br />
+int root[MAXN];<br />
+#define mid ((l + r) &gt;&gt; 1)<br />
+void build(int &rt,int l,int r)<br />
+{<br />
+	rt = newnode();<br />
+	if(l == r)return;<br />
+	build(t[rt].lc,l,mid);<br />
+	build(t[rt].rc,mid + 1,r);<br />
+	return;<br />
+}<br />
+void insert(int &rt,int p,int l,int r)<br />
+{<br />
+	int k = newnode();t[k] = t[rt];rt = k;<br />
+	++t[rt].sum;<br />
+	if(l == r)return;<br />
+	if(p &lt;= mid)insert(t[rt].lc,p,l,mid);<br />
+	else insert(t[rt].rc,p,mid + 1,r);<br />
+	return; <br />
+}<br />
+int query(int rtr,int rtl,int L,int R,int l,int r)<br />
+{<br />
+	if(L &lt;= l && r &lt;= R)return t[rtr].sum - t[rtl].sum;<br />
+	int res = 0;<br />
+	if(L &lt;= mid)res += query(t[rtr].lc,t[rtl].lc,L,R,l,mid);<br />
+	if(R &gt; mid)res += query(t[rtr].rc,t[rtl].rc,L,R,mid + 1,r);<br />
+	return res;<br />
+}<br />
+int calc2(int p,int v)<br />
+{<br />
+    for(int i = 19;i &gt;= 0;--i)<br />
+        if(t2.f[p][i] != 0 && t2.f[p][i] &gt;= v)<br />
+            p = t2.f[p][i];<br />
+    return p;<br />
+}<br />
+int calc1(int p,int v)<br />
+{<br />
+    for(int i = 19;i &gt;= 0;--i)<br />
+        if(t1.f[p][i] != 0 && t1.f[p][i] &lt;= v)<br />
+            p = t1.f[p][i];<br />
+    return p;<br />
+}<br />
+bool check(int s,int t,int l,int r)<br />
+{<br />
+    s = calc2(s,l);<br />
+    int sl = t2.rnk[s],sr = t2.rnk[s] + t2.siz[s] - 1;<br />
+    t = calc1(t,r);<br />
+    int tl = t1.rnk[t],tr = t1.rnk[t] + t1.siz[t] - 1;<br />
+    return (query(root[sr],root[sl - 1],tl,tr,1,n) &gt; 0);<br />
+}<br />
+int main()<br />
+{<br />
+	scanf("%d%d%d",&n,&m,&q);<br />
+	for(int i = 1;i &lt;= m;++i)add(rd() + 1,rd() + 1);<br />
+	for(int i = 1;i &lt;= n;++i)t1.fa[i] = t2.fa[i] = i;<br />
+	for(int i = 1;i &lt;= n;++i)t1.insert(i);<br />
+	for(int i = n;i &gt;= 1;--i)t2.insert(i);<br />
+	t1.root = n;<br />
+	t2.root = 1;<br />
+	t1.build();t2.build();<br />
+	int s,t,l,r;<br />
+	build(root[0],1,n);<br />
+	for(int i = 1;i &lt;= n;++i)<br />
+	{<br />
+		root[i] = root[i - 1];<br />
+		insert(root[i],t1.rnk[t2.th[i]],1,n);<br />
+	}<br />
+	for(int i = 1;i &lt;= q;++i)<br />
+	{<br />
+		scanf("%d%d%d%d",&s,&t,&l,&r);<br />
+		++s;++t;++l;++r;<br />
+		if(s &lt; l || t &gt; r)<br />
+		{<br />
+		    puts("0");<br />
+		    continue;<br />
+		}<br />
+		if(check(s,t,l,r))puts("1");<br />
+		else puts("0");<br />
+	}<br />
+	return 0;<br />
+}<br />
+</pre></code>
+</div>
+        </div>
+        <div class="blogfile_showtag">
+          <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png">
+          In tag:
+<a href="../tags/数据结构-kruskal重构树.html">数据结构-kruskal重构树</a> <a href="../tags/数据结构-主席树.html">数据结构-主席树</a> 
+          <!--<a href="../tags/blog.html">blog</a>-->
+        </div>
+      </div>
+    </div>
+    <div id="middle_nav">
+      <div class="blog_host">
+        <div class="nav_avator">
+          <img src="http://pic.yupoo.com/wjh15101051/72c1aeab/f51d56e0.jpg" alt="avator">
+        </div>
+        <div class="nav_ID">
+          wjh15101051
+        </div>
+      </div>
+      <div class="nav_list">
+        <li class="tags">
+          <a href="../tags.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png" class="list_icon" id="tags_image">
+            Tags
+          </a>
+        </li>
+        <li class="categories">
+          <a href="../categories.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png" class="list_icon" id="categories_image">
+            Categories
+          </a>
+        </li>
+        <li class="timeline">
+          <a href="../timeline.html">
+            <img src="http://pic.yupoo.com/wjh15101051/30365cc7/c1a3be15.png" class="list_icon" id="timeline_image">
+            Timeline
+          </a>
+        </li>
+        <li class="about">
+          <a href="../about.html">
+            <img src="http://pic.yupoo.com/wjh15101051/24f1cb41/e239086e.png" class="list_icon" id="about_image">
+            About
+          </a>
+        </li>
+        <li class="toolbox">
+          <a href="../toolbox.html">
+            <img src="http://pic.yupoo.com/wjh15101051/dee9f673/d3cf682a.png" class="list_icon" id="toolbox_image">
+            Toolbox
+          </a>
+        </li>
+        <li class="friends">
+            <div class="friends_text">
+              <img src="http://pic.yupoo.com/wjh15101051/d291ebed/29f9c807.png" id="friends_image">
+              Friends
+            </div>
+            <div id="fp_friends_list">
+              <div id="SGcolin">
+                <a href="http://blog.gyx.me/" target="_blank">SGcolin</a>
+              </div>
+              <div id="Xingcy">
+                <a href="https://www.cnblogs.com/xcysblog/" target="_blank">Xingcy</a>
+              </div>
+              <div id="ZH_comld">
+                <a href="https://www.cnblogs.com/ZH-comld/" target="_blank">ZH_comld</a>
+              </div>
+            </div>
+            <br>
+          </div>
+        </li>
+      </div>
+    <div class="music_player">
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer@1.10.0/dist/APlayer.min.css">
+      <script src="https://blog-static.cnblogs.com/files/yjlaugus/APlayer.min.js"></script>
+      <div id="aplayer" class="aplayer"  data-id="5313691453" data-server="netease" data-type="playlist" data-fixed="true" data-listfolded="true" data-order="random" data-theme="#F58EA8"></div>
+      <script src="https://unpkg.com/meting@1.2/dist/Meting.min.js"></script>
+    </div>
+    <div class="bottom">
+      <div>
+        Copyright © 2020
+        <a id="copyright_user_a" href="index.html">
+          <span id="copyright_user">wjh15101051</span>
+        </a>
+      </div>
+      <div class="bottom_anime">ღゝ◡╹)ノ♡</div>
+    </div>
+  </div>
+</body>
+</html>

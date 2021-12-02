@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Bear and Bad Powers of 42</title>
+  <link rel="stylesheet" type="text/css" id="frame_style" href="../css/frame_style1.css">
+  <link rel="stylesheet" type="text/css" id="Markdown_style" href="../css/Markdown_style.css">
+  <script type="text/javascript" src="../jscode/frame.js"></script>
+  <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+  <link rel="stylesheet" href="https://ziyuan.fenxianglu.cn/js/highlight/styles/default.css">
+  <script src="https://ziyuan.fenxianglu.cn/js/highlight/highlight.pack.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+        inlineMath: [['$','$']]
+      }
+    });
+  </script>
+</head>
+<body>
+  <div class="main">
+    <div class="head">
+      <div class="title1">
+        <a href="../index.html">wjh15101051's space</a>
+      </div>
+      <div class="title2">
+        卧薪尝胆，厚积薄发。
+      </div>
+    </div>
+    <div id="middle_blogfile">
+      <div class="blog_blogfile">
+        <div class="blogfile_title">
+            Bear and Bad Powers of 42
+        </div>
+        <div class="blogfile_stitle">
+          <img src="http://pic.yupoo.com/wjh15101051/1e0e1b3a/118165c5.jpg">
+          Date: Mon Feb 25 15:03:11 CST 2019
+          <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png">
+          In Category:
+          <a href="../categories/NoCategory.html">NoCategory</a>
+        </div>
+        <div class="blogfile_content">
+<div class = "MarkdownCommonContent">
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Description：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+维护一个序列，支持单点查询、区间修改、区间加，如果某次区间加操作完后，序列中有一个元素是
+$42$
+的幂，那么就需要一直做这个操作直到序列中不存在
+$42$
+的幂。
+</div>
+<div class = "MarkdownCommonContent">
+$1\leqslant n,q\leqslant 10^5$
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Solution：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+先考虑如果没有区间赋值怎么做，可以用线段树维护，对每个位置维护一个
+$lev$
+表示大于等于它的第一个
+$42$
+的幂是几，然后再维护一个
+$mind$
+表示这个位置的值与大于等于它的第一个
+$42$
+的幂的差，每次区间加不更新
+$lev$
+，之后
+$update$
+一下，把
+$mind$
+小于
+$0$
+的位置暴力更新
+$lev$
+，因为
+$long\ long$
+范围内
+$42$
+的倍数很少，因此复杂度是对的，在考虑有区间赋值怎么做，可以对每个区间维护一个
+$same$
+表示整个区间是否都相同，在
+$update$
+的时候如果
+$same=true$
+，就计算一下最终的值，然后打一个区间赋值标记退出，复杂度是对的。
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Code：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+<pre><code class="MarkdownParaCode">
+#include&lt;algorithm&gt;<br />
+#include&lt;iostream&gt;<br />
+#include&lt;cstdlib&gt;<br />
+#include&lt;cstdio&gt;<br />
+#include&lt;cmath&gt;<br />
+#include&lt;cctype&gt;<br />
+#include&lt;cstring&gt;<br />
+using namespace std;<br />
+int n,q;<br />
+#define MAXN 100010<br />
+typedef long long ll;<br />
+ll a[MAXN];<br />
+ll power[12];<br />
+struct node<br />
+{<br />
+	int lc,rc;<br />
+	ll lev,add,set,mind;<br />
+	bool same;<br />
+}t[MAXN &lt;&lt; 1];<br />
+int ptr = 0;<br />
+int newnode(){return ++ptr;}<br />
+int root;<br />
+#define mid ((l + r) &gt;&gt; 1)<br />
+int getlev(ll val){return lower_bound(power,power + 12,val) - power;}<br />
+void pushup(int rt)<br />
+{<br />
+	int lc = t[rt].lc,rc = t[rt].rc;<br />
+	t[rt].mind = min(t[lc].mind,t[rc].mind);<br />
+	if(t[lc].same && t[rc].same && t[lc].lev == t[rc].lev && t[lc].mind == t[rc].mind)<br />
+	{<br />
+		t[rt].same = true;t[rt].lev = t[lc].lev;<br />
+	}<br />
+	else t[rt].same = false;<br />
+	return;<br />
+}<br />
+void addtag(int rt,ll val)<br />
+{<br />
+	if(t[rt].set != -1)t[rt].set += val;<br />
+	else t[rt].add += val;<br />
+	t[rt].mind -= val;<br />
+	return;<br />
+}<br />
+void settag(int rt,ll val)<br />
+{<br />
+	if(t[rt].add != 0)t[rt].add = 0;<br />
+	t[rt].set = val;<br />
+	t[rt].same = true;<br />
+	t[rt].lev = getlev(val);<br />
+	t[rt].mind = power[t[rt].lev] - val;<br />
+	return;<br />
+}<br />
+void pushdown(int rt)<br />
+{<br />
+	if(t[rt].add != 0)<br />
+	{<br />
+		addtag(t[rt].lc,t[rt].add);addtag(t[rt].rc,t[rt].add);<br />
+		t[rt].add = 0;<br />
+		return;<br />
+	}<br />
+	if(t[rt].set != -1)<br />
+	{<br />
+		settag(t[rt].lc,t[rt].set);settag(t[rt].rc,t[rt].set);<br />
+		t[rt].set = -1;<br />
+		return;<br />
+	}<br />
+}<br />
+void build(int &rt,int l,int r)<br />
+{<br />
+	rt = newnode();<br />
+	t[rt].set = -1;<br />
+	if(l == r)<br />
+	{<br />
+		t[rt].same = true;<br />
+		t[rt].lev = getlev(a[l]);<br />
+		t[rt].mind = power[t[rt].lev] - a[l];<br />
+		return;<br />
+	}<br />
+	build(t[rt].lc,l,mid);<br />
+	build(t[rt].rc,mid + 1,r);<br />
+	pushup(rt);<br />
+	return;<br />
+}<br />
+void update(int rt,int l,int r)<br />
+{<br />
+	if(t[rt].same)<br />
+	{<br />
+		while(t[rt].mind &lt; 0)<br />
+		{<br />
+			++t[rt].lev;<br />
+			t[rt].mind = power[t[rt].lev] - (power[t[rt].lev - 1] - t[rt].mind);<br />
+		}<br />
+		settag(rt,power[t[rt].lev] - t[rt].mind);<br />
+		return;<br />
+	}<br />
+	pushdown(rt);<br />
+	if(t[t[rt].lc].mind &lt; 0)update(t[rt].lc,l,mid);<br />
+	if(t[t[rt].rc].mind &lt; 0)update(t[rt].rc,mid + 1,r);<br />
+	pushup(rt);<br />
+	return;<br />
+}<br />
+void set(int rt,int L,int R,ll val,int l,int r)<br />
+{<br />
+	if(L &lt;= l && r &lt;= R){settag(rt,val);return;}<br />
+	pushdown(rt);<br />
+	if(L &lt;= mid)set(t[rt].lc,L,R,val,l,mid);<br />
+	if(R &gt; mid)set(t[rt].rc,L,R,val,mid + 1,r);<br />
+	pushup(rt);<br />
+	return;<br />
+}<br />
+void add(int rt,int L,int R,ll val,int l,int r)<br />
+{<br />
+	if(L &lt;= l && r &lt;= R){addtag(rt,val);return;}<br />
+	pushdown(rt);<br />
+	if(L &lt;= mid)add(t[rt].lc,L,R,val,l,mid);<br />
+	if(R &gt; mid)add(t[rt].rc,L,R,val,mid + 1,r);<br />
+	pushup(rt);<br />
+	return;<br />
+}<br />
+ll query(int rt,int p,int l,int r)<br />
+{<br />
+	if(l == r)return power[t[rt].lev] - t[rt].mind;<br />
+	pushdown(rt);<br />
+	if(p &lt;= mid)return query(t[rt].lc,p,l,mid);<br />
+	else return query(t[rt].rc,p,mid + 1,r);<br />
+}<br />
+int main()<br />
+{<br />
+	power[0] = 1;<br />
+	for(int i = 1;i &lt;= 11;++i)power[i] = power[i - 1] * 42;<br />
+	scanf("%d%d",&n,&q);<br />
+	for(int i = 1;i &lt;= n;++i)cin &gt;&gt; a[i];<br />
+	build(root,1,n);<br />
+	int opt,l,r;<br />
+	ll x;<br />
+	for(int i = 1;i &lt;= q;++i)<br />
+	{<br />
+		scanf("%d",&opt);<br />
+		if(opt == 1)<br />
+		{<br />
+			cin &gt;&gt; x;<br />
+			cout &lt;&lt; query(root,x,1,n) &lt;&lt; endl;<br />
+		}<br />
+		else<br />
+		{<br />
+			scanf("%d%d",&l,&r);<br />
+			cin &gt;&gt; x;<br />
+			if(opt == 3)<br />
+			{<br />
+				add(root,l,r,x,1,n);<br />
+				update(root,1,n);<br />
+				while(t[root].mind == 0)<br />
+				{<br />
+					add(root,l,r,x,1,n);<br />
+					update(root,1,n);<br />
+				}<br />
+			}<br />
+			else set(root,l,r,x,1,n);<br />
+		}<br />
+	}<br />
+	return 0;<br />
+}<br />
+</pre></code>
+</div>
+        </div>
+        <div class="blogfile_showtag">
+          <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png">
+          In tag:
+<a href="../tags/数据结构-线段树.html">数据结构-线段树</a> 
+          <!--<a href="../tags/blog.html">blog</a>-->
+        </div>
+      </div>
+    </div>
+    <div id="middle_nav">
+      <div class="blog_host">
+        <div class="nav_avator">
+          <img src="http://pic.yupoo.com/wjh15101051/72c1aeab/f51d56e0.jpg" alt="avator">
+        </div>
+        <div class="nav_ID">
+          wjh15101051
+        </div>
+      </div>
+      <div class="nav_list">
+        <li class="tags">
+          <a href="../tags.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png" class="list_icon" id="tags_image">
+            Tags
+          </a>
+        </li>
+        <li class="categories">
+          <a href="../categories.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png" class="list_icon" id="categories_image">
+            Categories
+          </a>
+        </li>
+        <li class="timeline">
+          <a href="../timeline.html">
+            <img src="http://pic.yupoo.com/wjh15101051/30365cc7/c1a3be15.png" class="list_icon" id="timeline_image">
+            Timeline
+          </a>
+        </li>
+        <li class="about">
+          <a href="../about.html">
+            <img src="http://pic.yupoo.com/wjh15101051/24f1cb41/e239086e.png" class="list_icon" id="about_image">
+            About
+          </a>
+        </li>
+        <li class="toolbox">
+          <a href="../toolbox.html">
+            <img src="http://pic.yupoo.com/wjh15101051/dee9f673/d3cf682a.png" class="list_icon" id="toolbox_image">
+            Toolbox
+          </a>
+        </li>
+        <li class="friends">
+            <div class="friends_text">
+              <img src="http://pic.yupoo.com/wjh15101051/d291ebed/29f9c807.png" id="friends_image">
+              Friends
+            </div>
+            <div id="fp_friends_list">
+              <div id="SGcolin">
+                <a href="http://blog.gyx.me/" target="_blank">SGcolin</a>
+              </div>
+              <div id="Xingcy">
+                <a href="https://www.cnblogs.com/xcysblog/" target="_blank">Xingcy</a>
+              </div>
+              <div id="ZH_comld">
+                <a href="https://www.cnblogs.com/ZH-comld/" target="_blank">ZH_comld</a>
+              </div>
+            </div>
+            <br>
+          </div>
+        </li>
+      </div>
+    <div class="music_player">
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer@1.10.0/dist/APlayer.min.css">
+      <script src="https://blog-static.cnblogs.com/files/yjlaugus/APlayer.min.js"></script>
+      <div id="aplayer" class="aplayer"  data-id="5313691453" data-server="netease" data-type="playlist" data-fixed="true" data-listfolded="true" data-order="random" data-theme="#F58EA8"></div>
+      <script src="https://unpkg.com/meting@1.2/dist/Meting.min.js"></script>
+    </div>
+    <div class="bottom">
+      <div>
+        Copyright © 2020
+        <a id="copyright_user_a" href="index.html">
+          <span id="copyright_user">wjh15101051</span>
+        </a>
+      </div>
+      <div class="bottom_anime">ღゝ◡╹)ノ♡</div>
+    </div>
+  </div>
+</body>
+</html>

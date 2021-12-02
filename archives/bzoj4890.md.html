@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>TJOI2017 城市</title>
+  <link rel="stylesheet" type="text/css" id="frame_style" href="../css/frame_style1.css">
+  <link rel="stylesheet" type="text/css" id="Markdown_style" href="../css/Markdown_style.css">
+  <script type="text/javascript" src="../jscode/frame.js"></script>
+  <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+  <link rel="stylesheet" href="https://ziyuan.fenxianglu.cn/js/highlight/styles/default.css">
+  <script src="https://ziyuan.fenxianglu.cn/js/highlight/highlight.pack.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+        inlineMath: [['$','$']]
+      }
+    });
+  </script>
+</head>
+<body>
+  <div class="main">
+    <div class="head">
+      <div class="title1">
+        <a href="../index.html">wjh15101051's space</a>
+      </div>
+      <div class="title2">
+        卧薪尝胆，厚积薄发。
+      </div>
+    </div>
+    <div id="middle_blogfile">
+      <div class="blog_blogfile">
+        <div class="blogfile_title">
+            TJOI2017 城市
+        </div>
+        <div class="blogfile_stitle">
+          <img src="http://pic.yupoo.com/wjh15101051/1e0e1b3a/118165c5.jpg">
+          Date: Sun Oct 21 11:11:01 CST 2018
+          <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png">
+          In Category:
+          <a href="../categories/NoCategory.html">NoCategory</a>
+        </div>
+        <div class="blogfile_content">
+<div class = "MarkdownCommonContent">
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Description：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+给一棵边带权的树，可以删掉一条边，再加上一条同等权值的边，最小化最后的树的直径。
+</div>
+<div class = "MarkdownCommonContent">
+$1\leqslant n\leqslant 5000$
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Solution：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+$O(n^2)$
+卡卡常可过。
+</div>
+<div class = "MarkdownCommonContent">
+先枚举删那条边，然后最后的答案一定是分成的两棵子树的直径或加上这条边后包含这条边的最长路其中之一，两棵子树的直径可以树形
+$DP$
+求，不难发现这条边一定连在两棵子树的到其他点距离的最大值最小的点上，这个可以在刚才的树形
+$DP$
+中一并求出，方法就是类似
+<a class = "MarkdownA" href="http://localhost:4000/2018/10/19/cogs1359/">COGS1359 最长链</a>
+的做法。
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Code：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+<pre><code class="MarkdownParaCode">
+#include&lt;algorithm&gt;<br />
+#include&lt;iostream&gt;<br />
+#include&lt;cstdlib&gt;<br />
+#include&lt;cstdio&gt;<br />
+#include&lt;cmath&gt;<br />
+#include&lt;queue&gt;<br />
+#include&lt;cctype&gt;<br />
+#include&lt;cstring&gt;<br />
+using namespace std;<br />
+inline int rd()<br />
+{<br />
+	register int res = 0,f = 1;<br />
+	register char c = getchar();<br />
+	while(!isdigit(c))<br />
+	{<br />
+		if(c == '-')f = -1;<br />
+		c = getchar();<br />
+	}<br />
+	while(isdigit(c))<br />
+	{<br />
+		res = (res &lt;&lt; 1) + (res &lt;&lt; 3) + c - '0';<br />
+		c = getchar();<br />
+	}<br />
+	return res * f;<br />
+}<br />
+int n;<br />
+#define MAXN 5010<br />
+struct edges<br />
+{<br />
+	int u,v,w;<br />
+}es[MAXN];<br />
+struct edge<br />
+{<br />
+	int to,nxt,v,id;<br />
+}e[MAXN &lt;&lt; 1];<br />
+int edgenum = 0;<br />
+int lin[MAXN] = {0};<br />
+bool ava[MAXN];<br />
+inline void add(int a,int b,int c,int id)<br />
+{<br />
+	++edgenum;e[edgenum].to = b;e[edgenum].v = c;e[edgenum].id = id;e[edgenum].nxt = lin[a];lin[a] = edgenum;<br />
+	++edgenum;e[edgenum].to = a;e[edgenum].v = c;e[edgenum].id = id;e[edgenum].nxt = lin[b];lin[b] = edgenum;<br />
+	return;<br />
+}<br />
+#define mp make_pair<br />
+int f[MAXN],g[MAXN];<br />
+bool v[MAXN];<br />
+int res[MAXN];<br />
+void dp1(int k)<br />
+{<br />
+	v[k] = true;f[k] = 0;<br />
+	for(register int i = lin[k];i != 0;i = e[i].nxt)<br />
+	{<br />
+		if(!v[e[i].to] && ava[e[i].id])<br />
+		{<br />
+			dp1(e[i].to);<br />
+			f[k] = max(f[k],f[e[i].to] + e[i].v);<br />
+		}<br />
+	}<br />
+	v[k] = false;<br />
+	return;<br />
+}<br />
+void dp2(int k)<br />
+{<br />
+	v[k] = true;<br />
+	register int maxf = -1,bel,val;<br />
+	for(register int i = lin[k];i != 0;i = e[i].nxt)<br />
+		if(!v[e[i].to] && ava[e[i].id])<br />
+			g[e[i].to] = g[k] + e[i].v;<br />
+	for(register int i = lin[k];i != 0;i = e[i].nxt)<br />
+	{<br />
+		if(!v[e[i].to] && ava[e[i].id])<br />
+		{<br />
+			if(f[e[i].to] + e[i].v &gt; maxf)<br />
+			{<br />
+				maxf = f[e[i].to] + e[i].v;<br />
+				bel = e[i].to;val = e[i].v;<br />
+			}<br />
+		}<br />
+	}<br />
+	for(register int i = lin[k];i != 0;i = e[i].nxt)<br />
+		if(!v[e[i].to] && ava[e[i].id] && e[i].to != bel)<br />
+			g[e[i].to] = max(g[e[i].to],maxf + e[i].v);<br />
+	for(register int i = lin[k];i != 0;i = e[i].nxt)<br />
+		if(!v[e[i].to] && ava[e[i].id] && e[i].to != bel)<br />
+			g[bel] = max(g[bel],f[e[i].to] + e[i].v + val);<br />
+	for(register int i = lin[k];i != 0;i = e[i].nxt)<br />
+		if(!v[e[i].to] && ava[e[i].id])<br />
+			dp2(e[i].to);<br />
+	return;<br />
+}<br />
+inline int getd()<br />
+{<br />
+	int ans = 0;<br />
+	for(int i = 1;i &lt;= n;++i)ans = max(ans,res[i]);<br />
+	return ans;<br />
+}<br />
+inline int getrt(int s)<br />
+{<br />
+	dp1(s);<br />
+	g[s] = 0;<br />
+	dp2(s);<br />
+	register int rt = 0;res[0] = 0x3f3f3f3f;<br />
+	for(register int i = 1;i &lt;= n;++i)<br />
+	{<br />
+		if(v[i])<br />
+		{<br />
+			res[i] = max(f[i],g[i]);<br />
+			if(res[i] &lt; res[rt])rt = i;<br />
+			v[i] = false;<br />
+		}<br />
+	}<br />
+	return rt;<br />
+}<br />
+int main()<br />
+{<br />
+	n = rd();<br />
+	for(register int i = 1;i &lt; n;++i)<br />
+	{<br />
+		es[i].u = rd();es[i].v = rd();<br />
+		es[i].w = rd();<br />
+		add(es[i].u,es[i].v,es[i].w,i);<br />
+		ava[i] = true;<br />
+	}<br />
+	register int ans = 0x3f3f3f3f;<br />
+	for(register int i = 1;i &lt; n;++i)<br />
+	{ <br />
+		ava[i] = false;<br />
+		register int r1 = getrt(es[i].u),r2 = getrt(es[i].v);<br />
+		ans = min(ans,max(getd(),res[r1] + res[r2] + es[i].w));<br />
+		ava[i] = true;<br />
+	}<br />
+	cout &lt;&lt; ans &lt;&lt; endl;<br />
+	return 0;<br />
+}<br />
+</pre></code>
+</div>
+        </div>
+        <div class="blogfile_showtag">
+          <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png">
+          In tag:
+<a href="../tags/DP-树形DP.html">DP-树形DP</a> <a href="../tags/树-树的直径.html">树-树的直径</a> 
+          <!--<a href="../tags/blog.html">blog</a>-->
+        </div>
+      </div>
+    </div>
+    <div id="middle_nav">
+      <div class="blog_host">
+        <div class="nav_avator">
+          <img src="http://pic.yupoo.com/wjh15101051/72c1aeab/f51d56e0.jpg" alt="avator">
+        </div>
+        <div class="nav_ID">
+          wjh15101051
+        </div>
+      </div>
+      <div class="nav_list">
+        <li class="tags">
+          <a href="../tags.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png" class="list_icon" id="tags_image">
+            Tags
+          </a>
+        </li>
+        <li class="categories">
+          <a href="../categories.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png" class="list_icon" id="categories_image">
+            Categories
+          </a>
+        </li>
+        <li class="timeline">
+          <a href="../timeline.html">
+            <img src="http://pic.yupoo.com/wjh15101051/30365cc7/c1a3be15.png" class="list_icon" id="timeline_image">
+            Timeline
+          </a>
+        </li>
+        <li class="about">
+          <a href="../about.html">
+            <img src="http://pic.yupoo.com/wjh15101051/24f1cb41/e239086e.png" class="list_icon" id="about_image">
+            About
+          </a>
+        </li>
+        <li class="toolbox">
+          <a href="../toolbox.html">
+            <img src="http://pic.yupoo.com/wjh15101051/dee9f673/d3cf682a.png" class="list_icon" id="toolbox_image">
+            Toolbox
+          </a>
+        </li>
+        <li class="friends">
+            <div class="friends_text">
+              <img src="http://pic.yupoo.com/wjh15101051/d291ebed/29f9c807.png" id="friends_image">
+              Friends
+            </div>
+            <div id="fp_friends_list">
+              <div id="SGcolin">
+                <a href="http://blog.gyx.me/" target="_blank">SGcolin</a>
+              </div>
+              <div id="Xingcy">
+                <a href="https://www.cnblogs.com/xcysblog/" target="_blank">Xingcy</a>
+              </div>
+              <div id="ZH_comld">
+                <a href="https://www.cnblogs.com/ZH-comld/" target="_blank">ZH_comld</a>
+              </div>
+            </div>
+            <br>
+          </div>
+        </li>
+      </div>
+    <div class="music_player">
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer@1.10.0/dist/APlayer.min.css">
+      <script src="https://blog-static.cnblogs.com/files/yjlaugus/APlayer.min.js"></script>
+      <div id="aplayer" class="aplayer"  data-id="5313691453" data-server="netease" data-type="playlist" data-fixed="true" data-listfolded="true" data-order="random" data-theme="#F58EA8"></div>
+      <script src="https://unpkg.com/meting@1.2/dist/Meting.min.js"></script>
+    </div>
+    <div class="bottom">
+      <div>
+        Copyright © 2020
+        <a id="copyright_user_a" href="index.html">
+          <span id="copyright_user">wjh15101051</span>
+        </a>
+      </div>
+      <div class="bottom_anime">ღゝ◡╹)ノ♡</div>
+    </div>
+  </div>
+</body>
+</html>

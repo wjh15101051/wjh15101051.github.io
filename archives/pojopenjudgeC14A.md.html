@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Alice and Bob</title>
+  <link rel="stylesheet" type="text/css" id="frame_style" href="../css/frame_style1.css">
+  <link rel="stylesheet" type="text/css" id="Markdown_style" href="../css/Markdown_style.css">
+  <script type="text/javascript" src="../jscode/frame.js"></script>
+  <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+  <link rel="stylesheet" href="https://ziyuan.fenxianglu.cn/js/highlight/styles/default.css">
+  <script src="https://ziyuan.fenxianglu.cn/js/highlight/highlight.pack.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+        inlineMath: [['$','$']]
+      }
+    });
+  </script>
+</head>
+<body>
+  <div class="main">
+    <div class="head">
+      <div class="title1">
+        <a href="../index.html">wjh15101051's space</a>
+      </div>
+      <div class="title2">
+        卧薪尝胆，厚积薄发。
+      </div>
+    </div>
+    <div id="middle_blogfile">
+      <div class="blog_blogfile">
+        <div class="blogfile_title">
+            Alice and Bob
+        </div>
+        <div class="blogfile_stitle">
+          <img src="http://pic.yupoo.com/wjh15101051/1e0e1b3a/118165c5.jpg">
+          Date: Thu Sep 20 08:55:16 CST 2018
+          <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png">
+          In Category:
+          <a href="../categories/NoCategory.html">NoCategory</a>
+        </div>
+        <div class="blogfile_content">
+<div class = "MarkdownCommonContent">
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Description：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+给出平面上不相交不相切的
+$n$
+个圆，求每个点的深度。
+</div>
+<div class = "MarkdownCommonContent">
+$1\le n \le 100000$
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Solution：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+把圆的上下端点纵坐标离散化，左右端点拆成
+$\pm1$
+两个点并按横坐标排序。扫描线从左到右扫描，由题目的性质，任何时刻扫描线上都是一个括号序列。括号所在的实际位置不断变化，但括号之间的相对顺序不变，因此可以用平衡树(
+$set$
+)维护括号的次序，每个圆插入时通过查询恰好比它高的那个括号，如果没有，那么深度是
+$1$
+，如果是一个圆的上边界，那么深度是它的深度加一，如果是下边界，那么和他深度相同。
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Code：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+<pre><code class="MarkdownParaCode">
+#include&lt;algorithm&gt;<br />
+#include&lt;iostream&gt;<br />
+#include&lt;cstdlib&gt;<br />
+#include&lt;cstdio&gt;<br />
+#include&lt;cmath&gt;<br />
+#include&lt;set&gt;<br />
+#include&lt;cctype&gt;<br />
+#include&lt;cstring&gt;<br />
+using namespace std;<br />
+typedef long long ll;<br />
+int n;<br />
+#define MAXN 100010<br />
+struct circle<br />
+{<br />
+	ll x,y,r;<br />
+}c[MAXN];<br />
+struct scan<br />
+{<br />
+	ll x;<br />
+	int type,id;<br />
+}w[MAXN &lt;&lt; 1];<br />
+int tot = 0;<br />
+bool cmp_scan_x(scan a,scan b){return (a.x == b.x ? a.type &lt; b.type : a.x &lt; b.x);}<br />
+struct bracket<br />
+{<br />
+	ll x,y,r;<br />
+	int type,id;<br />
+	double height(ll pos)const{return (double)y + sqrt((double)r * (double)r - (double)(x - pos) * (double)(x - pos)) * (double)type;}<br />
+	bool operator &lt; (bracket b)const<br />
+	{<br />
+		if(x == b.x && y == b.y && r == b.r)return type &lt; b.type;<br />
+		ll pos = max(x - r,b.x - b.r);<br />
+		return height(pos) &lt; b.height(pos);<br />
+	}<br />
+}b[MAXN &lt;&lt; 1];<br />
+int dep[MAXN];<br />
+int ans[MAXN];<br />
+void work()<br />
+{<br />
+	scanf("%d",&n);<br />
+	tot = 0;<br />
+	for(int i = 1;i &lt;= n;++i)<br />
+	{<br />
+		scanf("%lld%lld%lld",&c[i].x,&c[i].y,&c[i].r);<br />
+		++tot;w[tot].x = c[i].x - c[i].r;w[tot].type =  1;w[tot].id = i;<br />
+		++tot;w[tot].x = c[i].x + c[i].r;w[tot].type = -1;w[tot].id = i;<br />
+	}<br />
+	sort(w + 1,w + 1 + 2 * n,cmp_scan_x);<br />
+	set&lt;bracket&gt; s;<br />
+	memset(dep,0,sizeof(dep));<br />
+	for(int i = 1;i &lt;= 2 * n;++i)<br />
+	{<br />
+		int id = w[i].id;<br />
+		bracket b1 = (bracket){c[id].x,c[id].y,c[id].r,-1,id};<br />
+		bracket b2 = (bracket){c[id].x,c[id].y,c[id].r, 1,id};<br />
+		if(w[i].type == -1)<br />
+		{<br />
+			s.erase(b1);<br />
+			s.erase(b2);<br />
+		}<br />
+		else<br />
+		{<br />
+			s.insert(b1);<br />
+			s.insert(b2);<br />
+			set&lt;bracket&gt;::iterator it = s.find(b1);<br />
+			if(it == s.begin())dep[w[i].id] = 1;<br />
+			else<br />
+			{<br />
+				--it;<br />
+				if(it -&gt; type == 1)dep[w[i].id] = dep[it -&gt; id];<br />
+				else dep[w[i].id] = dep[it -&gt; id] + 1;<br />
+			}<br />
+		}<br />
+	}<br />
+	memset(ans,0,sizeof(ans));<br />
+	for(int i = 1;i &lt;= n;++i)ans[dep[i]]++;<br />
+	for(int i = 1;i &lt;= n && ans[i] != 0;++i)printf("%d\n",ans[i]);<br />
+	return;<br />
+}<br />
+int main()<br />
+{<br />
+	int testcases;<br />
+	scanf("%d",&testcases);<br />
+	while(testcases--)work();<br />
+	return 0;<br />
+}<br />
+</pre></code>
+</div>
+        </div>
+        <div class="blogfile_showtag">
+          <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png">
+          In tag:
+<a href="../tags/STL-set.html">STL-set</a> 
+          <!--<a href="../tags/blog.html">blog</a>-->
+        </div>
+      </div>
+    </div>
+    <div id="middle_nav">
+      <div class="blog_host">
+        <div class="nav_avator">
+          <img src="http://pic.yupoo.com/wjh15101051/72c1aeab/f51d56e0.jpg" alt="avator">
+        </div>
+        <div class="nav_ID">
+          wjh15101051
+        </div>
+      </div>
+      <div class="nav_list">
+        <li class="tags">
+          <a href="../tags.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png" class="list_icon" id="tags_image">
+            Tags
+          </a>
+        </li>
+        <li class="categories">
+          <a href="../categories.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png" class="list_icon" id="categories_image">
+            Categories
+          </a>
+        </li>
+        <li class="timeline">
+          <a href="../timeline.html">
+            <img src="http://pic.yupoo.com/wjh15101051/30365cc7/c1a3be15.png" class="list_icon" id="timeline_image">
+            Timeline
+          </a>
+        </li>
+        <li class="about">
+          <a href="../about.html">
+            <img src="http://pic.yupoo.com/wjh15101051/24f1cb41/e239086e.png" class="list_icon" id="about_image">
+            About
+          </a>
+        </li>
+        <li class="toolbox">
+          <a href="../toolbox.html">
+            <img src="http://pic.yupoo.com/wjh15101051/dee9f673/d3cf682a.png" class="list_icon" id="toolbox_image">
+            Toolbox
+          </a>
+        </li>
+        <li class="friends">
+            <div class="friends_text">
+              <img src="http://pic.yupoo.com/wjh15101051/d291ebed/29f9c807.png" id="friends_image">
+              Friends
+            </div>
+            <div id="fp_friends_list">
+              <div id="SGcolin">
+                <a href="http://blog.gyx.me/" target="_blank">SGcolin</a>
+              </div>
+              <div id="Xingcy">
+                <a href="https://www.cnblogs.com/xcysblog/" target="_blank">Xingcy</a>
+              </div>
+              <div id="ZH_comld">
+                <a href="https://www.cnblogs.com/ZH-comld/" target="_blank">ZH_comld</a>
+              </div>
+            </div>
+            <br>
+          </div>
+        </li>
+      </div>
+    <div class="music_player">
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer@1.10.0/dist/APlayer.min.css">
+      <script src="https://blog-static.cnblogs.com/files/yjlaugus/APlayer.min.js"></script>
+      <div id="aplayer" class="aplayer"  data-id="5313691453" data-server="netease" data-type="playlist" data-fixed="true" data-listfolded="true" data-order="random" data-theme="#F58EA8"></div>
+      <script src="https://unpkg.com/meting@1.2/dist/Meting.min.js"></script>
+    </div>
+    <div class="bottom">
+      <div>
+        Copyright © 2020
+        <a id="copyright_user_a" href="index.html">
+          <span id="copyright_user">wjh15101051</span>
+        </a>
+      </div>
+      <div class="bottom_anime">ღゝ◡╹)ノ♡</div>
+    </div>
+  </div>
+</body>
+</html>

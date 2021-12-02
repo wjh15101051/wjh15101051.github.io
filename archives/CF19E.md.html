@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Fairy</title>
+  <link rel="stylesheet" type="text/css" id="frame_style" href="../css/frame_style1.css">
+  <link rel="stylesheet" type="text/css" id="Markdown_style" href="../css/Markdown_style.css">
+  <script type="text/javascript" src="../jscode/frame.js"></script>
+  <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+  <link rel="stylesheet" href="https://ziyuan.fenxianglu.cn/js/highlight/styles/default.css">
+  <script src="https://ziyuan.fenxianglu.cn/js/highlight/highlight.pack.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+        inlineMath: [['$','$']]
+      }
+    });
+  </script>
+</head>
+<body>
+  <div class="main">
+    <div class="head">
+      <div class="title1">
+        <a href="../index.html">wjh15101051's space</a>
+      </div>
+      <div class="title2">
+        卧薪尝胆，厚积薄发。
+      </div>
+    </div>
+    <div id="middle_blogfile">
+      <div class="blog_blogfile">
+        <div class="blogfile_title">
+            Fairy
+        </div>
+        <div class="blogfile_stitle">
+          <img src="http://pic.yupoo.com/wjh15101051/1e0e1b3a/118165c5.jpg">
+          Date: Sun Jul 08 16:03:30 CST 2018
+          <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png">
+          In Category:
+          <a href="../categories/NoCategory.html">NoCategory</a>
+        </div>
+        <div class="blogfile_content">
+<div class = "MarkdownCommonContent">
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Description：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+给定一张无向图，要求删掉一条边，使得图变成二分图，问所有的删法。
+</div>
+<div class = "MarkdownCommonContent">
+$n,m\le10000$
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Solution：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+先随便求出来图的一棵生成树，对这棵树进行二分图染色。
+</div>
+<div class = "MarkdownCommonContent">
+考虑所有非树边，如果加上后都没有矛盾，即都是偶环，那么所有边都可以。
+</div>
+<div class = "MarkdownCommonContent">
+考虑有一条边产生了矛盾，则可以删掉它构成的奇环上的任意一条边。最后的结果一定是被所有矛盾边覆盖，不被任何非矛盾边覆盖的边，于是分别打两个标记判断最后的标记个数是否是一个
+$tot$
+一个
+$0$
+即可，注意如果有多个矛盾边，则最后删掉的边一定不在矛盾边中，但如果只有一个，那么这个边也可能删掉。还要注意如果没有矛盾可以任意删掉一条边。如果一个边既被矛盾边覆盖也被非矛盾边覆盖，那么他也不能选因为这两个环套在一起一定还可以形成一个不包含这条边的奇环，而删掉这条边不能去掉这个大奇环。
+</div>
+<div class = "MarkdownCommonContent">
+<h2 class = "MarkdownH2">
+Code：
+</h2>
+</div>
+<div class = "MarkdownCommonContent">
+<pre><code class="MarkdownParaCode">
+#include&lt;algorithm&gt;<br />
+#include&lt;iostream&gt;<br />
+#include&lt;cstdlib&gt;<br />
+#include&lt;cstdio&gt;<br />
+#include&lt;cmath&gt;<br />
+#include&lt;stack&gt;<br />
+#include&lt;cstring&gt;<br />
+using namespace std;<br />
+int n,m;<br />
+#define MAXN 10010<br />
+#define MAXM 10010<br />
+struct segment<br />
+{<br />
+	int u,v;<br />
+	bool add;<br />
+	segment(){add = false;}<br />
+}l[MAXM];<br />
+struct node<br />
+{<br />
+	int c[2],fa,v1,tag1,v2,tag2,cnt,siz;<br />
+	bool rev;<br />
+	node(){c[0] = c[1] = fa = v1 = tag1 = v2 = tag2 = cnt = 0;}<br />
+}t[MAXN + MAXM];<br />
+void maintain(int rt)<br />
+{<br />
+	t[rt].siz = t[rt].cnt;<br />
+	if(t[rt].c[0] != 0)t[rt].siz += t[t[rt].c[0]].siz;<br />
+	if(t[rt].c[1] != 0)t[rt].siz += t[t[rt].c[1]].siz;<br />
+	return;<br />
+}<br />
+void pushdown(int rt)<br />
+{<br />
+	if(t[rt].rev)<br />
+	{<br />
+		t[t[rt].c[0]].rev ^= 1;t[t[rt].c[1]].rev ^= 1;<br />
+		swap(t[rt].c[0],t[rt].c[1]);t[rt].rev = false;<br />
+	}<br />
+	if(t[rt].tag1 != 0)<br />
+	{<br />
+		t[t[rt].c[0]].v1 += t[rt].tag1;t[t[rt].c[1]].v1 += t[rt].tag1;<br />
+		t[t[rt].c[0]].tag1 += t[rt].tag1;t[t[rt].c[1]].tag1 += t[rt].tag1;<br />
+		t[rt].tag1 = 0;<br />
+	}<br />
+	if(t[rt].tag2 != 0)<br />
+	{<br />
+		t[t[rt].c[0]].v2 += t[rt].tag2;t[t[rt].c[1]].v2 += t[rt].tag2;<br />
+		t[t[rt].c[0]].tag2 += t[rt].tag2;t[t[rt].c[1]].tag2 += t[rt].tag2;<br />
+		t[rt].tag2 = 0;<br />
+	}<br />
+	return;<br />
+}<br />
+bool isroot(int k){return (t[t[k].fa].c[0] != k && t[t[k].fa].c[1] != k);}<br />
+int id(int k){return (t[t[k].fa].c[0] == k ? 0 : 1);}<br />
+void connect(int k,int f,int p){t[k].fa = f;t[f].c[p] = k;return;}<br />
+void rotate(int x)<br />
+{<br />
+	int y = t[x].fa,z = t[y].fa,fx = id(x),fy = id(y);<br />
+	if(!isroot(y))t[z].c[fy] = x;<br />
+	t[x].fa = z;<br />
+	connect(t[x].c[fx ^ 1],y,fx);<br />
+	connect(y,x,fx ^ 1);<br />
+	maintain(y);maintain(x);<br />
+	return;<br />
+}<br />
+stack&lt;int&gt; s;<br />
+void splay(int k)<br />
+{<br />
+	s.push(k);<br />
+	for(int i = k;!isroot(i);i = t[i].fa)s.push(t[i].fa);<br />
+	while(!s.empty()){pushdown(s.top());s.pop();}<br />
+	while(!isroot(k))<br />
+	{<br />
+		int y = t[k].fa;<br />
+		if(isroot(y)){rotate(k);return;}<br />
+		if(id(k) == id(y)){rotate(y);rotate(k);}<br />
+		else{rotate(k);rotate(k);}<br />
+	}<br />
+	return;<br />
+}<br />
+void access(int k){for(int i = 0;k;i = k,k = t[k].fa){splay(k);t[k].c[1] = i;maintain(k);}return;}<br />
+void makeroot(int k){access(k);splay(k);t[k].rev ^= 1;return;}<br />
+int findroot(int k){access(k);splay(k);while(t[k].c[0] != 0)k = t[k].c[0];return k;}<br />
+void link(int x,int y){makeroot(x);makeroot(y);t[x].fa = y;return;} <br />
+int res[MAXN],tot = 0;<br />
+int main()<br />
+{<br />
+	scanf("%d%d",&n,&m);<br />
+	for(int i = 1;i &lt;= m;++i)<br />
+	{<br />
+		scanf("%d%d",&l[i].u,&l[i].v);<br />
+	}<br />
+	for(int i = 1;i &lt;= n;++i)<br />
+	{<br />
+		t[i].cnt = 1;<br />
+	}<br />
+	for(int i = 1;i &lt;= m;++i)<br />
+	{<br />
+		if(findroot(l[i].u) != findroot(l[i].v))<br />
+		{<br />
+			link(l[i].u,n + i);<br />
+			link(l[i].v,n + i);<br />
+			l[i].add = true;<br />
+		}<br />
+	}<br />
+	int ptr;<br />
+	for(int i = 1;i &lt;= m;++i)<br />
+	{<br />
+		if(l[i].add)continue;<br />
+		makeroot(l[i].u);access(l[i].v);splay(l[i].v);<br />
+		if((t[l[i].v].siz % 2) == 1)<br />
+		{<br />
+			ptr = i;<br />
+			t[l[i].v].tag1 += 1;<br />
+			t[l[i].v].v1 += 1;<br />
+			++tot;<br />
+		}<br />
+		else<br />
+		{<br />
+			t[l[i].v].tag2 += 1;<br />
+			t[l[i].v].v2 += 1;<br />
+		}<br />
+	}<br />
+	if(tot == 0)<br />
+	{<br />
+		printf("%d\n",m);<br />
+		for(int i = 1;i &lt;= m;++i)<br />
+		{<br />
+			printf("%d ",i);<br />
+		}<br />
+		puts("");<br />
+		return 0;<br />
+	}<br />
+	int cnt = 0;<br />
+	for(int i = 1;i &lt;= m;++i)<br />
+	{<br />
+		splay(i + n);<br />
+		if(t[i + n].v1 == tot && t[i + n].v2 == 0)<br />
+		{<br />
+			res[++cnt] = i;<br />
+		}<br />
+	}<br />
+	if(tot == 1)<br />
+	{<br />
+		res[++cnt] = ptr;<br />
+	}<br />
+	cout &lt;&lt; cnt &lt;&lt; endl;<br />
+	for(int i = 1;i &lt;= cnt;++i)<br />
+	{<br />
+		printf("%d ",res[i]);<br />
+	}<br />
+	return 0;<br />
+}<br />
+</pre></code>
+</div>
+        </div>
+        <div class="blogfile_showtag">
+          <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png">
+          In tag:
+<a href="../tags/数据结构-LCT.html">数据结构-LCT</a> <a href="../tags/图论-二分图染色.html">图论-二分图染色</a> 
+          <!--<a href="../tags/blog.html">blog</a>-->
+        </div>
+      </div>
+    </div>
+    <div id="middle_nav">
+      <div class="blog_host">
+        <div class="nav_avator">
+          <img src="http://pic.yupoo.com/wjh15101051/72c1aeab/f51d56e0.jpg" alt="avator">
+        </div>
+        <div class="nav_ID">
+          wjh15101051
+        </div>
+      </div>
+      <div class="nav_list">
+        <li class="tags">
+          <a href="../tags.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2380cc18/89ee2c05.png" class="list_icon" id="tags_image">
+            Tags
+          </a>
+        </li>
+        <li class="categories">
+          <a href="../categories.html">
+            <img src="http://pic.yupoo.com/wjh15101051/2ea96b56/7882c4ab.png" class="list_icon" id="categories_image">
+            Categories
+          </a>
+        </li>
+        <li class="timeline">
+          <a href="../timeline.html">
+            <img src="http://pic.yupoo.com/wjh15101051/30365cc7/c1a3be15.png" class="list_icon" id="timeline_image">
+            Timeline
+          </a>
+        </li>
+        <li class="about">
+          <a href="../about.html">
+            <img src="http://pic.yupoo.com/wjh15101051/24f1cb41/e239086e.png" class="list_icon" id="about_image">
+            About
+          </a>
+        </li>
+        <li class="toolbox">
+          <a href="../toolbox.html">
+            <img src="http://pic.yupoo.com/wjh15101051/dee9f673/d3cf682a.png" class="list_icon" id="toolbox_image">
+            Toolbox
+          </a>
+        </li>
+        <li class="friends">
+            <div class="friends_text">
+              <img src="http://pic.yupoo.com/wjh15101051/d291ebed/29f9c807.png" id="friends_image">
+              Friends
+            </div>
+            <div id="fp_friends_list">
+              <div id="SGcolin">
+                <a href="http://blog.gyx.me/" target="_blank">SGcolin</a>
+              </div>
+              <div id="Xingcy">
+                <a href="https://www.cnblogs.com/xcysblog/" target="_blank">Xingcy</a>
+              </div>
+              <div id="ZH_comld">
+                <a href="https://www.cnblogs.com/ZH-comld/" target="_blank">ZH_comld</a>
+              </div>
+            </div>
+            <br>
+          </div>
+        </li>
+      </div>
+    <div class="music_player">
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer@1.10.0/dist/APlayer.min.css">
+      <script src="https://blog-static.cnblogs.com/files/yjlaugus/APlayer.min.js"></script>
+      <div id="aplayer" class="aplayer"  data-id="5313691453" data-server="netease" data-type="playlist" data-fixed="true" data-listfolded="true" data-order="random" data-theme="#F58EA8"></div>
+      <script src="https://unpkg.com/meting@1.2/dist/Meting.min.js"></script>
+    </div>
+    <div class="bottom">
+      <div>
+        Copyright © 2020
+        <a id="copyright_user_a" href="index.html">
+          <span id="copyright_user">wjh15101051</span>
+        </a>
+      </div>
+      <div class="bottom_anime">ღゝ◡╹)ノ♡</div>
+    </div>
+  </div>
+</body>
+</html>
