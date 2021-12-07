@@ -74,154 +74,154 @@ Code：
 </div>
 <div class = "MarkdownCommonContent">
 <pre class="MarkdownParaPre"><code class="MarkdownParaCode">
-#include&lt;algorithm&gt;<br />
-#include&lt;iostream&gt;<br />
-#include&lt;cstdlib&gt;<br />
-#include&lt;cstdio&gt;<br />
-#include&lt;cmath&gt;<br />
-#include&lt;queue&gt;<br />
-#include&lt;cctype&gt;<br />
-#include&lt;cstring&gt;<br />
-using namespace std;<br />
-inline int rd()<br />
-{<br />
-	register int res = 0,f = 1;register char c = getchar();<br />
-	while(!isdigit(c)){if(c == '-')f = -1;c = getchar();}<br />
-	while(isdigit(c))res = (res &lt;&lt; 1) + (res &lt;&lt; 3) + c - '0',c = getchar();<br />
-	return res * f;<br />
-}<br />
-int n,m;<br />
-#define MAXN 50<br />
-int a[MAXN][MAXN];<br />
-int to(int i,int j){return (i - 1) * m + j;}<br />
-int s,t;<br />
-int ch[MAXN * MAXN];<br />
-typedef long long ll;<br />
-struct edge<br />
-{<br />
-	int to,nxt;<br />
-	ll f;<br />
-}e[MAXN * MAXN * 5 * 2];<br />
-int edgenum = 0;<br />
-int lin[MAXN * MAXN] = {0};<br />
-void add(int a,int b,ll f)<br />
-{<br />
-    e[edgenum] = (edge){b,lin[a],f};lin[a] = edgenum++;<br />
-    e[edgenum] = (edge){a,lin[b],0};lin[b] = edgenum++;<br />
-    return;<br />
-}<br />
-bool BFS()<br />
-{<br />
-    memset(ch,-1,sizeof(ch));ch[s] = 0;<br />
-    queue&lt;int&gt; q;q.push(s);<br />
-    while(!q.empty())<br />
-    {<br />
-        int k = q.front();q.pop();<br />
-        for(int i = lin[k];i != -1;i = e[i].nxt)<br />
-        {<br />
-            if(ch[e[i].to] == -1 && e[i].f &gt; 0)<br />
-            {<br />
-                ch[e[i].to] = ch[k] + 1;<br />
-                q.push(e[i].to);<br />
-            }<br />
-        }<br />
-    }<br />
-    return (ch[t] != -1);<br />
-}<br />
-ll flow(int k,ll f)<br />
-{<br />
-    if(k == t)return f;<br />
-    ll r = 0;<br />
-    for(int i = lin[k];i != -1 && f &gt; r;i = e[i].nxt)<br />
-    {<br />
-        if(ch[e[i].to] == ch[k] + 1 && e[i].f &gt; 0)<br />
-        {<br />
-            ll l = flow(e[i].to,min(e[i].f,f - r));<br />
-            e[i].f -= l;r += l;e[i ^ 1].f += l;<br />
-        }<br />
-    }<br />
-    if(r == 0)ch[k] = -1;<br />
-    return r;<br />
-}<br />
-#define INF 0x3f3f3f3f3f3f3f3f<br />
-ll ans;<br />
-ll dinic()<br />
-{<br />
-	ans = 0;ll r;<br />
-    while(BFS())while(r = flow(s,INF))ans += r;<br />
-    return ans;<br />
-}<br />
-bool check(ll h)<br />
-{<br />
-	memset(lin,-1,sizeof(lin));<br />
-	edgenum = 0;<br />
-	s = n * m + 1;t = s + 1;<br />
-	ll sum = 0;<br />
-	for(int i = 1;i &lt;= n;++i)<br />
-	{<br />
-		for(int j = 1;j &lt;= m;++j)<br />
-		{<br />
-			if((i + j) % 2 == 0)add(s,to(i,j),h - a[i][j]),sum += h - a[i][j];<br />
-			else add(to(i,j),t,h - a[i][j]);<br />
-			if((i + j) % 2 == 0)<br />
-			{<br />
-				if(i != 1)add(to(i,j),to(i - 1,j),INF);<br />
-				if(j != 1)add(to(i,j),to(i,j - 1),INF);<br />
-				if(i != n)add(to(i,j),to(i + 1,j),INF);<br />
-				if(j != m)add(to(i,j),to(i,j + 1),INF);<br />
-			}<br />
-		}<br />
-	}<br />
-	return sum == dinic();<br />
-}<br />
-void work()<br />
-{<br />
-	n = rd();m = rd();<br />
-	for(int i = 1;i &lt;= n;++i)for(int j = 1;j &lt;= m;++j)a[i][j] = rd();<br />
-	ll cur = 0;<br />
-	for(int i = 1;i &lt;= n;++i)for(int j = 1;j &lt;= m;++j)cur = max(cur,1ll * a[i][j]);<br />
-	ll sum0 = 0,sum1 = 0;<br />
-	for(int i = 1;i &lt;= n;++i)<br />
-	{<br />
-		for(int j = 1;j &lt;= m;++j)<br />
-		{<br />
-			if((i + j) % 2 == 0)sum0 += cur - a[i][j];<br />
-			else sum1 += cur - a[i][j];<br />
-		}<br />
-	}<br />
-	if(n * m % 2 != 0)<br />
-	{<br />
-		if(sum0 &gt; sum1)puts("-1");<br />
-		else<br />
-		{<br />
-			if(check(cur + sum1 - sum0))cout &lt;&lt; ans &lt;&lt; endl;<br />
-			else puts("-1");<br />
-		}<br />
-	}<br />
-	else<br />
-	{<br />
-		if(sum0 != sum1)puts("-1");<br />
-		else<br />
-		{<br />
-			ll l = cur - 1,r = 10000000000000000,mid;<br />
-			while(l &lt; r)<br />
-			{<br />
-				mid = ((l + r) &gt;&gt; 1);<br />
-				if(check(mid))r = mid;<br />
-				else l = mid + 1;<br />
-			}<br />
-			check(l);<br />
-			cout &lt;&lt; ans &lt;&lt; endl;<br />
-		}<br />
-	}<br />
-	return;<br />
-}<br />
-int main()<br />
-{<br />
-	int testcases = rd();<br />
-	while(testcases--)work();<br />
-	return 0;<br />
-}<br />
+<span class="CodeCompileOperation">#include&lt;algorithm&gt;</span><br />
+<span class="CodeCompileOperation">#include&lt;iostream&gt;</span><br />
+<span class="CodeCompileOperation">#include&lt;cstdlib&gt;</span><br />
+<span class="CodeCompileOperation">#include&lt;cstdio&gt;</span><br />
+<span class="CodeCompileOperation">#include&lt;cmath&gt;</span><br />
+<span class="CodeCompileOperation">#include&lt;queue&gt;</span><br />
+<span class="CodeCompileOperation">#include&lt;cctype&gt;</span><br />
+<span class="CodeCompileOperation">#include&lt;cstring&gt;</span><br />
+<strong>using</strong> <strong>namespace</strong> std<span class="CodeOperator">;</span><br />
+<strong>inline</strong> <strong>int</strong> rd<span class="CodeOperator">(</span><span class="CodeOperator">)</span><br />
+<span class="CodeOperator">{</span><br />
+	<strong>register</strong> <strong>int</strong> res <span class="CodeOperator">=</span> <span class="CodeNumber">0</span><span class="CodeOperator">,</span>f <span class="CodeOperator">=</span> <span class="CodeNumber">1</span><span class="CodeOperator">;</span><strong>register</strong> <strong>char</strong> c <span class="CodeOperator">=</span> getchar<span class="CodeOperator">(</span><span class="CodeOperator">)</span><span class="CodeOperator">;</span><br />
+	<strong>while</strong><span class="CodeOperator">(</span><span class="CodeOperator">!</span>isdigit<span class="CodeOperator">(</span>c<span class="CodeOperator">)</span><span class="CodeOperator">)</span><span class="CodeOperator">{</span><strong>if</strong><span class="CodeOperator">(</span>c <span class="CodeOperator">=</span><span class="CodeOperator">=</span> <span class="CodeOperator">'</span><span class="CodeOperator">-</span><span class="CodeOperator">'</span><span class="CodeOperator">)</span>f <span class="CodeOperator">=</span> <span class="CodeOperator">-</span><span class="CodeNumber">1</span><span class="CodeOperator">;</span>c <span class="CodeOperator">=</span> getchar<span class="CodeOperator">(</span><span class="CodeOperator">)</span><span class="CodeOperator">;</span><span class="CodeOperator">}</span><br />
+	<strong>while</strong><span class="CodeOperator">(</span>isdigit<span class="CodeOperator">(</span>c<span class="CodeOperator">)</span><span class="CodeOperator">)</span>res <span class="CodeOperator">=</span> <span class="CodeOperator">(</span>res <span class="CodeOperator">&lt;</span><span class="CodeOperator">&lt;</span> <span class="CodeNumber">1</span><span class="CodeOperator">)</span> <span class="CodeOperator">+</span> <span class="CodeOperator">(</span>res <span class="CodeOperator">&lt;</span><span class="CodeOperator">&lt;</span> <span class="CodeNumber">3</span><span class="CodeOperator">)</span> <span class="CodeOperator">+</span> c <span class="CodeOperator">-</span> <span class="CodeOperator">'</span><span class="CodeNumber">0</span><span class="CodeOperator">'</span><span class="CodeOperator">,</span>c <span class="CodeOperator">=</span> getchar<span class="CodeOperator">(</span><span class="CodeOperator">)</span><span class="CodeOperator">;</span><br />
+	<strong>return</strong> res <span class="CodeOperator">*</span> f<span class="CodeOperator">;</span><br />
+<span class="CodeOperator">}</span><br />
+<strong>int</strong> n<span class="CodeOperator">,</span>m<span class="CodeOperator">;</span><br />
+<span class="CodeCompileOperation">#define MAXN 50</span><br />
+<strong>int</strong> a<span class="CodeOperator">[</span>MAXN<span class="CodeOperator">]</span><span class="CodeOperator">[</span>MAXN<span class="CodeOperator">]</span><span class="CodeOperator">;</span><br />
+<strong>int</strong> to<span class="CodeOperator">(</span><strong>int</strong> i<span class="CodeOperator">,</span><strong>int</strong> j<span class="CodeOperator">)</span><span class="CodeOperator">{</span><strong>return</strong> <span class="CodeOperator">(</span>i <span class="CodeOperator">-</span> <span class="CodeNumber">1</span><span class="CodeOperator">)</span> <span class="CodeOperator">*</span> m <span class="CodeOperator">+</span> j<span class="CodeOperator">;</span><span class="CodeOperator">}</span><br />
+<strong>int</strong> s<span class="CodeOperator">,</span>t<span class="CodeOperator">;</span><br />
+<strong>int</strong> ch<span class="CodeOperator">[</span>MAXN <span class="CodeOperator">*</span> MAXN<span class="CodeOperator">]</span><span class="CodeOperator">;</span><br />
+<strong>typedef</strong> <strong>long</strong> <strong>long</strong> ll<span class="CodeOperator">;</span><br />
+<strong>struct</strong> edge<br />
+<span class="CodeOperator">{</span><br />
+	<strong>int</strong> to<span class="CodeOperator">,</span>nxt<span class="CodeOperator">;</span><br />
+	ll f<span class="CodeOperator">;</span><br />
+<span class="CodeOperator">}</span>e<span class="CodeOperator">[</span>MAXN <span class="CodeOperator">*</span> MAXN <span class="CodeOperator">*</span> <span class="CodeNumber">5</span> <span class="CodeOperator">*</span> <span class="CodeNumber">2</span><span class="CodeOperator">]</span><span class="CodeOperator">;</span><br />
+<strong>int</strong> edgenum <span class="CodeOperator">=</span> <span class="CodeNumber">0</span><span class="CodeOperator">;</span><br />
+<strong>int</strong> lin<span class="CodeOperator">[</span>MAXN <span class="CodeOperator">*</span> MAXN<span class="CodeOperator">]</span> <span class="CodeOperator">=</span> <span class="CodeOperator">{</span><span class="CodeNumber">0</span><span class="CodeOperator">}</span><span class="CodeOperator">;</span><br />
+<strong>void</strong> add<span class="CodeOperator">(</span><strong>int</strong> a<span class="CodeOperator">,</span><strong>int</strong> b<span class="CodeOperator">,</span>ll f<span class="CodeOperator">)</span><br />
+<span class="CodeOperator">{</span><br />
+    e<span class="CodeOperator">[</span>edgenum<span class="CodeOperator">]</span> <span class="CodeOperator">=</span> <span class="CodeOperator">(</span>edge<span class="CodeOperator">)</span><span class="CodeOperator">{</span>b<span class="CodeOperator">,</span>lin<span class="CodeOperator">[</span>a<span class="CodeOperator">]</span><span class="CodeOperator">,</span>f<span class="CodeOperator">}</span><span class="CodeOperator">;</span>lin<span class="CodeOperator">[</span>a<span class="CodeOperator">]</span> <span class="CodeOperator">=</span> edgenum<span class="CodeOperator">+</span><span class="CodeOperator">+</span><span class="CodeOperator">;</span><br />
+    e<span class="CodeOperator">[</span>edgenum<span class="CodeOperator">]</span> <span class="CodeOperator">=</span> <span class="CodeOperator">(</span>edge<span class="CodeOperator">)</span><span class="CodeOperator">{</span>a<span class="CodeOperator">,</span>lin<span class="CodeOperator">[</span>b<span class="CodeOperator">]</span><span class="CodeOperator">,</span><span class="CodeNumber">0</span><span class="CodeOperator">}</span><span class="CodeOperator">;</span>lin<span class="CodeOperator">[</span>b<span class="CodeOperator">]</span> <span class="CodeOperator">=</span> edgenum<span class="CodeOperator">+</span><span class="CodeOperator">+</span><span class="CodeOperator">;</span><br />
+    <strong>return</strong><span class="CodeOperator">;</span><br />
+<span class="CodeOperator">}</span><br />
+bool BFS<span class="CodeOperator">(</span><span class="CodeOperator">)</span><br />
+<span class="CodeOperator">{</span><br />
+    memset<span class="CodeOperator">(</span>ch<span class="CodeOperator">,</span><span class="CodeOperator">-</span><span class="CodeNumber">1</span><span class="CodeOperator">,</span><strong>sizeof</strong><span class="CodeOperator">(</span>ch<span class="CodeOperator">)</span><span class="CodeOperator">)</span><span class="CodeOperator">;</span>ch<span class="CodeOperator">[</span>s<span class="CodeOperator">]</span> <span class="CodeOperator">=</span> <span class="CodeNumber">0</span><span class="CodeOperator">;</span><br />
+    queue<span class="CodeOperator">&lt;</span><strong>int</strong><span class="CodeOperator">&gt;</span> q<span class="CodeOperator">;</span>q<span class="CodeOperator">.</span>push<span class="CodeOperator">(</span>s<span class="CodeOperator">)</span><span class="CodeOperator">;</span><br />
+    <strong>while</strong><span class="CodeOperator">(</span><span class="CodeOperator">!</span>q<span class="CodeOperator">.</span>empty<span class="CodeOperator">(</span><span class="CodeOperator">)</span><span class="CodeOperator">)</span><br />
+    <span class="CodeOperator">{</span><br />
+        <strong>int</strong> k <span class="CodeOperator">=</span> q<span class="CodeOperator">.</span>front<span class="CodeOperator">(</span><span class="CodeOperator">)</span><span class="CodeOperator">;</span>q<span class="CodeOperator">.</span>pop<span class="CodeOperator">(</span><span class="CodeOperator">)</span><span class="CodeOperator">;</span><br />
+        <strong>for</strong><span class="CodeOperator">(</span><strong>int</strong> i <span class="CodeOperator">=</span> lin<span class="CodeOperator">[</span>k<span class="CodeOperator">]</span><span class="CodeOperator">;</span>i <span class="CodeOperator">!</span><span class="CodeOperator">=</span> <span class="CodeOperator">-</span><span class="CodeNumber">1</span><span class="CodeOperator">;</span>i <span class="CodeOperator">=</span> e<span class="CodeOperator">[</span>i<span class="CodeOperator">]</span><span class="CodeOperator">.</span>nxt<span class="CodeOperator">)</span><br />
+        <span class="CodeOperator">{</span><br />
+            <strong>if</strong><span class="CodeOperator">(</span>ch<span class="CodeOperator">[</span>e<span class="CodeOperator">[</span>i<span class="CodeOperator">]</span><span class="CodeOperator">.</span>to<span class="CodeOperator">]</span> <span class="CodeOperator">=</span><span class="CodeOperator">=</span> <span class="CodeOperator">-</span><span class="CodeNumber">1</span> <span class="CodeOperator">&</span><span class="CodeOperator">&</span> e<span class="CodeOperator">[</span>i<span class="CodeOperator">]</span><span class="CodeOperator">.</span>f <span class="CodeOperator">&gt;</span> <span class="CodeNumber">0</span><span class="CodeOperator">)</span><br />
+            <span class="CodeOperator">{</span><br />
+                ch<span class="CodeOperator">[</span>e<span class="CodeOperator">[</span>i<span class="CodeOperator">]</span><span class="CodeOperator">.</span>to<span class="CodeOperator">]</span> <span class="CodeOperator">=</span> ch<span class="CodeOperator">[</span>k<span class="CodeOperator">]</span> <span class="CodeOperator">+</span> <span class="CodeNumber">1</span><span class="CodeOperator">;</span><br />
+                q<span class="CodeOperator">.</span>push<span class="CodeOperator">(</span>e<span class="CodeOperator">[</span>i<span class="CodeOperator">]</span><span class="CodeOperator">.</span>to<span class="CodeOperator">)</span><span class="CodeOperator">;</span><br />
+            <span class="CodeOperator">}</span><br />
+        <span class="CodeOperator">}</span><br />
+    <span class="CodeOperator">}</span><br />
+    <strong>return</strong> <span class="CodeOperator">(</span>ch<span class="CodeOperator">[</span>t<span class="CodeOperator">]</span> <span class="CodeOperator">!</span><span class="CodeOperator">=</span> <span class="CodeOperator">-</span><span class="CodeNumber">1</span><span class="CodeOperator">)</span><span class="CodeOperator">;</span><br />
+<span class="CodeOperator">}</span><br />
+ll flow<span class="CodeOperator">(</span><strong>int</strong> k<span class="CodeOperator">,</span>ll f<span class="CodeOperator">)</span><br />
+<span class="CodeOperator">{</span><br />
+    <strong>if</strong><span class="CodeOperator">(</span>k <span class="CodeOperator">=</span><span class="CodeOperator">=</span> t<span class="CodeOperator">)</span><strong>return</strong> f<span class="CodeOperator">;</span><br />
+    ll r <span class="CodeOperator">=</span> <span class="CodeNumber">0</span><span class="CodeOperator">;</span><br />
+    <strong>for</strong><span class="CodeOperator">(</span><strong>int</strong> i <span class="CodeOperator">=</span> lin<span class="CodeOperator">[</span>k<span class="CodeOperator">]</span><span class="CodeOperator">;</span>i <span class="CodeOperator">!</span><span class="CodeOperator">=</span> <span class="CodeOperator">-</span><span class="CodeNumber">1</span> <span class="CodeOperator">&</span><span class="CodeOperator">&</span> f <span class="CodeOperator">&gt;</span> r<span class="CodeOperator">;</span>i <span class="CodeOperator">=</span> e<span class="CodeOperator">[</span>i<span class="CodeOperator">]</span><span class="CodeOperator">.</span>nxt<span class="CodeOperator">)</span><br />
+    <span class="CodeOperator">{</span><br />
+        <strong>if</strong><span class="CodeOperator">(</span>ch<span class="CodeOperator">[</span>e<span class="CodeOperator">[</span>i<span class="CodeOperator">]</span><span class="CodeOperator">.</span>to<span class="CodeOperator">]</span> <span class="CodeOperator">=</span><span class="CodeOperator">=</span> ch<span class="CodeOperator">[</span>k<span class="CodeOperator">]</span> <span class="CodeOperator">+</span> <span class="CodeNumber">1</span> <span class="CodeOperator">&</span><span class="CodeOperator">&</span> e<span class="CodeOperator">[</span>i<span class="CodeOperator">]</span><span class="CodeOperator">.</span>f <span class="CodeOperator">&gt;</span> <span class="CodeNumber">0</span><span class="CodeOperator">)</span><br />
+        <span class="CodeOperator">{</span><br />
+            ll l <span class="CodeOperator">=</span> flow<span class="CodeOperator">(</span>e<span class="CodeOperator">[</span>i<span class="CodeOperator">]</span><span class="CodeOperator">.</span>to<span class="CodeOperator">,</span>min<span class="CodeOperator">(</span>e<span class="CodeOperator">[</span>i<span class="CodeOperator">]</span><span class="CodeOperator">.</span>f<span class="CodeOperator">,</span>f <span class="CodeOperator">-</span> r<span class="CodeOperator">)</span><span class="CodeOperator">)</span><span class="CodeOperator">;</span><br />
+            e<span class="CodeOperator">[</span>i<span class="CodeOperator">]</span><span class="CodeOperator">.</span>f <span class="CodeOperator">-</span><span class="CodeOperator">=</span> l<span class="CodeOperator">;</span>r <span class="CodeOperator">+</span><span class="CodeOperator">=</span> l<span class="CodeOperator">;</span>e<span class="CodeOperator">[</span>i <span class="CodeOperator">^</span> <span class="CodeNumber">1</span><span class="CodeOperator">]</span><span class="CodeOperator">.</span>f <span class="CodeOperator">+</span><span class="CodeOperator">=</span> l<span class="CodeOperator">;</span><br />
+        <span class="CodeOperator">}</span><br />
+    <span class="CodeOperator">}</span><br />
+    <strong>if</strong><span class="CodeOperator">(</span>r <span class="CodeOperator">=</span><span class="CodeOperator">=</span> <span class="CodeNumber">0</span><span class="CodeOperator">)</span>ch<span class="CodeOperator">[</span>k<span class="CodeOperator">]</span> <span class="CodeOperator">=</span> <span class="CodeOperator">-</span><span class="CodeNumber">1</span><span class="CodeOperator">;</span><br />
+    <strong>return</strong> r<span class="CodeOperator">;</span><br />
+<span class="CodeOperator">}</span><br />
+<span class="CodeCompileOperation">#define INF 0x3f3f3f3f3f3f3f3f</span><br />
+ll ans<span class="CodeOperator">;</span><br />
+ll dinic<span class="CodeOperator">(</span><span class="CodeOperator">)</span><br />
+<span class="CodeOperator">{</span><br />
+	ans <span class="CodeOperator">=</span> <span class="CodeNumber">0</span><span class="CodeOperator">;</span>ll r<span class="CodeOperator">;</span><br />
+    <strong>while</strong><span class="CodeOperator">(</span>BFS<span class="CodeOperator">(</span><span class="CodeOperator">)</span><span class="CodeOperator">)</span><strong>while</strong><span class="CodeOperator">(</span>r <span class="CodeOperator">=</span> flow<span class="CodeOperator">(</span>s<span class="CodeOperator">,</span>INF<span class="CodeOperator">)</span><span class="CodeOperator">)</span>ans <span class="CodeOperator">+</span><span class="CodeOperator">=</span> r<span class="CodeOperator">;</span><br />
+    <strong>return</strong> ans<span class="CodeOperator">;</span><br />
+<span class="CodeOperator">}</span><br />
+bool check<span class="CodeOperator">(</span>ll h<span class="CodeOperator">)</span><br />
+<span class="CodeOperator">{</span><br />
+	memset<span class="CodeOperator">(</span>lin<span class="CodeOperator">,</span><span class="CodeOperator">-</span><span class="CodeNumber">1</span><span class="CodeOperator">,</span><strong>sizeof</strong><span class="CodeOperator">(</span>lin<span class="CodeOperator">)</span><span class="CodeOperator">)</span><span class="CodeOperator">;</span><br />
+	edgenum <span class="CodeOperator">=</span> <span class="CodeNumber">0</span><span class="CodeOperator">;</span><br />
+	s <span class="CodeOperator">=</span> n <span class="CodeOperator">*</span> m <span class="CodeOperator">+</span> <span class="CodeNumber">1</span><span class="CodeOperator">;</span>t <span class="CodeOperator">=</span> s <span class="CodeOperator">+</span> <span class="CodeNumber">1</span><span class="CodeOperator">;</span><br />
+	ll sum <span class="CodeOperator">=</span> <span class="CodeNumber">0</span><span class="CodeOperator">;</span><br />
+	<strong>for</strong><span class="CodeOperator">(</span><strong>int</strong> i <span class="CodeOperator">=</span> <span class="CodeNumber">1</span><span class="CodeOperator">;</span>i <span class="CodeOperator">&lt;</span><span class="CodeOperator">=</span> n<span class="CodeOperator">;</span><span class="CodeOperator">+</span><span class="CodeOperator">+</span>i<span class="CodeOperator">)</span><br />
+	<span class="CodeOperator">{</span><br />
+		<strong>for</strong><span class="CodeOperator">(</span><strong>int</strong> j <span class="CodeOperator">=</span> <span class="CodeNumber">1</span><span class="CodeOperator">;</span>j <span class="CodeOperator">&lt;</span><span class="CodeOperator">=</span> m<span class="CodeOperator">;</span><span class="CodeOperator">+</span><span class="CodeOperator">+</span>j<span class="CodeOperator">)</span><br />
+		<span class="CodeOperator">{</span><br />
+			<strong>if</strong><span class="CodeOperator">(</span><span class="CodeOperator">(</span>i <span class="CodeOperator">+</span> j<span class="CodeOperator">)</span> <span class="CodeOperator">%</span> <span class="CodeNumber">2</span> <span class="CodeOperator">=</span><span class="CodeOperator">=</span> <span class="CodeNumber">0</span><span class="CodeOperator">)</span>add<span class="CodeOperator">(</span>s<span class="CodeOperator">,</span>to<span class="CodeOperator">(</span>i<span class="CodeOperator">,</span>j<span class="CodeOperator">)</span><span class="CodeOperator">,</span>h <span class="CodeOperator">-</span> a<span class="CodeOperator">[</span>i<span class="CodeOperator">]</span><span class="CodeOperator">[</span>j<span class="CodeOperator">]</span><span class="CodeOperator">)</span><span class="CodeOperator">,</span>sum <span class="CodeOperator">+</span><span class="CodeOperator">=</span> h <span class="CodeOperator">-</span> a<span class="CodeOperator">[</span>i<span class="CodeOperator">]</span><span class="CodeOperator">[</span>j<span class="CodeOperator">]</span><span class="CodeOperator">;</span><br />
+			<strong>else</strong> add<span class="CodeOperator">(</span>to<span class="CodeOperator">(</span>i<span class="CodeOperator">,</span>j<span class="CodeOperator">)</span><span class="CodeOperator">,</span>t<span class="CodeOperator">,</span>h <span class="CodeOperator">-</span> a<span class="CodeOperator">[</span>i<span class="CodeOperator">]</span><span class="CodeOperator">[</span>j<span class="CodeOperator">]</span><span class="CodeOperator">)</span><span class="CodeOperator">;</span><br />
+			<strong>if</strong><span class="CodeOperator">(</span><span class="CodeOperator">(</span>i <span class="CodeOperator">+</span> j<span class="CodeOperator">)</span> <span class="CodeOperator">%</span> <span class="CodeNumber">2</span> <span class="CodeOperator">=</span><span class="CodeOperator">=</span> <span class="CodeNumber">0</span><span class="CodeOperator">)</span><br />
+			<span class="CodeOperator">{</span><br />
+				<strong>if</strong><span class="CodeOperator">(</span>i <span class="CodeOperator">!</span><span class="CodeOperator">=</span> <span class="CodeNumber">1</span><span class="CodeOperator">)</span>add<span class="CodeOperator">(</span>to<span class="CodeOperator">(</span>i<span class="CodeOperator">,</span>j<span class="CodeOperator">)</span><span class="CodeOperator">,</span>to<span class="CodeOperator">(</span>i <span class="CodeOperator">-</span> <span class="CodeNumber">1</span><span class="CodeOperator">,</span>j<span class="CodeOperator">)</span><span class="CodeOperator">,</span>INF<span class="CodeOperator">)</span><span class="CodeOperator">;</span><br />
+				<strong>if</strong><span class="CodeOperator">(</span>j <span class="CodeOperator">!</span><span class="CodeOperator">=</span> <span class="CodeNumber">1</span><span class="CodeOperator">)</span>add<span class="CodeOperator">(</span>to<span class="CodeOperator">(</span>i<span class="CodeOperator">,</span>j<span class="CodeOperator">)</span><span class="CodeOperator">,</span>to<span class="CodeOperator">(</span>i<span class="CodeOperator">,</span>j <span class="CodeOperator">-</span> <span class="CodeNumber">1</span><span class="CodeOperator">)</span><span class="CodeOperator">,</span>INF<span class="CodeOperator">)</span><span class="CodeOperator">;</span><br />
+				<strong>if</strong><span class="CodeOperator">(</span>i <span class="CodeOperator">!</span><span class="CodeOperator">=</span> n<span class="CodeOperator">)</span>add<span class="CodeOperator">(</span>to<span class="CodeOperator">(</span>i<span class="CodeOperator">,</span>j<span class="CodeOperator">)</span><span class="CodeOperator">,</span>to<span class="CodeOperator">(</span>i <span class="CodeOperator">+</span> <span class="CodeNumber">1</span><span class="CodeOperator">,</span>j<span class="CodeOperator">)</span><span class="CodeOperator">,</span>INF<span class="CodeOperator">)</span><span class="CodeOperator">;</span><br />
+				<strong>if</strong><span class="CodeOperator">(</span>j <span class="CodeOperator">!</span><span class="CodeOperator">=</span> m<span class="CodeOperator">)</span>add<span class="CodeOperator">(</span>to<span class="CodeOperator">(</span>i<span class="CodeOperator">,</span>j<span class="CodeOperator">)</span><span class="CodeOperator">,</span>to<span class="CodeOperator">(</span>i<span class="CodeOperator">,</span>j <span class="CodeOperator">+</span> <span class="CodeNumber">1</span><span class="CodeOperator">)</span><span class="CodeOperator">,</span>INF<span class="CodeOperator">)</span><span class="CodeOperator">;</span><br />
+			<span class="CodeOperator">}</span><br />
+		<span class="CodeOperator">}</span><br />
+	<span class="CodeOperator">}</span><br />
+	<strong>return</strong> sum <span class="CodeOperator">=</span><span class="CodeOperator">=</span> dinic<span class="CodeOperator">(</span><span class="CodeOperator">)</span><span class="CodeOperator">;</span><br />
+<span class="CodeOperator">}</span><br />
+<strong>void</strong> work<span class="CodeOperator">(</span><span class="CodeOperator">)</span><br />
+<span class="CodeOperator">{</span><br />
+	n <span class="CodeOperator">=</span> rd<span class="CodeOperator">(</span><span class="CodeOperator">)</span><span class="CodeOperator">;</span>m <span class="CodeOperator">=</span> rd<span class="CodeOperator">(</span><span class="CodeOperator">)</span><span class="CodeOperator">;</span><br />
+	<strong>for</strong><span class="CodeOperator">(</span><strong>int</strong> i <span class="CodeOperator">=</span> <span class="CodeNumber">1</span><span class="CodeOperator">;</span>i <span class="CodeOperator">&lt;</span><span class="CodeOperator">=</span> n<span class="CodeOperator">;</span><span class="CodeOperator">+</span><span class="CodeOperator">+</span>i<span class="CodeOperator">)</span><strong>for</strong><span class="CodeOperator">(</span><strong>int</strong> j <span class="CodeOperator">=</span> <span class="CodeNumber">1</span><span class="CodeOperator">;</span>j <span class="CodeOperator">&lt;</span><span class="CodeOperator">=</span> m<span class="CodeOperator">;</span><span class="CodeOperator">+</span><span class="CodeOperator">+</span>j<span class="CodeOperator">)</span>a<span class="CodeOperator">[</span>i<span class="CodeOperator">]</span><span class="CodeOperator">[</span>j<span class="CodeOperator">]</span> <span class="CodeOperator">=</span> rd<span class="CodeOperator">(</span><span class="CodeOperator">)</span><span class="CodeOperator">;</span><br />
+	ll cur <span class="CodeOperator">=</span> <span class="CodeNumber">0</span><span class="CodeOperator">;</span><br />
+	<strong>for</strong><span class="CodeOperator">(</span><strong>int</strong> i <span class="CodeOperator">=</span> <span class="CodeNumber">1</span><span class="CodeOperator">;</span>i <span class="CodeOperator">&lt;</span><span class="CodeOperator">=</span> n<span class="CodeOperator">;</span><span class="CodeOperator">+</span><span class="CodeOperator">+</span>i<span class="CodeOperator">)</span><strong>for</strong><span class="CodeOperator">(</span><strong>int</strong> j <span class="CodeOperator">=</span> <span class="CodeNumber">1</span><span class="CodeOperator">;</span>j <span class="CodeOperator">&lt;</span><span class="CodeOperator">=</span> m<span class="CodeOperator">;</span><span class="CodeOperator">+</span><span class="CodeOperator">+</span>j<span class="CodeOperator">)</span>cur <span class="CodeOperator">=</span> max<span class="CodeOperator">(</span>cur<span class="CodeOperator">,</span><span class="CodeNumber">1ll</span> <span class="CodeOperator">*</span> a<span class="CodeOperator">[</span>i<span class="CodeOperator">]</span><span class="CodeOperator">[</span>j<span class="CodeOperator">]</span><span class="CodeOperator">)</span><span class="CodeOperator">;</span><br />
+	ll sum<span class="CodeNumber">0</span> <span class="CodeOperator">=</span> <span class="CodeNumber">0</span><span class="CodeOperator">,</span>sum<span class="CodeNumber">1</span> <span class="CodeOperator">=</span> <span class="CodeNumber">0</span><span class="CodeOperator">;</span><br />
+	<strong>for</strong><span class="CodeOperator">(</span><strong>int</strong> i <span class="CodeOperator">=</span> <span class="CodeNumber">1</span><span class="CodeOperator">;</span>i <span class="CodeOperator">&lt;</span><span class="CodeOperator">=</span> n<span class="CodeOperator">;</span><span class="CodeOperator">+</span><span class="CodeOperator">+</span>i<span class="CodeOperator">)</span><br />
+	<span class="CodeOperator">{</span><br />
+		<strong>for</strong><span class="CodeOperator">(</span><strong>int</strong> j <span class="CodeOperator">=</span> <span class="CodeNumber">1</span><span class="CodeOperator">;</span>j <span class="CodeOperator">&lt;</span><span class="CodeOperator">=</span> m<span class="CodeOperator">;</span><span class="CodeOperator">+</span><span class="CodeOperator">+</span>j<span class="CodeOperator">)</span><br />
+		<span class="CodeOperator">{</span><br />
+			<strong>if</strong><span class="CodeOperator">(</span><span class="CodeOperator">(</span>i <span class="CodeOperator">+</span> j<span class="CodeOperator">)</span> <span class="CodeOperator">%</span> <span class="CodeNumber">2</span> <span class="CodeOperator">=</span><span class="CodeOperator">=</span> <span class="CodeNumber">0</span><span class="CodeOperator">)</span>sum<span class="CodeNumber">0</span> <span class="CodeOperator">+</span><span class="CodeOperator">=</span> cur <span class="CodeOperator">-</span> a<span class="CodeOperator">[</span>i<span class="CodeOperator">]</span><span class="CodeOperator">[</span>j<span class="CodeOperator">]</span><span class="CodeOperator">;</span><br />
+			<strong>else</strong> sum<span class="CodeNumber">1</span> <span class="CodeOperator">+</span><span class="CodeOperator">=</span> cur <span class="CodeOperator">-</span> a<span class="CodeOperator">[</span>i<span class="CodeOperator">]</span><span class="CodeOperator">[</span>j<span class="CodeOperator">]</span><span class="CodeOperator">;</span><br />
+		<span class="CodeOperator">}</span><br />
+	<span class="CodeOperator">}</span><br />
+	<strong>if</strong><span class="CodeOperator">(</span>n <span class="CodeOperator">*</span> m <span class="CodeOperator">%</span> <span class="CodeNumber">2</span> <span class="CodeOperator">!</span><span class="CodeOperator">=</span> <span class="CodeNumber">0</span><span class="CodeOperator">)</span><br />
+	<span class="CodeOperator">{</span><br />
+		<strong>if</strong><span class="CodeOperator">(</span>sum<span class="CodeNumber">0</span> <span class="CodeOperator">&gt;</span> sum<span class="CodeNumber">1</span><span class="CodeOperator">)</span>puts<span class="CodeOperator">(</span>"<span class="CodeOperator">-</span><span class="CodeNumber">1</span>"<span class="CodeOperator">)</span><span class="CodeOperator">;</span><br />
+		<strong>else</strong><br />
+		<span class="CodeOperator">{</span><br />
+			<strong>if</strong><span class="CodeOperator">(</span>check<span class="CodeOperator">(</span>cur <span class="CodeOperator">+</span> sum<span class="CodeNumber">1</span> <span class="CodeOperator">-</span> sum<span class="CodeNumber">0</span><span class="CodeOperator">)</span><span class="CodeOperator">)</span>cout <span class="CodeOperator">&lt;</span><span class="CodeOperator">&lt;</span> ans <span class="CodeOperator">&lt;</span><span class="CodeOperator">&lt;</span> endl<span class="CodeOperator">;</span><br />
+			<strong>else</strong> puts<span class="CodeOperator">(</span>"<span class="CodeOperator">-</span><span class="CodeNumber">1</span>"<span class="CodeOperator">)</span><span class="CodeOperator">;</span><br />
+		<span class="CodeOperator">}</span><br />
+	<span class="CodeOperator">}</span><br />
+	<strong>else</strong><br />
+	<span class="CodeOperator">{</span><br />
+		<strong>if</strong><span class="CodeOperator">(</span>sum<span class="CodeNumber">0</span> <span class="CodeOperator">!</span><span class="CodeOperator">=</span> sum<span class="CodeNumber">1</span><span class="CodeOperator">)</span>puts<span class="CodeOperator">(</span>"<span class="CodeOperator">-</span><span class="CodeNumber">1</span>"<span class="CodeOperator">)</span><span class="CodeOperator">;</span><br />
+		<strong>else</strong><br />
+		<span class="CodeOperator">{</span><br />
+			ll l <span class="CodeOperator">=</span> cur <span class="CodeOperator">-</span> <span class="CodeNumber">1</span><span class="CodeOperator">,</span>r <span class="CodeOperator">=</span> <span class="CodeNumber">10000000000000000</span><span class="CodeOperator">,</span>mid<span class="CodeOperator">;</span><br />
+			<strong>while</strong><span class="CodeOperator">(</span>l <span class="CodeOperator">&lt;</span> r<span class="CodeOperator">)</span><br />
+			<span class="CodeOperator">{</span><br />
+				mid <span class="CodeOperator">=</span> <span class="CodeOperator">(</span><span class="CodeOperator">(</span>l <span class="CodeOperator">+</span> r<span class="CodeOperator">)</span> <span class="CodeOperator">&gt;</span><span class="CodeOperator">&gt;</span> <span class="CodeNumber">1</span><span class="CodeOperator">)</span><span class="CodeOperator">;</span><br />
+				<strong>if</strong><span class="CodeOperator">(</span>check<span class="CodeOperator">(</span>mid<span class="CodeOperator">)</span><span class="CodeOperator">)</span>r <span class="CodeOperator">=</span> mid<span class="CodeOperator">;</span><br />
+				<strong>else</strong> l <span class="CodeOperator">=</span> mid <span class="CodeOperator">+</span> <span class="CodeNumber">1</span><span class="CodeOperator">;</span><br />
+			<span class="CodeOperator">}</span><br />
+			check<span class="CodeOperator">(</span>l<span class="CodeOperator">)</span><span class="CodeOperator">;</span><br />
+			cout <span class="CodeOperator">&lt;</span><span class="CodeOperator">&lt;</span> ans <span class="CodeOperator">&lt;</span><span class="CodeOperator">&lt;</span> endl<span class="CodeOperator">;</span><br />
+		<span class="CodeOperator">}</span><br />
+	<span class="CodeOperator">}</span><br />
+	<strong>return</strong><span class="CodeOperator">;</span><br />
+<span class="CodeOperator">}</span><br />
+<strong>int</strong> main<span class="CodeOperator">(</span><span class="CodeOperator">)</span><br />
+<span class="CodeOperator">{</span><br />
+	<strong>int</strong> testcases <span class="CodeOperator">=</span> rd<span class="CodeOperator">(</span><span class="CodeOperator">)</span><span class="CodeOperator">;</span><br />
+	<strong>while</strong><span class="CodeOperator">(</span>testcases<span class="CodeOperator">-</span><span class="CodeOperator">-</span><span class="CodeOperator">)</span>work<span class="CodeOperator">(</span><span class="CodeOperator">)</span><span class="CodeOperator">;</span><br />
+	<strong>return</strong> <span class="CodeNumber">0</span><span class="CodeOperator">;</span><br />
+<span class="CodeOperator">}</span><br />
 <br />
 </pre></code>
 </div>
